@@ -3,6 +3,10 @@
 import { z } from "zod";
 
 import { createUser, getUser } from "@/lib/db/queries";
+import { db } from "@/lib/db";
+import { character, skill, home } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { emptyLayout } from "@/lib/game/homeRooms";
 
 import { signIn } from "./auth";
 
@@ -61,17 +65,38 @@ export const register = async (
       password: formData.get("password"),
     });
 
-    const [user] = await getUser(validatedData.email);
+    const [existingUser] = await getUser(validatedData.email);
 
-    if (user) {
+    if (existingUser) {
       return { status: "user_exists" } as RegisterActionState;
     }
+
     await createUser(validatedData.email, validatedData.password);
     await signIn("credentials", {
       email: validatedData.email,
       password: validatedData.password,
       redirect: false,
     });
+
+    // Auto-create character if class and name provided
+    const characterClass = formData.get("characterClass") as string | null;
+    const characterName = formData.get("characterName") as string | null;
+    const [newUser] = await getUser(validatedData.email);
+    if (characterClass && characterName && newUser?.id) {
+      const [existing] = await db.select().from(character).where(eq(character.name, characterName)).limit(1);
+      if (!existing) {
+        const shieldDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const [newChar] = await db.insert(character).values({
+          userId: newUser.id,
+          name: characterName,
+          class: characterClass as 'warrior' | 'mage' | 'ranger',
+          shieldExpiresAt: shieldDate,
+        }).returning();
+        const skillNames = ['mining', 'crafting', 'engineering', 'fishing', 'cooking', 'architecture', 'combat', 'alchemy', 'trading', 'hacking'] as const;
+        await db.insert(skill).values(skillNames.map(s => ({ characterId: newChar.id, name: s, level: 1, xp: 0 })));
+        await db.insert(home).values({ ownerId: newChar.id, name: `${characterName}'s Home`, layout: emptyLayout(3) as any, unlockedSize: 3 });
+      }
+    }
 
     return { status: "success" };
   } catch (error) {
