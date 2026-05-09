@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (state.status === 'failed' || state.status === 'invalid_data') {
-      setError('Invalid credentials. Check your email and password.');
+      setError('Unknown traveler. Check your credentials.');
       setLoading(false);
     } else if (state.status === 'success') {
       updateSession();
@@ -35,38 +35,45 @@ export default function LoginPage() {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Background grid */}
+      {/* Forest silhouette background */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: 'linear-gradient(var(--border-dim) 1px, transparent 1px), linear-gradient(90deg, var(--border-dim) 1px, transparent 1px)',
-        backgroundSize: '60px 60px',
-        opacity: 0.5,
+        background: 'radial-gradient(ellipse at 50% 100%, #1a2e0e 0%, #0b1008 50%, #060a05 100%)',
       }} />
-
-      {/* Glow orbs */}
-      <div style={{ position: 'absolute', top: '20%', left: '15%', width: 300, height: 300, borderRadius: '50%', background: '#4488ff', filter: 'blur(120px)', opacity: 0.06, pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: '20%', right: '15%', width: 250, height: 250, borderRadius: '50%', background: '#8844ff', filter: 'blur(120px)', opacity: 0.06, pointerEvents: 'none' }} />
+      {/* Tree line silhouette */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: '35%',
+        background: 'linear-gradient(0deg, #0d1a09 0%, transparent 100%)',
+        clipPath: 'polygon(0 100%, 0 60%, 3% 30%, 5% 60%, 8% 20%, 11% 60%, 14% 35%, 17% 55%, 20% 15%, 23% 50%, 26% 25%, 28% 55%, 31% 10%, 34% 45%, 37% 20%, 40% 50%, 43% 30%, 46% 55%, 49% 5%, 52% 40%, 55% 20%, 58% 50%, 61% 25%, 64% 55%, 67% 10%, 70% 45%, 73% 20%, 76% 50%, 79% 30%, 82% 55%, 85% 15%, 88% 50%, 91% 25%, 94% 55%, 97% 30%, 100% 50%, 100% 100%)',
+      }} />
+      {/* Atmosphere glows */}
+      <div style={{ position: 'absolute', top: '25%', left: '10%', width: 400, height: 400, borderRadius: '50%', background: '#2d5c1a', filter: 'blur(160px)', opacity: 0.12, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '30%', right: '10%', width: 300, height: 300, borderRadius: '50%', background: '#c8983a', filter: 'blur(160px)', opacity: 0.07, pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div className="game-title" style={{ fontSize: '2rem', marginBottom: 8 }}>BASE HOME</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', letterSpacing: '0.3em', textTransform: 'uppercase', fontFamily: 'Share Tech Mono, monospace' }}>
-            DISTRICT WARS
-          </div>
+        {/* Title */}
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div className="game-title" style={{ fontSize: '2.4rem', marginBottom: 6 }}>BASE</div>
+          <p style={{ fontFamily: 'Lora, serif', fontStyle: 'italic', color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+            A world fractured. A people divided.<br />Your legend begins now.
+          </p>
         </div>
 
         {/* Panel */}
-        <div className="panel" style={{ padding: 32 }}>
+        <div className="panel" style={{ padding: 32, backdropFilter: 'blur(4px)' }}>
           <div style={{ marginBottom: 24 }}>
-            <h2 style={{ fontSize: '1.4rem', marginBottom: 4 }}>Welcome back, Operative</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Log in to access your home and the Grid.</p>
+            <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.3rem', marginBottom: 6 }}>
+              Return, Survivor
+            </h2>
+            <p style={{ fontFamily: 'Lora, serif', fontStyle: 'italic', color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>
+              The world of Base remembers your deeds.
+            </p>
           </div>
 
           <form action={(formData) => { setError(''); setLoading(true); formAction(formData); }}>
             <div style={{ marginBottom: 16 }}>
               <label className="input-label">Email</label>
-              <input name="email" type="email" required className="input" placeholder="you@example.com" />
+              <input name="email" type="email" required className="input" placeholder="your@email.com" />
             </div>
             <div style={{ marginBottom: 24 }}>
               <label className="input-label">Password</label>
@@ -74,27 +81,27 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div style={{ background: '#ff334411', border: '1px solid #ff334433', borderRadius: 6, padding: '10px 14px', marginBottom: 16, color: 'var(--neon-red)', fontSize: '0.85rem' }}>
+              <div style={{ background: 'rgba(200,56,40,0.08)', border: '1px solid rgba(200,56,40,0.3)', borderRadius: 6, padding: '10px 14px', marginBottom: 16, color: 'var(--blood-red)', fontSize: '0.85rem', fontFamily: 'Lora, serif' }}>
                 {error}
               </div>
             )}
 
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-              {loading ? 'Authenticating...' : 'Enter the Grid →'}
+              {loading ? 'Entering the world...' : 'Enter the World →'}
             </button>
           </form>
 
-          <div style={{ marginTop: 20, textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            New operative?{' '}
-            <Link href="/register" style={{ color: 'var(--neon-blue)', textDecoration: 'none', fontWeight: 600 }}>
-              Create your home
+          <div style={{ marginTop: 20, textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', fontFamily: 'Lora, serif' }}>
+            First time in Base?{' '}
+            <Link href="/register" style={{ color: 'var(--dawn-gold)', textDecoration: 'none', fontWeight: 600 }}>
+              Begin your journey
             </Link>
           </div>
         </div>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: 24, color: 'var(--text-muted)', fontSize: '0.7rem', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace' }}>
-          SEASON 1 — THE GRID AWAKENS
+        <div style={{ textAlign: 'center', marginTop: 20, color: 'var(--text-muted)', fontSize: '0.68rem', letterSpacing: '0.15em', fontFamily: 'Cinzel, serif' }}>
+          SEASON OF RECKONING — 87 DAYS REMAIN
         </div>
       </div>
     </div>
