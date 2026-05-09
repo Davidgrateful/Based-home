@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { auth } from '@/app/(auth)/auth';
 import { WorldMapClient } from '@/components/game/WorldMapClient';
 import { WorldEventsFeed } from '@/components/game/WorldEventsFeed';

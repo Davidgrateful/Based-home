@@ -99,13 +99,13 @@ export function simulateRaid(
     ];
 
     let moved = false;
-    for (const dir of directions.sort(() => {
-      // Sort toward target if exists
+    const sorted = directions.slice().sort((a, b) => {
       if (!target) return Math.random() - 0.5;
-      const a = Math.abs((cx + dir.dx) - target.x) + Math.abs((cy + dir.dy) - target.y);
-      const b = Math.abs(cx - target.x) + Math.abs(cy - target.y);
-      return a - b;
-    })) {
+      const da = Math.abs((cx + a.dx) - target.x) + Math.abs((cy + a.dy) - target.y);
+      const db = Math.abs((cx + b.dx) - target.x) + Math.abs((cy + b.dy) - target.y);
+      return da - db;
+    });
+    for (const dir of sorted) {
       const nx = cx + dir.dx, ny = cy + dir.dy;
       if (nx < 0 || ny < 0 || ny >= GRID_SIZE || nx >= (layout[ny]?.length ?? 0)) continue;
       const cell = layout[ny]?.[nx];

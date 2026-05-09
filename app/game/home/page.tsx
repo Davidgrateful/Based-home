@@ -75,7 +75,7 @@ export default function HomePage() {
     if (res.ok) {
       const data = await res.json();
       setSaveMsg(`Settlement saved — DEF: ${data.defenseRating} | Prestige: ${data.prestigeScore}`);
-      setHomeData(prev => prev ? { ...prev, defenseRating: data.defenseRating, prestigeScore: data.prestigeScore, layout } : prev);
+      setHomeData(prev => prev ? { ...prev, defenseRating: data.defenseRating, prestigeScore: data.prestigeScore, layout: layout as unknown as RoomCell[][] } : prev);
       if (charData && cost > 0) setCharData(prev => prev ? { ...prev, gold: prev.gold - cost } : prev);
       setTimeout(() => setSaveMsg(''), 5000);
     }

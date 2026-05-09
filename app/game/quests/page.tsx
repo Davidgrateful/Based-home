@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { auth } from '@/app/(auth)/auth';
 import { redirect } from 'next/navigation';
 import { QuestBoard } from '@/components/game/QuestBoard';

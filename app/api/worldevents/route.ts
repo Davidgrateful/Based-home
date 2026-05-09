@@ -28,7 +28,7 @@ function minutesAgo(n: number): string {
   return h < 24 ? `${h}h ago` : `${Math.floor(h / 24)}d ago`;
 }
 
-export const revalidate = 30;
+
 
 export async function GET() {
   const events: { icon: string; text: string; type: string; timestamp: string }[] = [];

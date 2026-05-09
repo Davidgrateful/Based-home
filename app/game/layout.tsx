@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { redirect } from 'next/navigation';
 import { auth } from '@/app/(auth)/auth';
 import { GameSidebar } from '@/components/game/GameSidebar';
