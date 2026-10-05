@@ -12,6 +12,10 @@ export class Input {
   attack = false;
   dash = false;
   locked = false;
+  /** Touch: analog stick (x = strike right, y = forward), -1..1 */
+  moveX = 0;
+  moveY = 0;
+  touch = false;
   private settleUntil = 0;
   private el: HTMLElement;
 
@@ -44,6 +48,7 @@ export class Input {
   }
 
   lock() {
+    if (this.touch) return; // phones and tablets play without pointer lock
     const p = this.el.requestPointerLock() as unknown as Promise<void> | undefined;
     p?.catch?.(() => {});
   }
@@ -102,6 +107,9 @@ export class Player {
   onSwingHit?: (facing: number, dmg: number, heavy: boolean) => number;
   onHurt?: () => void;
   cameraBlockers: THREE.Object3D[] = [];
+  swingYaw = 0;
+  /** Returns the yaw toward a nearby enemy, or null. Used on touch screens. */
+  aimAssist?: (from: THREE.Vector3) => number | null;
   private ray = new THREE.Raycaster();
   private swingDone = false;
   private axe?: THREE.Group;
@@ -186,12 +194,17 @@ export class Player {
       if (input.down("KeyS")) wish.sub(fwd);
       if (input.down("KeyD")) wish.add(right);
       if (input.down("KeyA")) wish.sub(right);
+      // touch stick: analog, pushing it to the edge sprints
+      if (input.moveX || input.moveY) wish.addScaledVector(fwd, input.moveY).addScaledVector(right, input.moveX);
     }
-    const moving = wish.lengthSq() > 0;
+    const stick = Math.hypot(input.moveX, input.moveY);
+    const moving = wish.lengthSq() > 0.0004;
     if (moving) wish.normalize();
-    const sprint = moving && input.down("ShiftLeft") && this.stamina > 1 && !this.firstPerson;
+    else wish.set(0, 0, 0);
+    const sprint = moving && (input.down("ShiftLeft") || stick > 0.93) && this.stamina > 1 && !this.firstPerson;
     this.stamina = THREE.MathUtils.clamp(this.stamina + (sprint ? -22 : 18 * this.regenMul) * dt, 0, 100);
     let speed = this.firstPerson ? 2.4 : sprint ? 9.5 : 5.6;
+    if (stick > 0 && !sprint) speed *= Math.max(0.35, Math.min(1, stick * 1.25));
     if (this.attackT > 0) speed *= 0.45;
 
     // dash / dodge
@@ -239,7 +252,10 @@ export class Player {
       this.attackCd = heavy ? 0.62 : 0.38;
       this.comboWindow = this.attackCd + 0.45;
       this.swingDone = false;
-      this.facing = this.yaw;
+      // touch: swing toward the nearest enemy instead of the camera
+      const assisted = input.touch ? this.aimAssist?.(this.pos) : null;
+      this.swingYaw = assisted ?? this.yaw;
+      this.facing = this.swingYaw;
       this.onSwing?.(heavy);
     }
     if (this.attackT > 0) {
@@ -253,7 +269,7 @@ export class Player {
     }
 
     // ---- facing & animation
-    if (this.attackT > 0) this.facing = lerpAngle(this.facing, this.yaw, dt * 20);
+    if (this.attackT > 0) this.facing = lerpAngle(this.facing, this.swingYaw, dt * 20);
     else if (moving && !this.firstPerson) this.facing = lerpAngle(this.facing, Math.atan2(vel.x, vel.z), dt * 12);
     else if (this.firstPerson) this.facing = this.yaw;
 

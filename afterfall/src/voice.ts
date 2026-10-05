@@ -82,6 +82,18 @@ export class Voice {
     return this.queue;
   }
 
+  private unlocked = false;
+  /** iOS only allows speech after a tap: speak a silent blank inside one. */
+  unlock() {
+    if (this.unlocked || !("speechSynthesis" in window)) return;
+    this.unlocked = true;
+    try {
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;
+      speechSynthesis.speak(u);
+    } catch {}
+  }
+
   /** Drop everything queued or speaking (used on respawn, skip, restart). */
   interrupt() {
     this.token++;

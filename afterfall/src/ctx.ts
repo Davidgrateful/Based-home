@@ -17,12 +17,16 @@ import { AMBULANCE, heightAt, World, WORLD_RADIUS } from "./world";
 
 export const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
-// `?low` = no shadows/bloom, lower resolution, for weaker laptops.
-export const LOW = new URLSearchParams(location.search).has("low");
+const params = new URLSearchParams(location.search);
+/** Phones and tablets: touch controls, no pointer lock, mobile quality. */
+export const TOUCH = params.has("touch") || matchMedia("(pointer: coarse)").matches;
+if (TOUCH) document.body.classList.add("touch");
+// `?low` = no shadows/bloom, lower resolution. Default on touch devices (`?high` overrides).
+export const LOW = params.has("low") || (TOUCH && !params.has("high"));
 
 export const canvas = $<HTMLCanvasElement>("game");
 export const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LOW, powerPreference: "high-performance" });
-renderer.setPixelRatio(LOW ? Math.min(devicePixelRatio, 1) * 0.75 : Math.min(devicePixelRatio, 1.75));
+renderer.setPixelRatio(TOUCH ? Math.min(devicePixelRatio, 1.25) : LOW ? Math.min(devicePixelRatio, 1) * 0.75 : Math.min(devicePixelRatio, 1.75));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = !LOW;
 renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -41,6 +45,7 @@ addEventListener("resize", () => {
 
 export const world = new World(scene);
 export const input = new Input(canvas);
+input.touch = TOUCH;
 export const player = new Player(scene);
 player.cameraBlockers = world.cameraBlockers;
 export const enemies = new EnemyManager(scene, world.colliders);

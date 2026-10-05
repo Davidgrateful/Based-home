@@ -103,6 +103,10 @@ class VoiceChat {
     this.onChange?.();
   }
 
+  resumeAudio() {
+    if (this.ctx?.state === "suspended") this.ctx.resume().catch(() => {});
+  }
+
   setMode(m: MicMode) {
     this.mode = m;
     try {
@@ -123,7 +127,7 @@ class VoiceChat {
     this.onChange?.();
   }
 
-  private setPtt(v: boolean) {
+  setPtt(v: boolean) {
     if (this.ptt === v) return;
     this.ptt = v;
     if (v && net.active && this.mode === "ptt") this.enableMic();

@@ -3,6 +3,7 @@
 import "./style.css";
 import * as THREE from "three";
 import { coopSwing, coopUpdate, inviteLink, joinRoom, renderVoiceHud } from "./coop";
+import { goFullscreen, initTouch } from "./touch";
 import { voiceChat } from "./voicechat";
 import { applySaved, creator, menuCamera, menuLightOff, openCreator } from "./creator";
 import {
@@ -19,6 +20,7 @@ import {
   player,
   post,
   say,
+  TOUCH,
   sfx,
   state,
   toast,
@@ -43,8 +45,23 @@ player.onHurt = () => {
   sfx.hurt();
   hurtFlash();
 };
+const reach = TOUCH ? 0.4 : 0; // thumbs are less precise than a mouse
 player.onSwingHit = (facing, dmg, heavy) =>
-  net.isClient ? coopSwing(facing, dmg, heavy) : enemies.hit(player.pos, facing, heavy ? 3.2 : 2.7, heavy ? 1.5 : 1.2, dmg, heavy);
+  net.isClient ? coopSwing(facing, dmg, heavy) : enemies.hit(player.pos, facing, (heavy ? 3.2 : 2.7) + reach, heavy ? 1.5 : 1.2, dmg, heavy);
+// touch: swings turn toward the nearest Hollow within reach
+player.aimAssist = (from) => {
+  let best = null as number | null;
+  let bd = 4.5;
+  for (const e of enemies.list) {
+    if (!e.alive || e.state === "spawn") continue;
+    const d = Math.hypot(e.pos.x - from.x, e.pos.z - from.z);
+    if (d < bd) {
+      bd = d;
+      best = Math.atan2(e.pos.x - from.x, e.pos.z - from.z);
+    }
+  }
+  return best;
+};
 enemies.onHit = (e, _dmg, heavy) => {
   const at = e.pos.clone().add(new THREE.Vector3(0, 1.4 * e.scale, 0));
   fx.sparks(at, heavy ? 18 : 9, heavy ? 7 : 5);
@@ -88,6 +105,8 @@ function showScreen(id: "title" | "wallet" | "coop") {
 
 function leaveMenu() {
   sfx.init();
+  voice.unlock();
+  goFullscreen();
   $("title").classList.add("hidden");
   $("wallet").classList.remove("show");
   $("coop").classList.remove("show");
@@ -98,6 +117,7 @@ function leaveMenu() {
 /** First time through, make a survivor before playing. */
 function withSurvivor(then: () => void) {
   sfx.init();
+  voice.unlock();
   if (save.look) then();
   else openCreator(then);
 }
@@ -189,7 +209,17 @@ $("btn-reset").addEventListener("click", () => {
   }
 });
 $("pause").addEventListener("click", (e) => {
-  if (!(e.target as HTMLElement).closest("button")) input.lock();
+  if ((e.target as HTMLElement).closest("button")) return;
+  if (TOUCH) resume();
+  else input.lock();
+});
+function resume() {
+  state.paused = false;
+  $("pause").classList.remove("show");
+}
+initTouch(() => {
+  state.paused = true;
+  $("pause").classList.add("show");
 });
 document.addEventListener("pointerlockchange", () => {
   const overlay = $("shop").classList.contains("show") || $("end").classList.contains("show");
