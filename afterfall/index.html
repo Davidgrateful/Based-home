@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AFTERFALL</title>
+    <meta name="description" content="A voiced 3D survival story. Your medevac flight fell through the sky into another world. Built for vibe/vibe on Robinhood Chain Testnet." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='26' fill='%2310081c' stroke='%2355e8ff' stroke-width='5'/><path d='M32 14l9 18-9 18-9-18z' fill='%2355e8ff'/></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+
+    <div id="blur"></div>
+    <div id="vignette"></div>
+    <div id="flash"></div>
+    <div id="blackout"></div>
+
+    <!-- In-game HUD -->
+    <div id="hud">
+      <div class="hud-tl">
+        <div class="bar hp"><div id="hp-fill"></div><span>VITALS</span></div>
+        <div class="bar st"><div id="st-fill"></div></div>
+        <div class="inv">
+          <span title="Medkits (Q)">✚ <b id="medkits">2</b></span>
+          <span title="Rift Shards">◆ <b id="shards">0</b></span>
+          <span id="perk" class="perk" hidden>RIFT-BOUND</span>
+        </div>
+      </div>
+      <div class="hud-tc">
+        <div id="chapter"></div>
+        <div id="objective"></div>
+      </div>
+      <div id="wallet-chip" hidden></div>
+      <div id="boss"><label>THE WARDEN</label><div class="track"><div id="boss-fill"></div></div></div>
+      <div id="marker"><div class="pin">◆</div><div id="marker-dist"></div></div>
+      <div id="prompt"></div>
+      <div class="crosshair"></div>
+      <div class="keys">WASD move · Mouse look · LMB/F swing · RMB/C dodge · Space jump · Shift sprint · Q medkit · E interact</div>
+    </div>
+
+    <div id="subtitle"><div id="sub-who"></div><div id="sub-text"></div></div>
+    <div id="toast"></div>
+
+    <!-- Title -->
+    <section id="title">
+      <div class="title-inner">
+        <p class="eyebrow">A vibe/vibe original · Robinhood Chain Testnet</p>
+        <h1>AFTER<span>FALL</span></h1>
+        <p class="lede">
+          Medevac Flight 100 never landed. Something tore the sky open and pulled it through.
+          You wake strapped in the back of a wrecked ambulance, under two moons, in a world that
+          has been waiting for people like you to fall.
+        </p>
+        <div class="row">
+          <button id="btn-start" class="primary">Wake up</button>
+          <button id="btn-mute" class="ghost">Sound: on</button>
+        </div>
+        <p class="hint">Headphones on. Characters are fully voiced through your browser.</p>
+
+        <div class="token-card">
+          <div class="token-head">
+            <h2>Rift token <span data-token-sym>token</span></h2>
+            <span class="net">Chain 46630 · testnet</span>
+          </div>
+          <p id="token-status"></p>
+          <div class="row">
+            <button id="btn-connect" class="secondary">Connect wallet</button>
+            <a id="btn-trade" class="secondary" target="_blank" rel="noopener" hidden>Trade on vibe/vibe ↗</a>
+            <a id="btn-launch" class="secondary" target="_blank" rel="noopener">Launch on vibe/vibe ↗</a>
+            <a id="btn-faucet" class="ghost" target="_blank" rel="noopener">Testnet ETH faucet ↗</a>
+          </div>
+        </div>
+
+        <ul class="controls">
+          <li><kbd>WASD</kbd> move</li><li><kbd>Mouse</kbd> look</li><li><kbd>LMB</kbd>/<kbd>F</kbd> swing</li>
+          <li><kbd>RMB</kbd>/<kbd>C</kbd> dodge</li><li><kbd>Space</kbd> jump</li><li><kbd>Shift</kbd> sprint</li>
+          <li><kbd>Q</kbd> medkit</li><li><kbd>E</kbd> interact</li><li><kbd>←→</kbd> turn (no mouse)</li>
+        </ul>
+        <p class="fine">Testnet only. No real funds. Not affiliated with Robinhood.</p>
+      </div>
+    </section>
+
+    <div id="pause">
+      <div>
+        <h2>Paused</h2>
+        <p>Click to resume</p>
+        <button id="btn-nolock" class="ghost">Play without mouse lock (arrow keys to look)</button>
+      </div>
+    </div>
+    <div id="dead"><h2>YOU WENT DOWN</h2><p>Rhea's voice cuts through the static…</p></div>
+
+    <section id="end">
+      <div class="title-inner">
+        <p class="eyebrow">Chapter One complete</p>
+        <h1>THROUGH THE <span>RIFT</span></h1>
+        <p class="lede">The Warden is dust. The rift is open. And on the other side, someone knows your name.</p>
+        <div class="stats">
+          <div><b id="end-shards">0</b><span>Rift Shards</span></div>
+          <div><b id="end-kills">0</b><span>Hollow defeated</span></div>
+          <div><b id="end-time">0</b><span>Time</span></div>
+        </div>
+        <div class="token-card">
+          <p>Sign your run with your wallet as a gasless proof of play on Robinhood Chain Testnet, then back the story's token on vibe/vibe.</p>
+          <div class="row">
+            <button id="btn-sign" class="primary">Sign my run</button>
+            <a class="secondary" href="https://testnet.vibevibe.fun" target="_blank" rel="noopener">Open vibe/vibe ↗</a>
+            <button id="btn-again" class="ghost">Play again</button>
+          </div>
+          <p id="sign-out" class="mono"></p>
+        </div>
+        <p class="fine">To be continued in Chapter Two: <i>The Other Side</i>.</p>
+      </div>
+    </section>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
