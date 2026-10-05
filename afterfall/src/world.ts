@@ -121,6 +121,8 @@ export class World {
   riftMat: THREE.ShaderMaterial;
   riftLight: THREE.PointLight;
   riftOpen = 0;
+  /** Fire and smoke behind the falling plane (off while it cruises). */
+  planeTrail = true;
   hemi!: THREE.HemisphereLight;
   bigMoon!: THREE.MeshBasicMaterial;
   campfire!: { group: THREE.Group; light: THREE.PointLight; flames: THREE.Mesh[]; logs: THREE.Group; lit: boolean; hp: number; maxHp: number };
@@ -986,7 +988,7 @@ export class World {
     this.tears = this.tears.filter((x) => x.life > 0);
 
     // falling plane fire/smoke trail
-    if (this.fallingPlane.visible) {
+    if (this.fallingPlane.visible && this.planeTrail) {
       this.trailT -= dt;
       if (this.trailT <= 0) {
         this.trailT = 0.025;

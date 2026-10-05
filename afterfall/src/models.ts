@@ -80,7 +80,7 @@ export const LOOK = {
     { name: "Black", c: 0x17171a },
     { name: "Olive", c: 0x41463a },
   ] as Swatch[],
-  extra: ["None", "Beanie", "Scarf", "Backpack", "Glasses", "Bandana"],
+  extra: ["None", "Beanie", "Scarf", "Backpack", "Glasses", "Bandana", "Headset"],
 };
 
 export const DEFAULT_LOOK: Look = { build: 1, skin: 2, hair: 2, hairColor: 1, top: 0, topColor: 0, pants: 0, extra: 0 };
@@ -367,6 +367,20 @@ export function buildPlayerModel(look: Look): Humanoid {
       const cloth = mat(0x7d2620, { roughness: 1 });
       add(S, new THREE.CylinderGeometry(0.119, 0.119, 0.035, 24, 1, true), cloth, 0, 0.045, 0).rotation.x = -0.12;
       add(h.head, new THREE.SphereGeometry(0.025, 8, 6), cloth, 0, 0.05, -0.115);
+      break;
+    }
+    case 6: {
+      // aviation headset: band, ear cups, boom mic
+      const shell = mat(0x2a2b2e, { roughness: 0.5 });
+      const band = add(h.head, new THREE.TorusGeometry(0.128, 0.012, 6, 24, Math.PI), shell, 0, 0.02, -0.01);
+      band.rotation.y = Math.PI / 2;
+      for (const x of [-1, 1]) {
+        const cup = add(h.head, new THREE.CylinderGeometry(0.045, 0.045, 0.04, 16), shell, x * 0.118, 0, -0.005);
+        cup.rotation.z = Math.PI / 2;
+      }
+      const boom = add(h.head, new THREE.CylinderGeometry(0.006, 0.006, 0.12, 6), shell, 0.1, -0.06, 0.06);
+      boom.rotation.set(Math.PI / 2.4, 0, 0.5);
+      add(h.head, new THREE.SphereGeometry(0.014, 8, 6), shell, 0.06, -0.075, 0.105);
       break;
     }
   }

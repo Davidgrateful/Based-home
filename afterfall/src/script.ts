@@ -4,57 +4,145 @@
 // STORY BIBLE
 // ----------
 // Logline: A sedated patient on a black-site medevac flight wakes up on the far
-// side of a tear in the sky. He's the hundredth person to fall, and the world
-// on the other side has been counting.
+// side of a tear in the sky. They're the hundredth person to fall, and the
+// world on the other side has been counting.
 //
 // The engine of the story is one question: why does the sky open for YOU?
-//   Act I   (Wake → Black box): survival, wonder, and a dead pilot's warning.
+//   Cold open:  we SEE the flight. A tired captain, a rookie co-pilot, a medic
+//               who talks to her sleeping patient. Then the sky opens.
+//   Act I   (Wake → Black box): survival, wonder, and a dead pilot's warning,
+//               shown in flashback.
 //   Act II  (Hollow → Towers):  the Hollow are former patients. Rhea is hiding
-//                               something. Every tower lit costs a secret.
+//               something. Every tower lit costs a secret.
 //   Act III (Warden → Rift):    Patient One explains the hundredth is a key.
-//                               The door opens, and something answers.
-//   The Long Night (the loop):  the rift has caught you in a loop. Every death
-//                               resets the night, but your memories leak
-//                               through (upgrades), and so do the Echoes of the
-//                               99 before you. Echo #12 is your own voice.
+//               The door opens, and something answers.
+//   The Long Night (the loop):  the rift loops Patient 100. Every death
+//               resets the night; memories leak through. Echo #12 is your own
+//               voice.
 //
-// Characters
-//   YOU / "HUNDRED" — Patient 100, named and dressed by the player. Dry,
-//                     stubborn, gets braver the more scared they get.
-//   RHEA VANCE      — Flight medic. Warm and funny under fire, and guilty. The
-//                     Echoes hint that "Rhea" has been on every transfer.
-//                     (Seeded, unresolved: Chapter Two's hook.)
-//   CAPT. OKAFOR    — The pilot. Dies in the crash; his black-box log is the
-//                     first crack in the lie.
+// Characters (and how they talk)
+//   YOU / "HUNDRED" — Patient 100, named and dressed by the player. Dry. Says
+//                     less than they feel. Jokes when scared.
+//   RHEA VANCE      — Flight medic. Talks to unconscious patients because "they
+//                     can hear more than you think". Warm, quick, a little bossy.
+//                     Jokes first, bad news second. Hiding orders she hates.
+//   CAPT. DANIEL OKAFOR — Pilot, thirty years flying. Dry, patient, fatherly.
+//                     Calls everyone by their last name. Dies at the stick.
+//   DEZ REYES       — First officer. First black-site run. Over-checks gauges,
+//                     talks too much when nervous. In the log: "Dez is gone."
+//                     Not dead. Gone. (Chapter Two.)
 //   THE HOLLOW      — The 98 patients before you, masked so they can't see who
-//                     they were. Creed: "Fall. Forget. Belong." Their barks are
-//                     scraps of hospital life, which makes them sad and scary.
-//   THE WARDEN      — Patient One. A man who carved his own name away to rule.
+//                     they were. Their barks are scraps of hospital life.
+//   THE WARDEN      — Patient One. Speaks in pronouncements; cracks at the end.
 //   THE CHOIR       — The voice behind the rift. "The ones who didn't forget."
 //
-// Writing rules: every scene ends on a question. Short lines (they're spoken
-// by TTS). Rhea's jokes come before bad news. Nobody explains everything.
+// Writing rules: people interrupt, trail off, and answer the question under
+// the question. Short lines (they're spoken by TTS). Every scene ends on a
+// question. Nobody explains everything.
 // ============================================================================
 
 import type { SpeakerId } from "./voice";
 
-export type Line = [SpeakerId, string, { name?: string; pitch?: number; rate?: number }?];
+export type Line = [SpeakerId, string, { name?: string; pitch?: number; rate?: number; radio?: boolean }?];
+
+/** A cinematic beat: a camera shot, what happens in it, and who speaks. */
+export interface Beat {
+  shot: string;
+  lines: Line[];
+  cue?: ("alarm" | "rift" | "shake" | "flood" | "monitorFast" | "monitorCalm" | "beep")[];
+  hold?: number; // extra seconds on the shot after the lines
+}
+
+const IN = { radio: false }; // spoken in the room, not over the radio
+const COM = { radio: true, name: "Okafor (intercom)" };
 
 // ---------------------------------------------------------------- COLD OPEN
 export const COLD_OPEN_CAPTIONS = [
-  "MERIDIAN INSTITUTE · PATIENT TRANSFER",
-  "SUBJECT 100 · SEDATED · DESTINATION: [REDACTED]",
-  "03:12 AM · 31,000 FT",
+  "MERIDIAN INSTITUTE · PATIENT TRANSFER 100",
+  "03:12 · 31,000 FT · FLIGHT PLAN: [REDACTED]",
 ];
 
-export const COLD_OPEN_CABIN: Line[] = [
-  ["PILOT", "Meridian Control, Medevac One Zero Zero. Level at three one zero. Cargo is sedated and stable."],
-  ["RHEA", "Stable is a strong word, Captain. Their heart rate just doubled. In their sleep."],
-  ["PILOT", "Then put them under deeper. We don't get paid to ask questions, Vance."],
-  ["RHEA", "Hey. Hundred. Whatever you're dreaming about, stop it. Please."],
-  ["PILOT", "What is that? There's a light ahead of us. It's opening."],
-  ["RHEA", "Captain, pull up. Pull up!"],
-  ["PILOT", "Mayday, mayday! Medevac One Zero Zero, we are going in!"],
+/** The flight, shot by shot. The camera, the cast and the cues live in cinesets.ts. */
+export const COLD_OPEN_BEATS: Beat[] = [
+  {
+    shot: "exterior",
+    lines: [["PILOT", "Meridian Control, Medevac One Zero Zero. Level three one zero. Cargo's asleep. Crew's awake. Mostly."]],
+  },
+  {
+    shot: "cockpitWide",
+    lines: [
+      ["DEZ", "Mostly?"],
+      ["PILOT", "You've checked that fuel gauge nine times, Reyes.", IN],
+      ["DEZ", "It's my first black-site run, Captain. I'm allowed nine."],
+    ],
+  },
+  {
+    shot: "cockpitFaces",
+    lines: [
+      ["PILOT", "It's a hospital transfer.", IN],
+      ["DEZ", "Hospitals don't pay triple. And they don't make you sign an NDA in the parking lot."],
+      ["PILOT", "Fair.", IN],
+    ],
+  },
+  {
+    shot: "cabinWide",
+    cue: ["beep"],
+    lines: [
+      ["RHEA", "Cabin to cockpit. Are you two done gossiping? My patient's trying to sleep.", { radio: true }],
+      ["PILOT", "Your patient's sedated, Vance.", COM],
+    ],
+  },
+  {
+    shot: "monitor",
+    cue: ["monitorFast"],
+    lines: [["RHEA", "Mm. Then explain why their heart rate just jumped to one forty.", IN]],
+  },
+  {
+    shot: "cockpitFaces",
+    lines: [
+      ["DEZ", "Is that bad? That sounds bad."],
+      ["RHEA", "In someone this sedated? It means they're having one hell of a dream.", { radio: true }],
+    ],
+  },
+  {
+    shot: "rheaClose",
+    lines: [
+      ["RHEA", "Hey. Hundred. It's Rhea again. Whatever you're dreaming about, you can let it go.", IN],
+      ["RHEA", "I've got you. Nobody's going anywhere tonight.", IN],
+    ],
+    hold: 0.8,
+  },
+  {
+    shot: "windshield",
+    cue: ["rift"],
+    lines: [
+      ["DEZ", "Captain. Twelve o'clock. Is that a storm?"],
+      ["PILOT", "Storms don't glow like that.", IN],
+      ["DEZ", "It's opening. Why is it opening?"],
+    ],
+  },
+  {
+    shot: "cockpitFaces",
+    cue: ["alarm", "shake"],
+    lines: [
+      ["PILOT", "Autopilot off. Hard left, now.", IN],
+      ["DEZ", "She's not answering! Everything's dead, the controls are dead!"],
+    ],
+  },
+  {
+    shot: "cabinAlarm",
+    cue: ["alarm", "shake", "monitorFast"],
+    lines: [
+      ["RHEA", "Captain, talk to me!", IN],
+      ["PILOT", "Vance, strap in. Strap the patient in!", COM],
+      ["RHEA", "Already done. Hundred, hold on to me. Hold on.", IN],
+    ],
+  },
+  {
+    shot: "okaforClose",
+    cue: ["alarm", "shake", "flood"],
+    lines: [["PILOT", "Mayday, mayday, Medevac One Zero Zero. We're going in. God help whoever's down there.", IN]],
+  },
 ];
 
 export const COLD_OPEN_WATCHERS: Line[] = [
@@ -67,101 +155,118 @@ export const TITLE_TAGLINE = "The sky has a door. You fell through it.";
 // ---------------------------------------------------------------- ACT I
 export const WAKE: Line[] = [
   ["YOU", "Rhea?"],
-  ["RHEA", "Hundred. Hundred, if you can hear me, tap the radio. Anything."],
-  ["YOU", "I'm here. I think. Where is here?"],
-  ["RHEA", "{name}, right? It's on your wristband. Stay grumpy, it keeps you alive. The ambulance tore out of the cargo hold when we hit. I got thrown clear. I'm hurt, but I'm moving."],
-  ["RHEA", "Listen. That smell is fuel. Find something heavy and get out of that box."],
+  ["RHEA", "Hundred? Hundred. Oh, thank God. Tap the radio if you can hear me. Anything."],
+  ["YOU", "I'm here. I think. Where's here?"],
+  ["RHEA", "{name}. That's what your wristband says. Hi, {name}. I'm Rhea. I've been talking to you for six hours and you never once talked back."],
+  ["YOU", "Sorry. I was unconscious."],
+  ["RHEA", "Excuses. Listen. The ambulance tore out of the cargo hold when we hit. I got thrown clear. My leg's fine. It's not fine. I'm moving."],
+  ["RHEA", "That smell is fuel. Find something heavy and get out of that box before it decides to become a fireball."],
 ];
 
 export const TAKE_AXE: Line[] = [
-  ["YOU", "Fire axe. Okay. Okay."],
-  ["RHEA", "Perfect. Now the doors. Kick like they owe you money."],
+  ["YOU", "Fire axe. Okay. Okay, I can do fire axe."],
+  ["RHEA", "Good. Now the doors. Kick them like they owe you money."],
 ];
 
 export const REVEAL: Line[] = [
-  ["YOU", "Rhea. Look up."],
-  ["RHEA", "I'm looking."],
-  ["YOU", "There are two moons."],
-  ["RHEA", "Yeah. I counted three times too."],
-  ["RHEA", "Okay. Priorities. The black box has its own battery. If we boost its beacon, maybe somebody hears us. Head for the wreck."],
+  ["YOU", "Rhea."],
+  ["RHEA", "What? What's wrong?"],
+  ["YOU", "Look up."],
+  ["RHEA", "Okay. That's two moons."],
+  ["YOU", "Two moons."],
+  ["RHEA", "I counted. Three times. Still two."],
+  ["RHEA", "Right. Panic later, priorities now. The black box has its own battery. If we boost the beacon, somebody might hear us. Head for the wreck."],
 ];
 
 export const FIRST_SHARD: Line[] = [
-  ["YOU", "It's warm. It's humming."],
-  ["RHEA", "My scanner spikes every time you get close to one. Not me. You. Keep them. Something here runs on that hum."],
+  ["YOU", "It's warm. And it's humming."],
+  ["RHEA", "My scanner just jumped off the chart. Not near me. Near you. Keep it. Keep all of them."],
+];
+
+/** Played over the flashback of Okafor alone in the burning cockpit. */
+export const BLACK_BOX_LOG: Line[] = [
+  ["PILOT", "This is Captain Daniel Okafor. Final log. If you're hearing this, we didn't make it.", { name: "Okafor (recording)", radio: true }],
+  ["PILOT", "Meridian lied to us. Patient one hundred isn't a patient. They're a key. That light opened the second their heart rate spiked.", { name: "Okafor (recording)", radio: true }],
+  ["PILOT", "Reyes is gone. I looked away for one second and his seat was empty.", { name: "Okafor (recording)", radio: true }],
+  ["PILOT", "Vance is in the back with the patient. If anyone finds this, keep them away from the towers. Please.", { name: "Okafor (recording)", radio: true }],
 ];
 
 export const BLACK_BOX: Line[] = [
-  ["YOU", "Black box. It's still recording."],
-  ["PILOT", "Okafor. Final log. Meridian lied to us. Patient one hundred isn't a patient. They're a key.", { name: "Okafor (recording)" }],
-  ["PILOT", "The light opened the second they woke up. If anyone hears this, keep Hundred away from the towers.", { name: "Okafor (recording)" }],
-  ["RHEA", "Hundred, I didn't know. I swear I didn't know that part."],
-  ["YOU", "That part?"],
-  ["RHEA", "Later. Something's moving in the trees."],
+  ["YOU", "Rhea. Did you know?"],
+  ["RHEA", "Not all of it."],
+  ["YOU", "How much of it?"],
+  ["RHEA", "Later. I swear, later. Something's moving in the trees."],
 ];
+
+export const BLACK_BOX_FIND: Line[] = [["YOU", "Black box. It's still got power. There's a recording."]];
 
 // ---------------------------------------------------------------- ACT II
 export const AMBUSH_START: Line[] = [
   ["HOLLOW", "Fall. Forget. Belong."],
-  ["HOLLOW", "The hundredth has come home!", { pitch: 0.7 }],
+  ["HOLLOW", "The hundredth! The hundredth has come home!", { pitch: 0.7 }],
 ];
 
 export const AMBUSH_CLEARED: Line[] = [
-  ["YOU", "They're wearing hospital bands. Meridian bands."],
+  ["YOU", "These are wristbands. Meridian wristbands."],
   ["RHEA", "Same as yours."],
-  ["YOU", "Rhea. How many patients did Meridian transfer before me?"],
-  ["RHEA", "The manifest says ninety nine. None of them came home."],
-  ["RHEA", "Okafor said stay away from the towers. But they're the only thing strong enough to carry a signal."],
-  ["YOU", "Then I guess I'm not listening to Okafor."],
+  ["YOU", "Rhea. How many patients went out before me?"],
+  ["RHEA", "The manifest says ninety nine."],
+  ["YOU", "And how many came back?"],
+  ["RHEA", "You know the answer."],
+  ["RHEA", "Okafor said stay away from the towers. But they're the only thing strong enough to carry a signal. So I'm about to say something really stupid."],
+  ["YOU", "Light the towers."],
+  ["RHEA", "Light the towers."],
 ];
 
-export const PYLON_TOUCH: Line[] = [["HOLLOW", "No! The towers wake the Warden!"]];
+export const PYLON_TOUCH: Line[] = [["HOLLOW", "No! No, the towers wake him!"]];
 
 export const PYLON_LIT: Line[][] = [
   [
-    ["RHEA", "It worked! The signal jumped. And there's something riding underneath it. Voices."],
+    ["RHEA", "It worked, the signal jumped! And there's something riding underneath it. Voices."],
     ["CHOIR", "Hundred."],
     ["YOU", "Tell me you heard that."],
-    ["RHEA", "I heard it. Keep going."],
+    ["RHEA", "I heard it. I really wish I hadn't. Keep going."],
   ],
   [
-    ["RHEA", "Hundred, I need to tell you something before I lose my nerve."],
+    ["RHEA", "{name}, I need to tell you something before I lose my nerve."],
+    ["YOU", "That's never a good start."],
     ["RHEA", "My orders weren't to keep you alive. They were to keep you asleep. Until we landed."],
     ["YOU", "Landed where?"],
     ["RHEA", "I think they meant here."],
   ],
   [
     ["WARDEN", "Who rings my towers?"],
-    ["RHEA", "All three beams point north. To that stone circle. Whatever lives there is awake now."],
-    ["YOU", "Yeah. I think it's been awake the whole time."],
+    ["RHEA", "All three beams point north. To that stone circle."],
+    ["YOU", "Something's waiting there."],
+    ["RHEA", "Something's been waiting there a very long time."],
   ],
 ];
 
 // ---------------------------------------------------------------- ACT III
 export const WARDEN_INTRO: Line[] = [
-  ["WARDEN", "Ninety nine came before you. I was the first."],
-  ["WARDEN", "They gave me a number instead of a name. So I carved the rest away."],
-  ["WARDEN", "The door only opens for the hundredth. The door is mine. So are you."],
-  ["RHEA", "Hundred, the red ring! When it glows, jump or get out of there!"],
+  ["WARDEN", "Ninety nine fell before you, little key. I was the first."],
+  ["WARDEN", "They gave me a number. One. I carved away everything else."],
+  ["WARDEN", "The door only opens for the hundredth. So the door is mine. And so are you."],
+  ["RHEA", "{name}, the red ring! When it glows, jump or run!"],
 ];
-export const WARDEN_SUMMON: Line[] = [["WARDEN", "Children of the Drop! Bring me the key!"]];
+export const WARDEN_SUMMON: Line[] = [["WARDEN", "Children! Bring me the key!"]];
 export const WARDEN_HALF: Line[] = [["WARDEN", "You think the sky saved you? The sky ate you!"]];
-export const WARDEN_LOW: Line[] = [["WARDEN", "I remember rain. Earth rain. Cold, on my face."]];
+export const WARDEN_LOW: Line[] = [["WARDEN", "I remember rain. Real rain. Cold, on my face."]];
 export const WARDEN_DEATH: Line[] = [["WARDEN", "Patient One. Discharged."]];
 
 export const EPILOGUE: Line[] = [
-  ["RHEA", "Hundred, the signal is punching through. But it's not going home. Something on the other side is pulling."],
+  ["RHEA", "{name}, the signal's through! But it's not going home. Something on the other side is pulling it."],
   ["CHOIR", "Hundred. We counted every fall. We waited for you."],
   ["YOU", "Who are you?"],
   ["CHOIR", "The ones who didn't forget."],
-  ["RHEA", "I'm coming to you. Don't you dare go through without me."],
-  ["YOU", "Then hurry. Because I don't think it's going to wait."],
+  ["RHEA", "Don't you dare go through without me. I'm coming. I'm limping, but I'm coming."],
+  ["YOU", "Then limp faster, Rhea. I don't think it's going to wait."],
 ];
 
 export const RESPAWN: Line[][] = [
-  [["RHEA", "{name}! Get up! Don't you dare quit on me!"]],
-  [["RHEA", "Breathe. In. Out. You're not done. I'm not done with you."]],
-  [["RHEA", "Up! Up! You can bleed later, that's an order."]],
+  [["RHEA", "{name}! Get up. Don't you dare quit on me."]],
+  [["RHEA", "Breathe. In. Out. You're not done, and I'm not done with you."]],
+  [["RHEA", "Up! You can bleed later. That's a medical opinion."]],
 ];
 
 // ---------------------------------------------------------------- HOLLOW BARKS
@@ -181,7 +286,7 @@ export const HOLLOW_BARKS = [
 
 // ---------------------------------------------------------------- THE LONG NIGHT
 export const NIGHT_INTRO_FIRST: Line[] = [
-  ["RHEA", "Hundred. The rift went wild when the Warden fell. It's spitting Hollow out of the sky, and I can't reach you before dark."],
+  ["RHEA", "{name}, the rift went wild when the Warden fell. It's spitting Hollow out of the sky, and I can't reach you before dark."],
   ["RHEA", "That fire pit by the ambulance. Somebody built it for you. Light it. Hold it. Whatever comes out of the dark hates the light."],
 ];
 
@@ -195,28 +300,26 @@ export const LOOP_WAKE: Line[][] = [
   ],
   [
     ["YOU", "Same moons. Same smoke. Same fire."],
-    ["RHEA", "Hundred, you're scaring me."],
+    ["RHEA", "{name}, you're scaring me."],
     ["YOU", "Good. Stay scared. It keeps you alive."],
   ],
   [
-    ["RHEA", "Hundred, tap the radio. Anything."],
+    ["RHEA", "Hundred, tap the radio if you can hear me. Anything."],
     ["YOU", "I know. I always know what you're going to say."],
     ["RHEA", "Then tell me how tonight ends."],
     ["YOU", "Differently."],
   ],
-  [
-    ["YOU", "Again. The shards remember. So do I."],
-  ],
+  [["YOU", "Again. The shards remember. So do I."]],
 ];
 
 export const NIGHT_OPENERS: Line[][] = [
   [["RHEA", "First night out here. Keep the fire burning. Whatever comes out of the dark, it hates the light."]],
-  [["RHEA", "I found tracks by the river. Bare feet. Dozens. Heading your way."]],
-  [["RHEA", "I keep hearing my name in the static. In my own voice. That's normal, right?"]],
+  [["RHEA", "I found tracks by the river. Bare feet. Dozens of them. Heading your way."]],
+  [["RHEA", "I keep hearing my name in the static. In my own voice. That's normal, right?"], ["YOU", "Totally normal."], ["RHEA", "You're a terrible liar."]],
   [["RHEA", "The second moon looks bigger tonight. Tell me I'm wrong."], ["YOU", "You're wrong."], ["RHEA", "Liar."]],
   [["RHEA", "Something big is walking toward your fire. Something that used to be the Warden."]],
-  [["RHEA", "I tried to walk to you today. I walked for six hours. I ended up where I started."]],
-  [["RHEA", "If I stop answering, keep the fire lit anyway. Promise me."]],
+  [["RHEA", "I tried to walk to you today. Six hours. I ended up right where I started."]],
+  [["RHEA", "If I stop answering, keep the fire lit anyway. Promise me."], ["YOU", "Promise."]],
   [["RHEA", "The Hollow are learning. They watched you fight last night."]],
   [["CHOIR", "Hundred. Stop counting the nights. We stopped long ago."]],
 ];

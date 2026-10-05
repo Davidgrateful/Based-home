@@ -29,7 +29,8 @@ import {
 } from "./ctx";
 import { echoProgress, listenEcho, spawnEcho } from "./echo";
 import type { Enemy } from "./enemies";
-import { buildHumanoid, buildSpear } from "./models";
+import { PlaneSet } from "./cinesets";
+import { buildHumanoid, buildSpear, DEFAULT_LOOK } from "./models";
 import { save } from "./save";
 import * as S from "./script";
 import { ARENA, BEACON, CAMP, heightAt, PYLONS } from "./world";
@@ -60,7 +61,7 @@ async function coldOpen() {
   hud.blackout.style.transition = "none";
   hud.blackout.style.opacity = "1";
   sfx.drone(true);
-  const beat = setInterval(() => sfx.heartbeat(), 1150);
+  const beat = 0; // the heart monitor in the cabin carries the pulse now
 
   // 1. Black. Typed transfer manifest.
   for (const line of S.COLD_OPEN_CAPTIONS) {
@@ -72,18 +73,44 @@ async function coldOpen() {
     sfx.beep();
     await cine.wait(1500);
   }
-  await cine.wait(600);
+  await cine.wait(500);
   caps.classList.add("out");
 
-  // 2. The cabin, heard but not seen.
-  await cine.say(S.COLD_OPEN_CABIN.slice(0, 4));
+  // 2. The flight, on screen: the plane in the clouds, the cockpit, the cabin.
   if (!cine.skipped) {
-    hud.blackout.classList.add("alarm");
-    sfx.alarm();
+    const set = new PlaneSet(world.scene, world, save.look ?? DEFAULT_LOOK);
+    set.onBeat = () => sfx.monitor();
+    let tt = 0;
+    cine.onTick = (dt) => {
+      tt += dt;
+      set.update(dt, tt, voice.busy);
+      if (set.shaking) cine.shake = Math.max(cine.shake, 0.12 * set.shaking);
+    };
+    world.setMood("night");
+    hud.blackout.style.transition = "opacity 1.6s ease";
+    hud.blackout.style.opacity = "0";
+    for (const b of S.COLD_OPEN_BEATS) {
+      if (cine.skipped) break;
+      for (const c of b.cue ?? []) {
+        set.cue(c);
+        if (c === "alarm") sfx.alarm();
+        if (c === "beep") sfx.beep();
+        if (c === "flood") {
+          sfx.whoosh();
+          sfx.rumble();
+        }
+      }
+      const sh = set.shot(b.shot);
+      cine.shot(sh.from, sh.to, sh.dur);
+      await cine.say(b.lines);
+      if (b.hold) await cine.wait(b.hold * 1000);
+    }
+    await cine.wait(1200);
+    $("flash").classList.add("go");
+    await cine.wait(700);
+    set.dispose();
+    cine.onTick = undefined;
   }
-  await cine.say(S.COLD_OPEN_CABIN.slice(4));
-  hud.blackout.classList.remove("alarm");
-  clearInterval(beat);
   sfx.drone(false);
 
   // 3. Cut outside: the sky tears, the plane falls, a Hollow watches.
@@ -245,9 +272,38 @@ async function beaconFound() {
   stageClock = -999;
   checkpoint = BEACON.clone().add(new THREE.Vector3(3, 0, -4));
   setObjective("CHAPTER 1 · THE DROP", "Listen.");
+  await say(S.BLACK_BOX_FIND);
+  if (story.stage !== "ambush") return;
+  await blackBoxFlashback();
   await say(S.BLACK_BOX);
   if (story.stage !== "ambush") return;
   startAmbush();
+}
+
+/** The recording plays over what it describes: Okafor alone at the stick. */
+async function blackBoxFlashback() {
+  cine.begin();
+  document.body.classList.add("flashback");
+  const set = new PlaneSet(world.scene, world, save.look ?? DEFAULT_LOOK);
+  set.flashback();
+  set.onBeat = () => sfx.monitor();
+  let tt = 0;
+  cine.onTick = (dt) => {
+    tt += dt;
+    set.update(dt, tt, voice.busy);
+    cine.shake = Math.max(cine.shake, 0.06);
+  };
+  sfx.alarm();
+  const shots = ["okaforClose", "dezSeat", "cabinAlarm", "okaforClose"];
+  for (let i = 0; i < S.BLACK_BOX_LOG.length; i++) {
+    if (cine.skipped) break;
+    const sh = set.shot(shots[i] ?? "okaforClose");
+    cine.shot(sh.from, sh.to, sh.dur);
+    await cine.say([S.BLACK_BOX_LOG[i]]);
+  }
+  set.dispose();
+  document.body.classList.remove("flashback");
+  cine.end();
 }
 
 // ------------------------------------------------------------------ ACT II

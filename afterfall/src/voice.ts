@@ -6,7 +6,7 @@
 
 import type { Line } from "./script";
 
-export type SpeakerId = "RHEA" | "YOU" | "PILOT" | "HOLLOW" | "WARDEN" | "CHOIR" | "ECHO";
+export type SpeakerId = "RHEA" | "YOU" | "PILOT" | "DEZ" | "HOLLOW" | "WARDEN" | "CHOIR" | "ECHO";
 
 interface Speaker {
   name: string;
@@ -24,7 +24,8 @@ const MALE = ["daniel", "alex", "guy", "male", "david", "mark", "fred", "ryan", 
 const SPEAKERS: Record<SpeakerId, Speaker> = {
   RHEA: { name: "Rhea", color: "#8fc7bd", pitch: 1.12, rate: 1.03, prefer: FEMALE, radio: true },
   YOU: { name: "You", color: "#e2c48a", pitch: 0.95, rate: 0.98, prefer: MALE },
-  PILOT: { name: "Okafor", color: "#a8b3d0", pitch: 0.82, rate: 1.12, prefer: ["fred", ...MALE], radio: true },
+  PILOT: { name: "Okafor", color: "#a8b3d0", pitch: 0.82, rate: 1.05, prefer: ["fred", ...MALE], radio: true },
+  DEZ: { name: "Dez", color: "#c7b98f", pitch: 1.08, rate: 1.16, prefer: ["alex", "ryan", "guy", ...MALE] },
   HOLLOW: { name: "Hollow", color: "#d4887a", pitch: 0.45, rate: 0.82, prefer: MALE },
   WARDEN: { name: "The Warden", color: "#cf5f56", pitch: 0.1, rate: 0.74, prefer: MALE },
   CHOIR: { name: "The Choir", color: "#b8a6d6", pitch: 1.7, rate: 0.68, prefer: ["whisper", ...FEMALE], ghost: true },
@@ -43,7 +44,7 @@ export class Voice {
   private active = 0;
   private typer = 0;
   private queue: Promise<void> = Promise.resolve();
-  onLine?: (speaker: SpeakerId) => void;
+  onLine?: (speaker: SpeakerId, radio: boolean) => void;
 
   get busy() {
     return this.active > 0;
@@ -111,10 +112,10 @@ export class Voice {
     const rate = opts?.rate ?? s.rate;
     this.who.textContent = (opts?.name ?? (id === "YOU" ? this.playerName : s.name)).replace(/\{name\}/g, this.playerName);
     this.who.style.color = s.color;
-    this.box.classList.toggle("radio", !!s.radio);
+    this.box.classList.toggle("radio", opts?.radio ?? !!s.radio);
     this.box.classList.toggle("ghost", !!s.ghost);
     this.box.classList.add("show");
-    this.onLine?.(id);
+    this.onLine?.(id, opts?.radio ?? !!s.radio);
     this.active++;
 
     // typewriter subtitle

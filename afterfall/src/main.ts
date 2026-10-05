@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { coopSwing, coopUpdate, inviteLink, joinRoom, renderVoiceHud } from "./coop";
 import { goFullscreen, initTouch } from "./touch";
 import { voiceChat } from "./voicechat";
+import { castLine } from "./cinesets";
 import { applySaved, creator, menuCamera, menuLightOff, openCreator } from "./creator";
 import {
   $,
@@ -36,8 +37,9 @@ import { net, randomRoom } from "./net";
 import { LINKS } from "./token";
 
 // ------------------------------------------------------------------ hooks
-voice.onLine = (id) => {
-  if (id === "RHEA" || id === "PILOT") sfx.beep();
+voice.onLine = (id, radio) => {
+  if (radio) sfx.beep();
+  castLine(id);
 };
 player.onSwing = () => sfx.swing();
 player.onDash = () => sfx.dash();

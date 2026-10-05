@@ -77,6 +77,7 @@ export class Sfx {
   whoosh() { this.noise(3.5, 500, 0.4, 0.9, "bandpass"); this.tone(220, 3.5, 0.25, "sawtooth", 60); }
   rumble() { this.noise(3, 60, 0.5, 1.0, "lowpass"); this.tone(32, 3, 0.6, "sine", 25); }
   ghost() { this.tone(523, 1.4, 0.12, "sine", 784); this.tone(659, 1.6, 0.1, "sine", 988, 0.1); this.noise(1.2, 3000, 2, 0.15, "bandpass"); }
+  monitor() { this.tone(1040, 0.07, 0.04, "sine"); }
   coin() { this.tone(1320, 0.08, 0.12, "triangle", 1760); }
 
   /** Engine drone for the cabin scene. */

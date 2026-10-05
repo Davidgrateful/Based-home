@@ -300,3 +300,7 @@ body.touch #card-title { font-size: clamp(26px, 6vw, 40px); }
   .btn { height: 36px; }
   .creator-hint { display: none; }
 }
+
+/* black-box flashback */
+body.flashback canvas#game { filter: grayscale(0.7) sepia(0.25) contrast(1.15) brightness(0.92); }
+body.flashback::after { content: "Flight recorder · 03:14:52"; position: fixed; left: clamp(20px, 8vw, 140px); top: calc(10vh + 18px); z-index: 35; font: 400 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); pointer-events: none; }
