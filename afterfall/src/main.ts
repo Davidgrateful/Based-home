@@ -14,6 +14,7 @@ import {
   camera,
   cine,
   enemies,
+  farlands,
   fx,
   hud,
   hurtFlash,
@@ -32,16 +33,19 @@ import {
 import { echoProgress } from "./echo";
 import { night, nightDebug, nightOnDeath, nightTarget, nightUpdate, renderShop, startLongNight } from "./night";
 import { playerName, resetSave, save } from "./save";
-import { story, storyOnDeath, storyOnSummon, storySkip, storyTarget, storyUpdate, startStory } from "./story";
+import { CHAPTER_NAMES, resumeStory, story, storyOnDeath, storyOnSummon, storySkip, storyTarget, storyUpdate, startStory } from "./story";
 import { net, randomRoom } from "./net";
 import { LINKS } from "./token";
 import { initMap, mapUpdate } from "./map";
 import { regionsUpdate } from "./regions";
+import { faunaUpdate } from "./fauna";
+import { setMemoryCamera } from "./memory";
 
 // ------------------------------------------------------------------ hooks
 voice.onLine = (id, radio) => {
   if (radio) sfx.beep();
   castLine(id);
+  farlands.onLine(id);
 };
 player.onSwing = () => sfx.swing();
 player.onDash = () => sfx.dash();
@@ -89,6 +93,10 @@ enemies.onDeath = (e) => {
 
 // ------------------------------------------------------------------ main menu
 function renderMenu() {
+  const ch = typeof save.flags.chapter === "string" && !save.storyDone ? save.flags.chapter : "";
+  $("btn-continue").hidden = !CHAPTER_NAMES[ch];
+  $("continue-sub").textContent = CHAPTER_NAMES[ch] ?? "";
+  queueMicrotask(menuDesc);
   $("stat-best").textContent = save.bestNight ? `Night ${save.bestNight}` : "None";
   $("stat-loops").textContent = String(save.loops);
   $("stat-echoes").textContent = echoProgress();
@@ -99,6 +107,18 @@ function renderMenu() {
     : save.storyDone
       ? "Survive until dawn. Then do it again."
       : "Survive until dawn. Best played after Chapter One.";
+}
+
+// one quiet line under the menu: whatever's under the cursor or focus
+const menuDesc = () => {
+  const first = [...document.querySelectorAll<HTMLElement>("#title .mi")].find((b) => !b.hidden);
+  $("menu-desc").textContent = first?.querySelector(".mi-d")?.textContent ?? "";
+};
+for (const b of document.querySelectorAll<HTMLElement>("#title .mi")) {
+  const show = () => ($("menu-desc").textContent = b.querySelector(".mi-d")?.textContent ?? "");
+  b.addEventListener("pointerenter", show);
+  b.addEventListener("focus", show);
+  b.addEventListener("pointerleave", menuDesc);
 }
 
 function showScreen(id: "title" | "wallet" | "coop") {
@@ -126,6 +146,12 @@ function withSurvivor(then: () => void) {
   else openCreator(then);
 }
 
+$("btn-continue").addEventListener("click", () =>
+  withSurvivor(() => {
+    leaveMenu();
+    resumeStory(save.flags.chapter as Parameters<typeof resumeStory>[0]);
+  }),
+);
 $("btn-story").addEventListener("click", () =>
   withSurvivor(() => {
     leaveMenu();
@@ -222,6 +248,7 @@ function resume() {
   $("pause").classList.remove("show");
 }
 initMap();
+setMemoryCamera(camera);
 initTouch(() => {
   state.paused = true;
   $("pause").classList.add("show");
@@ -390,11 +417,13 @@ function tick(now?: number) {
     if (simulate) {
       if (state.mode === "story") storyUpdate(dt);
       else if (state.mode === "night") nightUpdate(dt);
+      if (state.exited) faunaUpdate(dt);
     }
     enemies.update(simulate ? dt : 0, t, player, camera);
   }
   coopUpdate(dt, camera);
   world.update(dt, t, player.pos, camera);
+  farlands.update(dt, t, player);
   fx.update(dt, camera);
   if (state.mode !== "title") {
     mapUpdate(dt, running && state.exited !== false);
@@ -451,6 +480,8 @@ tick();
     startLongNight(false);
   },
   nightDebug,
+  farlands,
+  spawn: (kind: Parameters<typeof enemies.spawn>[0], x: number, z: number) => enemies.spawn(kind, new THREE.Vector3(x, 0, z), { rise: false }),
   say,
   net,
   enterRoom,

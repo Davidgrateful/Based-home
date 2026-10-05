@@ -3,34 +3,36 @@
 // reached are interference at the edge. It never shows the objective; the
 // world does that.
 
-import { $, cine, persist, player, state, TOUCH, world } from "./ctx";
+import { $, cine, farlands, persist, player, state, TOUCH, world } from "./ctx";
 import { net } from "./net";
 import { save } from "./save";
 import { regionAt, REGIONS } from "./regions";
 import { CASE_POS } from "./signs";
-import { ARENA, BEACON, CAMP, heightAt, MAST, PYLONS, STATION, WORLD_RADIUS } from "./world";
+import { ARENA, BASIN_C, BASIN_R, BEACON, CAMP, CHOIR_C, heightAt, MAST, PYLONS, SETTLEMENT, STATION, WORLD_RADIUS } from "./world";
 
 // World window drawn by the map (north = +z is up, east = -x is right).
 const CX = 0;
-const CZ = 20;
-const SPAN = 400;
-const GRID = 64; // fog cells per side (6.25 m each)
+const CZ = 75;
+const SPAN = 520;
+const GRID = 72; // fog cells per side (~7.2 m each)
+const FOG_V = "v2:"; // bump when the window changes; older reveals are dropped
 const REVEAL = 26; // metres revealed around the player
 
 const fog = new Uint8Array(GRID * GRID);
 (() => {
   try {
-    const bin = atob(save.fog);
+    if (!save.fog.startsWith(FOG_V)) return;
+    const bin = atob(save.fog.slice(FOG_V.length));
     for (let i = 0; i < fog.length; i++) fog[i] = (bin.charCodeAt(i >> 3) >> (i & 7)) & 1;
   } catch {}
 })();
 
 function packFog() {
-  const bytes = new Uint8Array(fog.length / 8);
+  const bytes = new Uint8Array(Math.ceil(fog.length / 8));
   for (let i = 0; i < fog.length; i++) if (fog[i]) bytes[i >> 3] |= 1 << (i & 7);
   let s = "";
   for (const b of bytes) s += String.fromCharCode(b);
-  return btoa(s);
+  return FOG_V + btoa(s);
 }
 
 /** World → 0..1 map space. */
@@ -96,7 +98,8 @@ function buildBase() {
       const x = CX - (px / S - 0.5) * SPAN;
       const z = CZ - (py / S - 0.5) * SPAN;
       const k = (py * S + px) * 4;
-      if (Math.hypot(x, z - 20) > WORLD_RADIUS) {
+      const db = Math.hypot(x - BASIN_C.x, z - BASIN_C.z);
+      if (Math.hypot(x, z - 20) > WORLD_RADIUS && db > BASIN_R) {
         img.data[k + 3] = 0;
         continue;
       }
@@ -108,6 +111,9 @@ function buildBase() {
       if (Math.hypot(x - STATION.x, z - STATION.z) < 46) [r, gg, b] = [52, 34, 31];
       if (Math.hypot(x + 6, z - 18) < 22) [r, gg, b] = [30, 28, 29];
       if (Math.hypot(x - ARENA.x, z - ARENA.z) < 24) [r, gg, b] = [48, 33, 32];
+      if (db < BASIN_R) [r, gg, b] = [24, 44, 50];
+      if (Math.hypot(x - CHOIR_C.x, z - CHOIR_C.z) < 22) [r, gg, b] = [150, 158, 160];
+      if (Math.hypot(x - SETTLEMENT.x, z - SETTLEMENT.z) < 17) [r, gg, b] = [58, 44, 34];
       img.data[k] = r * light * 1.55;
       img.data[k + 1] = gg * light * 1.55;
       img.data[k + 2] = b * light * 1.55;
@@ -133,6 +139,9 @@ function buildBase() {
   g.beginPath();
   g.arc(mx(0) * S, mz(20) * S, (WORLD_RADIUS / SPAN) * S, 0, Math.PI * 2);
   g.stroke();
+  g.beginPath();
+  g.arc(mx(BASIN_C.x) * S, mz(BASIN_C.z) * S, (BASIN_R / SPAN) * S, 0, Math.PI * 2);
+  g.stroke();
   base = c;
 }
 
@@ -140,7 +149,7 @@ interface Mark {
   x: number;
   z: number;
   label: string;
-  kind: "fire" | "warm" | "rift" | "danger" | "plain";
+  kind: "fire" | "warm" | "rift" | "danger" | "plain" | "white";
   lit?: () => boolean;
 }
 
@@ -154,6 +163,8 @@ const MARKS: Mark[] = [
   { x: STATION.x, z: STATION.z, label: "Field station", kind: "danger" },
   ...PYLONS.map((p, i) => ({ x: p.x, z: p.z, label: "Tower", kind: "rift" as const, lit: () => world.pylons[i]?.lit ?? false })),
   { x: ARENA.x, z: ARENA.z, label: "Stone circle", kind: "rift" },
+  { x: SETTLEMENT.x, z: SETTLEMENT.z, label: "Settlement", kind: "fire", lit: () => farlands.live },
+  { x: CHOIR_C.x, z: CHOIR_C.z, label: "White light", kind: "white" },
 ];
 
 const COL = { ink: "#e9e6df", dim: "#85827b", fire: "#e0873e", rift: "#62d6e8", danger: "#c4473a" };
@@ -229,8 +240,8 @@ function draw() {
     const c = sum.get(r.id);
     const x = c ? sx(c[0] / c[2]) : sx(r.label[0]);
     const y = c ? sz(c[1] / c[2]) : sz(r.label[1]);
-    if (r.locked) {
-      if (!save.storyDone) continue;
+    if (r.locked?.()) {
+      if (!save.storyDone && !save.flags.settlementFound) continue;
       g.font = `600 ${13 * u}px "Barlow Condensed", sans-serif`;
       g.fillStyle = "rgba(233,230,223,0.35)";
       g.fillText(garble(r.name.toUpperCase()), x, y);
@@ -248,7 +259,7 @@ function draw() {
     const x = sx(m.x);
     const y = sz(m.z);
     const lit = m.lit ? m.lit() : true;
-    const col = m.kind === "fire" ? (lit ? COL.fire : COL.dim) : m.kind === "rift" ? (lit ? COL.rift : COL.dim) : m.kind === "danger" ? COL.danger : m.kind === "warm" ? COL.ink : COL.dim;
+    const col = m.kind === "white" ? "#f2f8fa" : m.kind === "fire" ? (lit ? COL.fire : COL.dim) : m.kind === "rift" ? (lit ? COL.rift : COL.dim) : m.kind === "danger" ? COL.danger : m.kind === "warm" ? COL.ink : COL.dim;
     g.fillStyle = col;
     g.strokeStyle = col;
     g.lineWidth = 1.5 * u;

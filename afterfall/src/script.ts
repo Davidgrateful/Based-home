@@ -265,6 +265,15 @@ export const FIRST_HOLLOW_DOWN: Line[] = [
 
 export const BLACK_BOX_FIND: Line[] = [["YOU", "Black box. It's still got power. There's a recording."]];
 
+// ---------------------------------------------------------------- THE THINGS
+// First sighting of a native. Not a patient. Not anybody.
+export const THING_FIRST: Line[] = [
+  ["YOU", "Rhea. Something's watching me. It's not one of them."],
+  ["RHEA", "Not a Hollow?"],
+  ["YOU", "No mask. No wristband. No face, really."],
+  ["RHEA", "Then it was here before any of us. Back away slow. Find a fire if you can."],
+];
+
 // ---------------------------------------------------------------- ACT II
 export const AMBUSH_START: Line[] = [
   ["HOLLOW", "Fall. Forget. Belong."],
@@ -329,9 +338,122 @@ export const EPILOGUE: Line[] = [
   ["RHEA", "{name}, the signal's through! But it's not going home. Something on the other side is pulling it."],
   ["CHOIR", "Ten thousand and one. We counted every fall. You are the one we did not count."],
   ["YOU", "Who are you?"],
-  ["CHOIR", "The ones who didn't forget."],
-  ["RHEA", "Don't you dare go through without me. I'm coming. I'm limping, but I'm coming."],
-  ["YOU", "Then limp faster, Rhea. I don't think it's going to wait."],
+  ["CHOIR", "Come and see."],
+  ["RHEA", "Don't you dare go anywhere without me."],
+];
+
+// ---------------------------------------------------------------- CHAPTER FIVE: THE CHANGED
+export const INES_MEET: Line[] = [
+  ["INES", "Don't swing. I'm not one of them."],
+  ["YOU", "You've got a wristband."],
+  ["INES", "Forty three eighty two. They wrote me down as missing. I wasn't missing. I was busy."],
+  ["INES", "You put the Warden down. Do you know what that means?"],
+  ["YOU", "That he stops trying to kill me?"],
+  ["INES", "It means nobody's standing in the door. Everything out here is going to come and look."],
+  ["RHEA", "{name}, I've got two signals on you. One of them's wrong. It's too bright."],
+  ["INES", "Tell her Ines says hello. She'll remember me. She's the one who dropped me off."],
+  ["RHEA", "Ines?"],
+  ["INES", "There are people in the deep woods. Living ones. Keep the red light on your right and walk until the trees go black. I'll have the fire going."],
+];
+export const CHANGED_WALK: Line[] = [
+  ["RHEA", "{name}. About Ines."],
+  ["YOU", "She said you dropped her off."],
+  ["RHEA", "I've flown forty transfers. I talked every one of them down. I told myself they were going somewhere better."],
+  ["YOU", "Were they?"],
+  ["RHEA", "I never asked. That was the job. Not asking."],
+];
+export const SETTLEMENT_ARRIVE: Line[] = [
+  ["TEO", "Another one walking in on their own feet. That's twice this year."],
+  ["INES", "Teo, this is ten thousand and one."],
+  ["TEO", "No. There's no such number."],
+  ["YOU", "That's what everyone keeps telling me."],
+];
+export const WRISTBAND_WALL: Line[] = [
+  ["YOU", "Wristbands. Hundreds of them, nailed up in rows."],
+  ["INES", "Everyone who makes it here leaves theirs. It's how we stop being numbers."],
+  ["YOU", "There's one here with my number on it."],
+  ["INES", "That's not possible."],
+  ["YOU", "The plastic's gone yellow. It's been here for years."],
+  ["INES", "Teo's going to want to see that."],
+];
+export const FIRE_TALK: Line[] = [
+  ["TEO", "Sit. The fire doesn't ask questions."],
+  ["TEO", "Meridian thinks the rift is a door. It isn't. It's a mouth. They feed it one of us every few days, and it stays shut on their side."],
+  ["INES", "And sometimes it spits us back out. Changed. Alive. It's a door, Teo. Doors go both ways."],
+  ["TEO", "Everyone who wants to go home walks north into the Basin. Nobody walks back."],
+  ["INES", "Because nobody's tried it with a key."],
+  ["RHEA", "{name}, listen to me. Meridian has a pickup at the heart of the Basin. That's what the towers were for. I can get you out. I just need you there."],
+  ["TEO", "Your radio woman. Ask her what happens to the ones she picks up."],
+  ["YOU", "Rhea?"],
+  ["RHEA", "I don't know. I never asked."],
+  ["TEO", "Leave your band on the wall. Stay. Be a person here instead of a number out there."],
+  ["INES", "Or keep it, walk north, and find out what the number's for."],
+];
+export const CHOICE_LEFT: Line[] = [
+  ["YOU", "{name}. Not ten thousand and one. Just {name}."],
+  ["TEO", "Then the fire's yours, whenever you want it."],
+  ["INES", "You're still going north."],
+  ["YOU", "I'm still going north."],
+];
+export const CHOICE_KEPT: Line[] = [
+  ["YOU", "I'm keeping it. If it's a key, I want to know what it opens."],
+  ["TEO", "Everyone says that."],
+  ["INES", "Not everyone gets to be right."],
+];
+
+// ---------------------------------------------------------------- CHAPTER SIX: THE RIFT BASIN
+export const BASIN_ENTER: Line[] = [
+  ["RHEA", "The signal's so strong here I can hear my own heartbeat in it."],
+  ["YOU", "Rhea, the rocks are floating."],
+  ["RHEA", "Of course they are. Why wouldn't they be."],
+];
+export const BASIN_ECHO: Line[] = [
+  ["YOU", "Someone's following me. It's me. A few seconds behind."],
+  ["RHEA", "Don't look at it too long."],
+];
+export const BASIN_FIGHT: Line[] = [["HOLLOW", "The one walks north! Stop the one!", { pitch: 0.6 }]];
+export const BASIN_LIGHT: Line[] = [
+  ["RHEA", "{name}, there's a light ahead of you. White. My whole screen's just white."],
+  ["YOU", "I'm walking into it."],
+  ["RHEA", "I know. I think I've always known you would."],
+];
+
+// ---------------------------------------------------------------- CHAPTER SEVEN: THE CHOIR
+export const CHOIR_GREET_KEPT: Line[] = [["CHOIR", "Ten thousand and one."]];
+export const CHOIR_GREET_LEFT: Line[] = [["CHOIR", "{name}. You came with a name. You are the first who did."]];
+export const CHOIR_TRUTH: Line[] = [
+  ["CHOIR", "Meridian opened the door ten thousand times. The ten thousand and first time, the door opened itself."],
+  ["YOU", "Why?"],
+  ["CHOIR", "Because you were already on this side."],
+  ["YOU", "Who are you?"],
+  ["CHOIR", "The ones who didn't forget. Every one of us walked in here. Every one of us was you."],
+  ["YOU", "Then what happens now?"],
+  ["CHOIR", "Someone has to be waiting when you fall. Someone has to build the fire. Someone has to write it down."],
+];
+export const CHOIR_BUILD: Line[] = [
+  ["YOU", "Stones. Kindling. Dry wood."],
+  ["YOU", "Right next to where I woke up."],
+];
+export const CHOIR_WRITTEN: Line[] = [
+  ["YOU", "Ten thousand and one. Active. Flight, the fourteenth of March."],
+  ["YOU", "It was my handwriting. The whole time."],
+  ["RHEA", "{name}? I can't see you anymore. Everything's gone white."],
+  ["YOU", "Rhea. You told me nobody was going anywhere tonight."],
+  ["RHEA", "When did I say that?"],
+  ["YOU", "You will."],
+  ["RHEA", "Then come back to me."],
+  ["YOU", "Every time."],
+];
+export const CHOIR_AGAIN_KEPT: Line[] = [["CHOIR", "Ten thousand and one. Again."]];
+export const CHOIR_AGAIN_LEFT: Line[] = [["CHOIR", "{name}. Again."]];
+/** Back on the plane. The first scene, heard the second time. */
+export const ENDING_PLANE: Line[] = [
+  ["RHEA", "Hey, sleeper. It's Rhea again. Whatever you're dreaming about, you can let it go."],
+  ["RHEA", "I've got you. Nobody's going anywhere tonight."],
+];
+export const ENDING_WHISPER: Line[] = [
+  ["YOU", "I know.", { name: "The patient", rate: 0.7, pitch: 0.85 }],
+  ["RHEA", "Sleeper?"],
 ];
 
 export const RESPAWN: Line[][] = [
@@ -432,6 +554,26 @@ export const DAWN_LINES: Line[][] = [
   [["RHEA", "Dawn. I could hear you fighting from here. Rest."]],
   [["YOU", "Still here."], ["RHEA", "Still here."]],
   [["RHEA", "That's another night. I'm marking them on my arm."]],
+];
+
+// ---------------------------------------------------------------- WORLD MEMORY
+// The loop keeps evidence. These play the first time each change is noticed.
+export const MEM_CAIRN: Line[] = [["YOU", "That cairn wasn't here last time."], ["RHEA", "Last time?"], ["YOU", "Never mind."]];
+export const MEM_TREE: Line[] = [["YOU", "That tree was standing yesterday. Or whenever yesterday was."]];
+export const MEM_MAST: Line[] = [["RHEA", "{name}, the mast light's out. I can't find you without it."], ["YOU", "Then I'll find you."]];
+export const MEM_BANDS: Line[] = [["YOU", "Wristbands on the stones by the fire. Mine. More of them every time."]];
+// Escalation around the fire, one beat per night, slowly.
+export const MEM_SHAPE: Line[] = [["YOU", "Someone at the edge of the light again."], ["RHEA", "Same one?"], ["YOU", "I think it's always the same one."]];
+export const MEM_VOICE: Line[] = [
+  ["RHEA", "Sleeper? Over here.", { name: "From the trees", radio: false, rate: 0.85 }],
+  ["RHEA", "{name}, that wasn't me. I didn't say anything. I swear I didn't say anything."],
+];
+export const MEM_PAGE: Line[] = [["YOU", "There's a page by the fire. The registry. My line."], ["RHEA", "Is the ink"], ["YOU", "Still wet."]];
+export const MEM_STANDOFF: Line[] = [["RHEA", "They've stopped at the edge of the light. Why have they stopped?"], ["YOU", "They're waiting to see if I remember."]];
+export const MEM_TEAR: Line[] = [["CHOIR", "Again."]];
+export const MEM_UNDERSTAND: Line[] = [
+  ["YOU", "I understand it now. It isn't punishing me. It's waiting for me to build the fire."],
+  ["RHEA", "Then build it. I'll be on the radio. I'm always on the radio."],
 ];
 
 export const FIRE_LOW: Line[] = [["RHEA", "The fire's dying! Get back to it!"]];

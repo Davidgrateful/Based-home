@@ -39,6 +39,7 @@ import type { Enemy, EnemyKind, EnemySnap, FireLike } from "./enemies";
 import { net } from "./net";
 import { MEMORIES, playerName, save } from "./save";
 import * as S from "./script";
+import { applyWorldMemory, memoryNightStart, memoryStorm, memoryUpdate, memoryWakeLine, rememberedAngle } from "./memory";
 import { CAMP, heightAt, WORLD_RADIUS } from "./world";
 
 type Phase = "dusk" | "storm" | "dawn" | "over";
@@ -133,12 +134,14 @@ export async function startLongNight(fromReset = false, ns?: NightStart) {
   enemies.fire = fire;
   night.n = 1;
   night.phase = "dusk";
+  phaseT = 999; // nothing starts until the night is set up below (after the fade)
   loopShards = 0;
   bestThisLoop = 0;
   downFor = 0;
   state.runShards = 0;
   state.runStart = state.elapsed;
   sfx.startAmbience();
+  applyWorldMemory();
   await fade(0, 1500);
 
   const lines = !fromReset && save.loops === 0 ? S.NIGHT_INTRO_FIRST : S.LOOP_WAKE[Math.min(save.loops, S.LOOP_WAKE.length - 1)];
@@ -151,6 +154,8 @@ export async function startLongNight(fromReset = false, ns?: NightStart) {
     else setWaiting();
   } else startNight();
   if (lines.length) say(lines);
+  const mem = memoryWakeLine();
+  if (mem) setTimeout(() => state.mode === "night" && say(mem), 7000);
 }
 
 function setWaiting() {
@@ -204,6 +209,7 @@ function applyNightStart(ns: NightStart) {
   }
   for (const g of [...world.ghosts]) world.removeGhost(g);
   if (ns.echo && !save.echoes.includes(ns.echo[0])) spawnEcho(ns.echo[0], ns.echo[1], ns.echo[2]);
+  memoryNightStart(n);
   $("night-chip").textContent = `Night ${n}`;
   card(`Night ${n}`, night.omen.name, night.omen.text, 3800);
   const opener = n - 1 < S.NIGHT_OPENERS.length ? S.NIGHT_OPENERS[n - 1] : pick(S.NIGHT_OPENERS);
@@ -220,6 +226,7 @@ function stormHits() {
   sfx.roar();
   sfx.rumble();
   toast(net.active ? "The storm is here. Hold the fire together." : "The storm is here. Defend the fire.", 3000);
+  memoryStorm();
   if (o.id === "warden") {
     hud.bossName.textContent = "Warden's Echo";
     hud.bossBar.classList.add("show");
@@ -261,7 +268,13 @@ function spawnGroup() {
   ];
   if (o.bias) for (const w of weights) if (w[0] === o.bias) w[1] += 4;
   const total = weights.reduce((a, w) => a + w[1], 0);
-  const base = randomSpot(26, 34);
+  // from the third loop they come the way you remember
+  const mem = rememberedAngle(n);
+  const base = mem === null ? randomSpot(26, 34) : (() => {
+    const a = mem + (Math.random() - 0.5) * 0.7;
+    const r = 26 + Math.random() * 8;
+    return { x: CAMP.x + Math.cos(a) * r, z: CAMP.z + Math.sin(a) * r };
+  })();
   for (let i = 0; i < size; i++) {
     let r = Math.random() * total;
     let kind: EnemyKind = "hollow";
@@ -528,6 +541,7 @@ export function nightOnDeath(e: Enemy) {
 /** Runs every frame in the Long Night, also while you're down in co-op. */
 export function nightUpdate(dt: number) {
   if (night.phase === "over") return;
+  memoryUpdate(dt, night.phase === "dusk");
   const host = !net.isClient;
 
   // falling

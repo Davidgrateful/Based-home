@@ -40,6 +40,9 @@ export class Signs {
   shape: Humanoid;
   caseLid: THREE.Mesh;
   shapeT = 0;
+  private tally!: THREE.Group;
+  private gouge!: THREE.MeshStandardMaterial;
+  private extraMarks = 0;
 
   constructor(scene: THREE.Scene, ambulance: THREE.Group) {
     // ---- footprints: one instanced mesh, alternating left/right
@@ -100,6 +103,8 @@ export class Signs {
     }
     tally.position.set(1.42, 0, 0.3);
     ambulance.add(tally);
+    this.tally = tally;
+    this.gouge = gouge;
 
     // ---- the records case, lid up, papers out
     const caseG = new THREE.Group();
@@ -143,6 +148,28 @@ export class Signs {
     this.group.add(this.shape.root);
 
     scene.add(this.group);
+  }
+
+  /** Every loop leaves more marks on the ambulance. Somebody keeps counting. */
+  addTally(groups: number) {
+    const bar = new THREE.BoxGeometry(0.012, 0.34, 0.016);
+    for (; this.extraMarks < groups; this.extraMarks++) {
+      const g = 18 + this.extraMarks;
+      const col = g % 6;
+      const row = Math.floor(g / 6);
+      for (let i = 0; i < 5; i++) {
+        const b = new THREE.Mesh(i < 4 ? bar : new THREE.BoxGeometry(0.012, 0.46, 0.016), this.gouge);
+        b.position.set(0, 2.2 - row * 0.5, -2.2 + col * 0.7 + (i < 4 ? i * 0.09 : 0.135));
+        if (i === 4) b.rotation.x = 1.0;
+        this.tally.add(b);
+      }
+    }
+  }
+
+  /** Stand the figure somewhere else, facing a point (Long Night sightings). */
+  placeShape(p: THREE.Vector3, face: THREE.Vector3) {
+    this.shape.root.position.set(p.x, heightAt(p.x, p.z), p.z);
+    this.shape.root.rotation.y = Math.atan2(face.x - p.x, face.z - p.z);
   }
 
   showShape(on: boolean) {

@@ -9,6 +9,7 @@ import {
   card,
   cine,
   enemies,
+  farlands,
   fade,
   hud,
   type Interact,
@@ -36,11 +37,15 @@ import { CASE_POS, SHAPE_POS, Signs } from "./signs";
 import { buildHumanoid, buildSpear, DEFAULT_LOOK } from "./models";
 import { save } from "./save";
 import * as S from "./script";
-import { ARENA, BEACON, CAMP, heightAt, PYLONS } from "./world";
+import { ARENA, BEACON, BLACKWOOD_X, CAMP, CHOIR_C, heightAt, PYLONS, SETTLEMENT } from "./world";
+import { CHOIR_CASE, CHOIR_PIT, inBasin, inChoir, WALL_POS } from "./farlands";
+import { choose } from "./choice";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
-type Stage = "intro" | "wake" | "outside" | "signs" | "fire" | "records" | "first" | "ambush" | "pylons" | "boss" | "ending" | "done";
+type Stage =
+  | "intro" | "wake" | "outside" | "signs" | "fire" | "records" | "first" | "ambush" | "pylons" | "boss" | "ending"
+  | "changed" | "settlement" | "basin" | "choir" | "finale" | "done";
 
 export const story = {
   stage: "intro" as Stage,
@@ -61,12 +66,23 @@ const waveTimers: { at: number; n: number; kind: "hollow" | "runner" }[] = [];
 
 // Chapter One set dressing lives in the world for every mode (the tracks are
 // still there on the hundredth night).
-const signs = new Signs(world.scene, world.ambulance);
+export const signs = new Signs(world.scene, world.ambulance);
 let signStep = 0;
 let seenFor = 0;
 let fireFoundSaid = false;
 let firstHollow: Enemy | null = null;
 const AMB_SIDE = new THREE.Vector3(2.8, 0, 0.3);
+
+// Chapters Five to Seven
+const late = { walkSaid: false, wallRead: false, talking: false, basinSaid: false, basinT: 0, echoSaid: false, fightDone: false, lightSaid: false, built: false };
+const GATE = new THREE.Vector3(SETTLEMENT.x + 21, 0, SETTLEMENT.z);
+const CHOIR_V = new THREE.Vector3(CHOIR_C.x, 0, CHOIR_C.z);
+GATE.y = heightAt(GATE.x, GATE.z);
+CHOIR_V.y = heightAt(CHOIR_V.x, CHOIR_V.z);
+const chapter = (id: string) => {
+  save.flags.chapter = id;
+  persist();
+};
 
 // ------------------------------------------------------------------ COLD OPEN
 async function coldOpen() {
@@ -240,6 +256,7 @@ export async function startStory() {
     if (!world.ghosts.some((g) => g.echoId === id)) spawnEcho(id, x, z);
   }
 
+  farlands.dressAs(save.look); // the Choir will wear what you're wearing
   await coldOpen();
 
   // WAKE
@@ -415,6 +432,7 @@ function startAmbush() {
 
 async function ambushCleared() {
   story.stage = "pylons";
+  chapter("pylons");
   activePylon = -1;
   setObjective("CHAPTER 3 · RESONANCE", "Activate the resonance pylons (0/3).");
   await say(S.AMBUSH_CLEARED);
@@ -431,6 +449,7 @@ async function pylonLit(i: number) {
   setObjective("CHAPTER 3 · RESONANCE", `Activate the resonance pylons (${lit}/3).`);
   if (lit === 3) {
     story.stage = "boss";
+    chapter("boss");
     checkpoint = ARENA.clone().add(new THREE.Vector3(0, 0, -34));
     sfx.rumble();
     setObjective("CHAPTER 4 · THE WARDEN", "Follow the beams north to the stone circle.");
@@ -480,11 +499,194 @@ async function bossDefeated() {
   cine.shot(key(around(-0.6, 30, 2), r), key(around(0.5, 20, 0), r), 14);
   await cine.say(S.EPILOGUE);
   void a;
-  await fade(1, 2500);
+  cine.onTick = undefined;
+  // Ines steps out from behind the stones
+  if (!cine.skipped) {
+    const ip = player.pos.clone().add(new THREE.Vector3(4.5, 0, 4));
+    farlands.placeInes(ip, player.pos);
+    farlands.ines.h.root.visible = true;
+    // a two-shot from the side: you, her, the stones and the open rift behind
+    const dir = ip.clone().sub(player.pos).setY(0).normalize();
+    const perp = new THREE.Vector3(-dir.z, 0, dir.x);
+    const mid = player.pos.clone().lerp(ip, 0.5);
+    const look = mid.clone().setY(heightAt(mid.x, mid.z) + 1.4);
+    const eye = mid.clone().addScaledVector(perp, 5.2).addScaledVector(dir, -1.2).setY(look.y + 0.4);
+    sfx.ghost();
+    cine.shot(key(eye, look), key(eye.clone().addScaledVector(perp, -1.2), look), 30);
+    await cine.say(S.INES_MEET);
+  }
   cine.end();
+  startChanged();
+}
+
+// ------------------------------------------------------------------ CHAPTER FIVE: THE CHANGED
+function startChanged() {
+  story.stage = "changed";
+  chapter("changed");
+  world.riftOpen = 1;
+  farlands.setLive(true); // her fire's going: you'll see it through the trees
+  farlands.placeInes(null);
+  checkpoint = ARENA.clone().add(new THREE.Vector3(0, 0, -30));
+  card("CHAPTER FIVE", "THE CHANGED", "Find the fire in the Blackwood", 3200);
+  setObjective("CHAPTER 5 · THE CHANGED", "Walk west into the Blackwood. Find their fire.");
+}
+
+async function arriveSettlement() {
+  story.stage = "settlement";
+  save.flags.settlementFound = true;
+  persist();
+  checkpoint = GATE.clone().add(new THREE.Vector3(-6, 0, 0));
+  setObjective("CHAPTER 5 · THE CHANGED", "Sit with Teo by the fire.");
+  await say(S.SETTLEMENT_ARRIVE);
+}
+
+async function fireTalk() {
+  late.talking = true;
+  const f = farlands.teo.pos.clone();
+  const c = new THREE.Vector3(SETTLEMENT.x, f.y + 1.2, SETTLEMENT.z);
+  cine.begin(false);
+  const orbit = (a: number, d: number) => new THREE.Vector3(c.x + Math.cos(a) * d, c.y + 0.6, c.z + Math.sin(a) * d);
+  cine.shot(key(orbit(0.6, 6), c), key(orbit(2.2, 5), c), 70);
+  await cine.say(S.FIRE_TALK);
+  const pick = await choose("Your wristband", "Leave it on the wall. Stay a person.", "Keep it. Find out what it opens.");
+  save.flags.band = pick === 0 ? "left" : "kept";
+  persist();
+  if (pick === 0) {
+    farlands.leaveBand();
+    sfx.pickup();
+  }
+  await cine.say(pick === 0 ? S.CHOICE_LEFT : S.CHOICE_KEPT);
+  cine.end();
+  startBasin();
+}
+
+// ------------------------------------------------------------------ CHAPTER SIX: THE RIFT BASIN
+function startBasin() {
+  story.stage = "basin";
+  chapter("basin");
+  world.basinOpen = true;
+  save.flags.basinOpen = true;
+  persist();
+  farlands.setLive(true);
+  world.riftOpen = 1;
+  late.basinSaid = late.echoSaid = late.fightDone = late.lightSaid = false;
+  late.basinT = 0;
+  checkpoint = ARENA.clone().add(new THREE.Vector3(0, 0, 14));
+  card("CHAPTER SIX", "THE RIFT BASIN", "North, through the stone circle", 3200);
+  setObjective("CHAPTER 6 · THE RIFT BASIN", "Go north through the Warden's circle. Follow the white light.");
+}
+
+function basinUpdate(dt: number) {
+  const p = player.pos;
+  if (inBasin(p.x, p.z)) {
+    late.basinT += dt;
+    if (!late.basinSaid) {
+      late.basinSaid = true;
+      farlands.ghostOn = true;
+      checkpoint = new THREE.Vector3(0, 0, 206);
+      say(S.BASIN_ENTER);
+    }
+    if (!late.echoSaid && late.basinT > 12 && !voice.busy) {
+      late.echoSaid = true;
+      say(S.BASIN_ECHO);
+    }
+  }
+  if (!late.fightDone && p.z > 246) {
+    late.fightDone = true;
+    checkpoint = new THREE.Vector3(p.x, 0, 240);
+    say(S.BASIN_FIGHT);
+    sfx.roar();
+    enemies.spawnAround(p, 2, 12, 16, "shaman");
+    enemies.spawnAround(p, 2, 10, 14, "hollow");
+    for (let i = 0; i < 2; i++) enemies.spawn("thing", new THREE.Vector3(p.x + (i ? 13 : -13), 0, p.z + 9), { rise: false }).provoked = true;
+  }
+  if (!late.lightSaid && p.z > 278 && !voice.busy) {
+    late.lightSaid = true;
+    say(S.BASIN_LIGHT);
+  }
+  if (inChoir(p.x, p.z)) enterChoir();
+}
+
+// ------------------------------------------------------------------ CHAPTER SEVEN: THE CHOIR
+async function enterChoir() {
+  story.stage = "choir";
+  late.built = false;
+  enemies.clear();
+  farlands.ghostOn = false;
+  checkpoint = CHOIR_V.clone().add(new THREE.Vector3(0, 0, -14));
+  voice.interrupt();
+  card("CHAPTER SEVEN", "THE CHOIR", "", 3600);
+  cine.begin(false);
+  const c = CHOIR_V.clone().setY(CHOIR_V.y + 1.4);
+  const ring = (a: number, d: number, h: number) => new THREE.Vector3(c.x + Math.cos(a) * d, c.y + h, c.z + Math.sin(a) * d);
+  cine.shot(key(ring(-1.9, 19, 1.5), c), key(ring(-1.2, 15, 0.6), c), 60);
+  await cine.say(save.flags.band === "left" ? S.CHOIR_GREET_LEFT : S.CHOIR_GREET_KEPT);
+  await cine.say(S.CHOIR_TRUTH);
+  cine.end();
+  setObjective("CHAPTER 7 · THE CHOIR", "Build the fire.");
+}
+
+async function writeItDown() {
+  story.stage = "finale";
+  player.frozen = true;
+  hud.prompt.classList.remove("show");
+  await showRecords(true);
+  player.frozen = false;
+  setObjective("", "");
+  await say(S.CHOIR_WRITTEN);
+  await say(save.flags.band === "left" ? S.CHOIR_AGAIN_LEFT : S.CHOIR_AGAIN_KEPT);
+  await finale();
+}
+
+/** Back on the plane. The first scene, the second time you hear it. */
+async function finale() {
+  cine.begin(false);
+  const flash = $("flash");
+  flash.classList.remove("go");
+  void flash.offsetWidth;
+  flash.classList.add("go");
+  sfx.whoosh();
+  await wait(500);
+  player.pos.set(0, 0.36, -1.2); // out of the white, so the plane isn't fogged
+  world.zoneMood = null;
+  const set = new PlaneSet(world.scene, world, save.look ?? DEFAULT_LOOK);
+  set.onBeat = () => sfx.monitor();
+  let tt = 0;
+  cine.onTick = (dt) => {
+    tt += dt;
+    set.update(dt, tt, voice.busy);
+  };
+  world.setMood("night");
+  world.snapMood();
+  const sh = (id: string) => {
+    const k = set.shot(id);
+    cine.shot(k.from, k.to, k.dur);
+  };
+  sh("cabinWide");
+  await wait(2600);
+  sh("rheaClose");
+  await cine.say(S.ENDING_PLANE);
+  await wait(900);
+  set.cue("monitorFast");
+  sh("monitor");
+  await wait(2400);
+  sh("rheaClose");
+  await cine.say(S.ENDING_WHISPER);
+  await wait(1400);
+  hud.blackout.style.transition = "opacity 1.2s";
+  hud.blackout.style.opacity = "1";
+  await wait(1400);
+  set.dispose();
+  cine.onTick = undefined;
+  $("titlecard").classList.add("show");
+  sfx.sting();
+  await wait(4600);
+  $("titlecard").classList.remove("show");
   story.stage = "done";
   save.storyDone = true;
+  delete save.flags.chapter;
   persist();
+  cine.end();
   story.onComplete();
 }
 
@@ -551,6 +753,52 @@ const interacts: Interact[] = [
       readRecords();
     },
   },
+  {
+    pos: () => WALL_POS,
+    r: 2.6,
+    label: "Read the wristband wall",
+    when: () => story.stage === "settlement" && !late.wallRead && !late.talking,
+    run: () => {
+      late.wallRead = true;
+      voice.interrupt();
+      say(S.WRISTBAND_WALL);
+    },
+  },
+  {
+    pos: () => farlands.teo.pos,
+    r: 2.8,
+    label: "Sit by the fire",
+    when: () => story.stage === "settlement" && !late.talking,
+    run: () => {
+      voice.interrupt();
+      fireTalk();
+    },
+  },
+  {
+    pos: () => CHOIR_PIT,
+    r: 2.6,
+    label: "Build the fire",
+    when: () => story.stage === "choir" && !late.built && !cine.active,
+    run: async () => {
+      late.built = true;
+      farlands.buildPit();
+      sfx.door();
+      await wait(700);
+      farlands.lightPit();
+      sfx.ignite();
+      setObjective("CHAPTER 7 · THE CHOIR", "Write it down.");
+      await say(S.CHOIR_BUILD);
+    },
+  },
+  {
+    pos: () => CHOIR_CASE,
+    r: 2.2,
+    label: "Write it down",
+    when: () => story.stage === "choir" && late.built && !voice.busy,
+    run: () => {
+      writeItDown();
+    },
+  },
   ...PYLONS.map((p, i) => ({
     pos: () => p,
     r: 6,
@@ -604,6 +852,7 @@ export async function storyPlayerDown() {
   player.medkits = Math.max(player.medkits, 1);
   player.invuln = 2;
   if (story.stage === "first") spawnFirstHollow(false);
+  if (story.stage === "basin" && late.fightDone && checkpoint.z >= 240) late.fightDone = false; // the fight comes again
   if (story.stage === "ambush") startAmbush();
   if (story.stage === "pylons" && activePylon >= 0) {
     world.pylons[activePylon].charge = 0;
@@ -627,6 +876,14 @@ export function storyTarget(): THREE.Vector3 | null {
       return signStep >= 0 && signStep < 2 ? AMB_SIDE : null;
     case "fire":
       return CAMP;
+    case "changed":
+      return GATE;
+    case "settlement":
+      return late.talking ? null : farlands.teo.pos;
+    case "basin":
+      return CHOIR_V;
+    case "choir":
+      return late.built ? CHOIR_CASE : CHOIR_PIT;
     case "records":
       return CASE_POS;
     case "pylons": {
@@ -687,6 +944,15 @@ export function storyUpdate(dt: number) {
     fireFoundSaid = true;
     say(S.FIRE_FOUND);
   }
+
+  if (story.stage === "changed") {
+    if (!late.walkSaid && player.pos.x < BLACKWOOD_X && !voice.busy) {
+      late.walkSaid = true;
+      say(S.CHANGED_WALK);
+    }
+    if (Math.hypot(player.pos.x - SETTLEMENT.x, player.pos.z - SETTLEMENT.z) < 19) arriveSettlement();
+  }
+  if (story.stage === "basin") basinUpdate(dt);
 
   if (story.stage === "ambush") {
     for (const w of waveTimers) {
@@ -781,5 +1047,49 @@ export function storySkip(to: Stage) {
     world.pylons.forEach((p) => (p.lit = true));
     player.pos.set(0, heightAt(0, 128), 128);
   }
+  if (["changed", "settlement", "basin", "choir"].includes(to)) {
+    world.pylons.forEach((p) => (p.lit = true));
+    world.setCampfire(true);
+    farlands.dressAs(save.look);
+  }
+  if (to === "changed") {
+    player.pos.copy(ARENA).add(new THREE.Vector3(0, 0, -6));
+    startChanged();
+  }
+  if (to === "settlement") {
+    farlands.setLive(true);
+    farlands.placeInes(null);
+    player.pos.copy(GATE);
+    story.stage = "changed";
+  }
+  if (to === "basin") {
+    player.pos.copy(ARENA).add(new THREE.Vector3(0, 0, 14));
+    startBasin();
+  }
+  if (to === "choir") {
+    world.basinOpen = true;
+    player.pos.set(CHOIR_C.x, 0, CHOIR_C.z - 30);
+    startBasin();
+    story.stage = "basin";
+  }
   void input;
 }
+
+/** Pick the story up at a saved chapter (the menu's Continue). */
+export function resumeStory(ch: Stage) {
+  state.mode = "story";
+  state.runStart = state.elapsed;
+  farlands.dressAs(save.look);
+  sfx.startAmbience();
+  markRegion("fallsite");
+  storySkip(ch);
+  world.setCampfire(true);
+  if (ch === "pylons") player.pos.set(4, 0, 6);
+}
+
+export const CHAPTER_NAMES: Record<string, string> = {
+  pylons: "Chapter Three · Resonance",
+  boss: "Chapter Four · The Warden",
+  changed: "Chapter Five · The Changed",
+  basin: "Chapter Six · The Rift Basin",
+};

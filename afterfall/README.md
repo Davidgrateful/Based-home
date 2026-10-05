@@ -20,7 +20,9 @@ The full script and story bible live in [`src/script.ts`](src/script.ts). The pr
 | **II · The Hollow** | The woods come for the fire. Wristbands, statuses: terminated, missing, transferred. Rhea never asked where "transferred" went. |
 | **III · Resonance** | Light three towers. Each one costs a secret: Rhea's orders were to keep you *asleep* until you landed *here*. |
 | **IV · The Warden** | Patient One has counted every fall. *"Ten thousand. No. Ten thousand and one? You're not the one I was expecting."* |
-| **Epilogue** | The Choir: "You are the one we did not count." |
+| **V · The Changed** | Ines, Patient 4382 ("missing"), was dropped off by Rhea. She leads you to a settlement of survivors deep in the Blackwood: a wall of wristbands, and yours already on it, yellowed with age. At the fire the truths conflict, and you choose: **leave your band on the wall, or keep it.** |
+| **VI · The Rift Basin** | Floating rocks and hospital beds, low gravity, cyan cracks, and your own echo walking a few seconds behind you. |
+| **VII · The Choir** | A ring of white figures wearing your clothes. *"Every one of us was you."* You build the fire. You write the line in the registry yourself. Then you're back on the plane, and the patient answers Rhea in their sleep. |
 
 ## The world
 
@@ -33,7 +35,13 @@ Named regions announce themselves the first time you walk in, and the **field ma
 | 03 · Meridian Field Station | Red trees, tents, a lab cabin with its door hanging open, restraint straps on the gurneys, one emergency lamp still turning. |
 | 04 · The Tower Fields | Cyan rune light. |
 | 05 · The Warden's Domain | The stone circle and the rift. |
-| 06–07 · The Hollow Settlement, The Rift Basin | Not reachable yet. |
+| 06 · The Hollow Settlement | Barred and cold until Chapter Five, then firelight, a palisade, the Changed. |
+| 07 · The Rift Basin | Down is a suggestion here. |
+| 08 · The Choir | White. |
+
+**Three kinds of threat:** the **Hollow** (former patients, whispering scraps of hospital life), the **Things** (natives that were here first: territorial, they fear firelight, and they lunge) and the **Changed** (survivors who adapted; some help).
+
+**The world remembers.** Every loop leaves evidence: more tally marks on the ambulance, your wristbands by the fire, a cairn that wasn't there, a fallen tree, the mast light going out. Within a loop, each night's fire gets one quiet, escalating beat: a figure at the edge of the light, a voice that isn't Rhea's, a page in your handwriting, a stand-off, a tear. From the third loop you remember which way they come, and they come that way.
 
 Colour carries meaning: **orange** is people and safety (fire), **cyan/white** is the rift and anything impossible, **red** is danger and corruption, **black** is unknown.
 
@@ -138,9 +146,12 @@ Deploy `dist/` anywhere static. On Vercel, set the root directory to `afterfall`
 | File | Purpose |
 | --- | --- |
 | `src/script.ts` | Story bible and every line of dialogue, the Echoes, omens and loop-wake lines |
-| `src/story.ts` | Chapter One: cold open, stages, cinematics, the boss |
+| `src/story.ts` | The story, prologue to Chapter Seven: stages, cinematics, the boss, the ending |
 | `src/signs.ts`, `src/records.ts` | The Fallsite's evidence (tracks, tally marks, the figure, the case) and the subject registry |
 | `src/regions.ts`, `src/map.ts` | Named regions and the fog-of-war field map |
+| `src/farlands.ts`, `src/choice.ts` | The settlement and the Changed, the Rift Basin, the Choir; the on-screen choice |
+| `src/fauna.ts` | The Things: wildlife spawning in the Blackwood and the Basin |
+| `src/memory.ts` | World memory across loops and the escalating fire beats |
 | `src/cinesets.ts` | The plane interior set and cast for the cold open and flashback |
 | `src/night.ts` | The Long Night: dusk/storm/dawn, waves, omens, shop, loop reset |
 | `src/cinematic.ts` | Letterboxed, skippable camera shots |

@@ -474,3 +474,91 @@ export function buildStaff() {
   g.position.z = 0.1;
   return { group: g, orbMat };
 }
+
+// ------------------------------------------------------------------ natives
+/**
+ * A Thing: something that lived here long before the first patient fell.
+ * Low, long-legged, eyeless but for a pale slit, with a ridge of quills.
+ * It fills the Humanoid contract so the enemy code can drive it: the arm
+ * pivots are the hind legs, the leg pivots the forelegs.
+ */
+export function buildThing(): Humanoid {
+  const hide = mat(0x4a5048, { roughness: 0.7 });
+  const belly = mat(0x9a9a88, { roughness: 0.8 });
+  const plate = mat(0x1b1d1c, { roughness: 0.45, metalness: 0.2 });
+  const eyes = new THREE.MeshStandardMaterial({ color: 0x0b0d0b, emissive: 0xc8ffd8, emissiveIntensity: 2, roughness: 0.3 });
+  const root = new THREE.Group();
+  const body = new THREE.Group();
+  body.position.y = 0.72;
+  root.add(body);
+  const torso = add(body, new THREE.CapsuleGeometry(0.24, 0.8, 6, 14), hide);
+  torso.rotation.x = Math.PI / 2;
+  const under = add(body, new THREE.CapsuleGeometry(0.2, 0.7, 6, 12), belly, 0, -0.06, 0);
+  under.rotation.x = Math.PI / 2;
+  // back plates and quills
+  for (let i = 0; i < 5; i++) {
+    const p = add(body, new THREE.SphereGeometry(0.2, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), plate, 0, 0.12, 0.42 - i * 0.2);
+    p.scale.set(1, 0.45, 0.9);
+    const q = add(body, new THREE.ConeGeometry(0.025, 0.32, 6), plate, 0, 0.32, 0.38 - i * 0.2);
+    q.rotation.x = -0.6;
+  }
+  // neck + head: long, low, a vertical slit that glows
+  const head = new THREE.Group();
+  head.position.set(0, 0.06, 0.62);
+  body.add(head);
+  const neck = add(head, new THREE.CylinderGeometry(0.09, 0.14, 0.4, 10), hide, 0, 0.02, 0.12);
+  neck.rotation.x = Math.PI / 2 - 0.3;
+  const skull = add(head, new THREE.CapsuleGeometry(0.11, 0.3, 6, 12), hide, 0, 0.08, 0.42);
+  skull.rotation.x = Math.PI / 2 + 0.15;
+  const jaw = add(head, new THREE.BoxGeometry(0.14, 0.05, 0.32), belly, 0, -0.02, 0.44);
+  jaw.rotation.x = 0.12;
+  for (const x of [-1, 0, 1]) add(head, new THREE.SphereGeometry(0.018, 8, 6), eyes, x * 0.05, 0.16 + (x === 0 ? 0.02 : 0), 0.5 - Math.abs(x) * 0.03);
+  for (const x of [-1, 1]) add(head, new THREE.SphereGeometry(0.014, 8, 6), eyes, x * 0.08, 0.12, 0.42);
+  // throat sac: the light it hunts by
+  add(head, new THREE.SphereGeometry(0.06, 10, 8), eyes, 0, -0.06, 0.3).scale.set(1, 0.7, 1.3);
+  // legs: thin, long, two segments (pivot at the hip/shoulder)
+  const limb = (x: number, z: number) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(x * 0.2, -0.04, z);
+    const upper = add(pivot, new THREE.CapsuleGeometry(0.045, 0.32, 4, 8), hide, x * 0.08, -0.16, 0);
+    upper.rotation.z = x * 0.5;
+    const lower = add(pivot, new THREE.CapsuleGeometry(0.032, 0.42, 4, 8), plate, x * 0.16, -0.5, 0.04);
+    lower.rotation.z = -x * 0.12;
+    add(pivot, new THREE.ConeGeometry(0.05, 0.12, 6), plate, x * 0.17, -0.72, 0.06).rotation.x = Math.PI;
+    body.add(pivot);
+    return pivot;
+  };
+  const legL = limb(-1, 0.38);
+  const legR = limb(1, 0.38);
+  const armL = limb(-1, -0.38);
+  const armR = limb(1, -0.38);
+  const weapon = new THREE.Group();
+  head.add(weapon);
+  return finish({ root, body, head, armL, armR, legL, legR, weapon, eyes, mats: [hide, belly, plate] });
+}
+
+/** One of the Changed: a survivor who stayed long enough for the rift to
+ *  start rewriting them. Human, mostly. One arm has gone to cyan crystal. */
+export function buildChanged(o: { cloth: number; skin: number; pants: number; hair?: number; wrap?: number }): Humanoid {
+  const h = core({ skin: o.skin, top: o.cloth, pants: o.pants, w: 0.96, limb: 0.054, eye: 0x7ae2ff });
+  if (o.hair !== undefined) {
+    const hm = mat(o.hair, { roughness: 0.95 });
+    h.mats.push(hm);
+    const c = add(h.skull, cap(0.124, 0.55), hm);
+    c.rotation.x = -0.35;
+  }
+  // a cloth wrap over the lower face
+  const wrap = mat(o.wrap ?? 0x4a4038, { roughness: 1 });
+  h.mats.push(wrap);
+  const w = add(h.head, new THREE.CylinderGeometry(0.105, 0.11, 0.07, 16, 1, true), wrap, 0, -0.04, 0.012);
+  w.scale.z = 1.08;
+  // crystal growth along the left arm and shoulder
+  const crystal = new THREE.MeshStandardMaterial({ color: 0x9eeaf5, emissive: 0x2ab8d8, emissiveIntensity: 0.9, roughness: 0.15, metalness: 0.1, flatShading: true });
+  for (let i = 0; i < 7; i++) {
+    const c = add(h.armL, new THREE.OctahedronGeometry(0.035 + (i % 3) * 0.012, 0), crystal, -0.03 + Math.sin(i * 2.3) * 0.03, -0.1 - i * 0.08, Math.cos(i * 1.7) * 0.03);
+    c.scale.y = 1.8;
+    c.rotation.z = i * 0.7;
+  }
+  for (let i = 0; i < 3; i++) add(h.body, new THREE.OctahedronGeometry(0.04, 0), crystal, -0.2 - i * 0.03, 0.62 + i * 0.05, -0.02 + i * 0.03).scale.y = 2;
+  return finish(h);
+}

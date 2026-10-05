@@ -85,6 +85,8 @@ export class Player {
   invuln = 0;
   hurtFlash = 0;
   airborne = false;
+  /** Below 1 inside gravity anomalies (the Basin). */
+  gravityMul = 1;
   hasAxe = false;
   riftBound = false; // token-holder perk
   firstPerson = true;
@@ -234,7 +236,7 @@ export class Player {
       this.vy = 7.5;
       this.airborne = true;
     }
-    this.vy -= 22 * dt;
+    this.vy -= 22 * this.gravityMul * dt;
     this.pos.y += this.vy * dt;
     if (this.pos.y <= ground) {
       this.pos.y = ground;

@@ -82,6 +82,9 @@
       </div>
     </div>
 
+    <!-- A decision (choice.ts). -->
+    <div id="choice"><div class="choice-box"><p id="choice-prompt"></p><button id="choice-a" class="choice-opt"></button><button id="choice-b" class="choice-opt"></button></div></div>
+
     <!-- The registry found beside the fire pit (records.ts). -->
     <div id="records">
       <div class="rec-sheet">
@@ -108,13 +111,15 @@
           <p class="tag">The sky has a door. You fell through it.</p>
         </header>
         <nav class="menu">
-          <button class="mi" id="btn-story"><span class="mi-t">Chapter One</span><span class="mi-d">The Fallsite. Story, about twenty minutes.</span></button>
+          <button class="mi" id="btn-continue" hidden><span class="mi-t">Continue</span><span class="mi-d" id="continue-sub"></span></button>
+          <button class="mi" id="btn-story"><span class="mi-t">Chapter One</span><span class="mi-d">The whole story, about forty minutes.</span></button>
           <button class="mi" id="btn-night"><span class="mi-t">The Long Night</span><span class="mi-d" id="night-sub">Survive until dawn. Then do it again.</span></button>
           <button class="mi" id="btn-coop"><span class="mi-t">Play together</span><span class="mi-d">The Long Night with friends. Up to eight survivors.</span></button>
           <button class="mi" id="btn-character"><span class="mi-t">Survivor</span><span class="mi-d" id="char-sub">Name and dress your character.</span></button>
           <button class="mi" id="btn-wallet"><span class="mi-t">Wallet</span><span class="mi-d" id="wallet-sub">Robinhood Chain Testnet</span></button>
           <button class="mi" id="btn-mute"><span class="mi-t">Sound</span><span class="mi-d" id="mute-sub">On</span></button>
         </nav>
+        <p id="menu-desc" aria-live="polite"></p>
       </div>
       <footer class="foot">
         <dl class="records">

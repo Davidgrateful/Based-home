@@ -80,73 +80,88 @@ Net protocol shapes, the enemy `KINDS` order, the save key, touch input, the voi
 10. **First Hollow** (new). One figure walks into the firelight muttering hospital words. The first fight is one on one.
 11. Its wristband. Then the woods empty out toward you: Chapter Two.
 
-## L. World map (target)
+## L. World map
 
-(Stages 1–3 below are built as of this pass.)
+Everything below is built.
 
-| # | Region | Status | Role | Read |
+| # | Region | Where | Role | Read |
 |---|---|---|---|---|
-| 01 | The Fallsite | built | Crash scar, ambulance, fire, records | Burning wreck, orange fire, white hull |
-| 02 | The Blackwood | built (west belt) | First exploration, abandoned camps, records | Black trunks, low fog, no flora glow |
-| 03 | Meridian Field Station | built (east, by tower 1) | Company history, Rhea's link | Red trees, white tents, dead floodlights |
-| 04 | The Tower Fields | built | Towers / resonance | Cyan rune light |
-| 05 | The Warden's Domain | built (north circle) | Patient One | Standing stones, red ground |
-| 06 | The Hollow Settlement | planned | The Changed: survivors who adapted | Firelight, salvaged walls |
-| 07 | The Rift Basin | planned | Gravity anomalies, floating debris | Cyan/white, broken ground |
-| 08 | The Choir | planned (late) | Reality unstable | White |
+| 01 | The Fallsite | crash scar | Crash, ambulance, fire, registry | Burning wreck, orange fire, white hull |
+| 02 | The Blackwood | west of x = −38 | First exploration, natives | Black trunks, no glow, thick fog, mist |
+| 03 | Meridian Field Station | east (80, 26) | Company history | Red trees, tents, lab cabin, one turning lamp |
+| 04 | The Tower Fields | around the 3 towers | Resonance | Cyan rune light |
+| 05 | The Warden's Domain | north stone circle | Patient One | Standing stones, red ground, gaps north and south |
+| 06 | The Hollow Settlement | deep Blackwood (−124, 104) | The Changed, the wristband wall, the choice | Firelight, palisade, salvage; barred and cold until Chapter Five |
+| 07 | The Rift Basin | past the circle (0, 262) | Low gravity, your own echo, natives | Floating rocks and hospital beds, cyan cracks |
+| 08 | The Choir | Basin's north edge (0, 304) | The truth, the ending | White: fog, ground, a ring of figures in your clothes, the world repeated |
 
 Navigation landmarks:
-- **The broken radio mast** at the Fallsite: tall, with a red light.
-- **The red trees** at the station.
+- **The red light on the relay mast:** home. It goes dark from the fifth loop.
+- **The red trees** around the field station.
 - **Cyan beams** from lit towers.
-- **The rift glow** to the north.
+- **The settlement's fire** through the black trees.
+- **The white column** over the Choir, visible from the title screen on.
 
-The map starts blank and reveals as you walk. Regions beyond the edge show as distorted static until the story reaches them.
+The map frames whatever you've discovered. The Settlement, Basin and Choir appear as scrambled names until the story opens them.
 
 ## M. Story structure
-- **Prologue: The Flight.** We see the people before we lose them.
-- **Chapter One: The Fallsite.** Survive, discover, become 10001.
-- **Chapter Two: The Hollow.** The woods come for the fire. Wristbands and patient numbers.
-- **Chapter Three: Resonance.** Towers; the field station; Rhea's orders.
-- **Chapter Four: The Warden.** "Ten thousand." "…No. Ten thousand and one?" "You're not the one I was expecting."
-- **The Long Night (the loop).**
-  1. "I need to survive."
-  2. "I've been here before."
-  3. "Something changed."
-  4. "I can use what I remember."
-  5. "I understand the loop."
+- **Prologue: The Flight.** We see the people before we lose them. The watcher counts "ten thousand… and one."
+- **Chapter One: The Fallsite.**
+  1. Wake, two moons, black box.
+  2. The signs: tracks, tally marks, breathing, a figure, a voice.
+  3. The fire, then the registry: **10001 ACTIVE**, handwritten.
+  4. One Hollow walks into the light.
+- **Chapter Two: The Hollow.** The woods come for the fire.
+- **Chapter Three: Resonance.** Towers; Rhea's orders were to keep you asleep.
+- **Chapter Four: The Warden.** "Ten thousand. No. Ten thousand and one? You're not the one I was expecting."
+- **Chapter Five: The Changed.**
+  1. Ines (4382, "missing") meets you at the circle. Rhea dropped her off.
+  2. The settlement: Teo, the wristband wall, and your band, yellowed, nailed up years ago.
+  3. At the fire the truths conflict. The rift is a mouth (Teo), a door (Ines), or a pickup (Rhea, who never asked).
+  4. **Choice:** leave your band on the wall (be a person) or keep it (be the key). It changes how the Choir names you.
+- **Chapter Six: The Rift Basin.** Low gravity, floating relics, your echo a few seconds behind you, a fight on the way north.
+- **Chapter Seven: The Choir.**
+  1. "Every one of us was you." Someone has to build the fire, and someone has to write it down.
+  2. You build the fire ("right next to where I woke up") and write the 10001 line yourself.
+  3. Cut to the plane: "Hey, sleeper… Nobody's going anywhere tonight." The patient answers in their sleep: "I know."
+- **The Long Night (the loop).** Loop wake lines move through five stages:
+  1. survive
+  2. been here before
+  3. something changed
+  4. use what you remember (the storm comes from the direction you predict)
+  5. understand the loop
 
-## N. The Patient 10001 mystery
-- **Surface:** Meridian sent ten thousand subjects through. You are listed as 10001, ACTIVE, before you ever boarded.
-- **Plants** (kept small, all in the first ten minutes):
-  - The watcher's count stops at ten thousand, then hesitates.
-  - The 10001 record is dated before the flight and is written by hand, not printed.
-  - Rhea, in the wake scene: "You always pick at the wristband." She has said this before.
-  - The fire pit was built for you, and the records case was carried to it.
-  - Echo 12 is your own voice.
-- **Truth** (not locked yet): the registry stops at 10000 because Meridian stopped there. 10001 was added by someone who had already lived this, inside the loop: you, on an earlier cycle. You built the fire. You carried the case. "Someone knew Patient 10001 would arrive" is true, and that someone is the player. The Warden was waiting for 10000, the last of Meridian's keys, and you are the first patient who wasn't sent. You came back. The opening scene is the truth all along: Rhea says "Nobody's going anywhere tonight" and nobody does; the night repeats.
+## N. The Patient 10001 mystery (resolved in Chapter Seven)
+- **Surface:** Meridian sent ten thousand subjects through. You are listed as 10001, ACTIVE, before you boarded.
+- **Plants:**
+  - The watcher's hesitating count.
+  - The handwritten line dated before the flight.
+  - "You always pick at the wristband."
+  - The fire pit built for you, and the case carried to it.
+  - Your old band on the settlement wall.
+  - The white column on the title screen.
+  - Echo 12 in your own voice.
+- **Truth:** every time you fall, you arrive before yourself. The Choir are the ones who didn't forget: earlier yous. You build the fire, carry the case and write yourself in, so the next you is expected. The opening scene was the truth: nobody's going anywhere tonight.
 
-## O. Implementation plan (order)
-1. **Narrative spine** (this pass)
-   - Rename to 10001 in all script and UI.
-   - The player doesn't know their number until the records.
-   - Signs sequence, fire, records overlay, first Hollow one on one.
-   - New Warden meeting.
-   - Hollow whispers.
-2. **World and map** (this pass)
-   - Named regions with entry cards.
-   - Radio mast and field-station landmarks; Blackwood fog and dark trunks.
-   - Fog-of-war map (M / map button) saved per browser.
-3. **Colour language** (this pass)
-   - Rift and tears move to cyan/white.
-   - Echo ghosts move to white.
-   - Red is kept for danger and corruption.
-   - Ground mist near the forest.
-4. **Threat categories** (next)
-   - "Things", native creatures: a new appended `KINDS` entry with its own model and behaviour.
-   - "Changed", intelligent survivors: NPCs in the Hollow Settlement.
-5. **World memory** (next)
-   - Loop-indexed changes around the fire: objects, footprints closer, new paths.
-6. **Title screen poster** (next)
-   - Wreck, fire, rift and silhouette composition.
-7. **New regions** (later): Settlement, Rift Basin, Choir.
+## O. What was built (in order)
+1. **Narrative spine:**
+   - Patient 10001.
+   - The signs, the registry and the first Hollow.
+   - The Warden meeting and the Hollow whispers.
+2. **World and map:** regions with cards, the mast, the field station, the Blackwood, and the fog-of-war field map.
+3. **Colour language:** cyan/white rift, warm fire, red danger, ground mist.
+4. **Threats:**
+   - The **Things** (natives: territorial, they fear firelight, they lunge, and they're not part of any wave; appended to `KINDS` so co-op snapshots stay compatible).
+   - The **Changed** (Ines, Teo and two others at the settlement).
+5. **Chapters Five to Seven:**
+   - The settlement, the Basin and the Choir.
+   - The wristband choice and the ending.
+   - **Continue** on the menu for chapters 3–6.
+6. **World memory** (`memory.ts`):
+   - **Across loops:** more tally marks, your bands by the fire, a cairn (loop 3), a fallen tree (loop 4), the mast going dark (loop 5). After the story, the station lamp goes out.
+   - **Across nights:** one quiet beat per night (a figure, a voice that isn't Rhea, a page in your handwriting, a stand-off at the edge of the light, a tear over the fire).
+   - **Remembered direction** from loop 3 (the storm comes from where you say).
+7. **Title poster:** a low shot past the survivor at the fire, the rift breathing over the wreck, an oversized wordmark and a one-row menu.
+8. **Intro video:** re-rendered from the game's own script with MBROLA voices.
+
+Performance notes: one extra point light each for the field station and the settlement. Everything else is emissive, sprites or instanced meshes. Basin debris is one instanced mesh.

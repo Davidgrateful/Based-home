@@ -179,6 +179,13 @@ export class Sfx {
     this.noise(1.6, 700, 0.5, 0.55, "bandpass", 0.1);
     this.tone(90, 1.2, 0.18, "sine", 140, 0.1);
   }
+  /** Pen on paper. */
+  scratch() { this.noise(0.09 + Math.random() * 0.06, 2400 + Math.random() * 1500, 2, 0.12, "bandpass"); }
+  /** A native's call: a dry run of clicks, then a low warble. */
+  click() {
+    for (let i = 0; i < 7; i++) this.noise(0.02, 2600 + i * 120, 4, 0.35 - i * 0.03, "bandpass", i * 0.05);
+    this.tone(180, 0.6, 0.12, "triangle", 120, 0.4);
+  }
   /** One pop of burning wood; call at random intervals near a fire. */
   crackle(gain = 0.2) {
     this.noise(0.03 + Math.random() * 0.04, 1800 + Math.random() * 2400, 1.2, gain, "bandpass");

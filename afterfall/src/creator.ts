@@ -2,7 +2,7 @@
 // The preview is the real in-game model standing by the campfire.
 
 import * as THREE from "three";
-import { $, camera, persist, player, scene, sfx, voice } from "./ctx";
+import { $, camera, persist, player, scene, sfx, voice, world } from "./ctx";
 import { DEFAULT_LOOK, LOOK, type Look, randomLook, type Swatch } from "./models";
 import { playerName, save } from "./save";
 import { CAMP, heightAt } from "./world";
@@ -31,6 +31,9 @@ const ROWS: Row[] = [
 
 /** Where the survivor stands on the menu and in the creator. */
 export const STAND = new THREE.Vector3(CAMP.x - 1.7, 0, CAMP.z + 1.2);
+/** Title shot: from the camp toward the wreck (and the sky over it). */
+const POSTER_DIR = new THREE.Vector3(-12 - STAND.x, 0, 30 - STAND.z).normalize();
+const POSTER_SIDE = new THREE.Vector3(-POSTER_DIR.z, 0, POSTER_DIR.x);
 STAND.y = heightAt(STAND.x, STAND.z);
 
 export const creator = { open: false, spin: 0.6 };
@@ -191,10 +194,18 @@ export function menuCamera(dt: number, t: number) {
     camTarget.copy(STAND).add(new THREE.Vector3(0.7, 1.15, 3.0));
     lookTarget.copy(STAND).add(new THREE.Vector3(-0.55, 0.95, 0));
   } else {
-    // facing the fire, camera drifting slowly over the camp
-    pose(t, Math.atan2(CAMP.x - STAND.x, CAMP.z - STAND.z) + 0.5);
-    camTarget.copy(CAMP).add(new THREE.Vector3(3.6 + Math.sin(t * 0.05) * 0.8, 1.7, 6.4));
-    lookTarget.copy(CAMP).add(new THREE.Vector3(-3.4, 1.15, -0.4));
+    // The poster: low behind the survivor, the fire at their side, the
+    // burning wreck ahead and the rift breathing open in the sky above it.
+    pose(t, Math.atan2(POSTER_DIR.x, POSTER_DIR.z));
+    const push = (Math.sin(t * 0.06) + 1) * 0.35;
+    camTarget.copy(STAND).addScaledVector(POSTER_DIR, -7 + push).addScaledVector(POSTER_SIDE, -2.8).setY(STAND.y + 1.05);
+    lookTarget.copy(STAND).addScaledVector(POSTER_DIR, 22).addScaledVector(POSTER_SIDE, -3).setY(STAND.y + 7.5);
+    const tear = world.skyTear;
+    tear.visible = true;
+    tear.position.copy(STAND).addScaledVector(POSTER_DIR, 190).setY(105);
+    tear.scale.setScalar(1.25);
+    tear.lookAt(camera.position);
+    world.skyTearMat.uniforms.uOpen.value = 0.32 + Math.sin(t * 0.35) * 0.08;
   }
   const k = Math.min(1, dt * 2.2);
   camera.position.lerp(camTarget, k);
@@ -204,4 +215,5 @@ export function menuCamera(dt: number, t: number) {
 
 export function menuLightOff() {
   key.intensity = 0;
+  world.skyTear.visible = false;
 }

@@ -22,8 +22,26 @@ export function heightAt(x: number, z: number) {
   const crash = smoothstep(18, 55, Math.hypot(x + 6, z - 16));
   // Arena is a shallow bowl.
   const arena = smoothstep(20, 34, Math.hypot(x - ARENA.x, z - ARENA.z));
-  return h * crash * arena + (1 - arena) * -2;
+  const ground = h * crash * arena + (1 - arena) * -2;
+  // North of the Warden's circle the ground breaks: the Rift Basin. Ridged,
+  // cracked, sinking toward a crater; flat and pale where the Choir waits.
+  const db = Math.hypot(x - BASIN_C.x, z - BASIN_C.z);
+  const basin = 1 - smoothstep(58, 80, db);
+  if (basin <= 0) return ground;
+  const ridge = Math.abs(Math.sin(x * 0.11 + Math.sin(z * 0.05) * 2) + Math.sin(z * 0.13 + x * 0.04));
+  const shards = Math.max(0, Math.sin(x * 0.31) * Math.sin(z * 0.27) - 0.55) * 9;
+  const crater = -7 * (1 - smoothstep(0, 46, db));
+  const choir = 1 - smoothstep(16, 30, Math.hypot(x - CHOIR_C.x, z - CHOIR_C.z));
+  const broken = (-3 + ridge * 3.2 + shards + crater) * (1 - choir) + choir * -4;
+  return ground + (broken - ground) * basin;
 }
+
+/** The Rift Basin, past the Warden's circle; the Choir at its far edge. */
+export const BASIN_C = { x: 0, z: 262 };
+export const BASIN_R = 70;
+export const CHOIR_C = { x: 0, z: 304 };
+/** The settlement of the Changed, deep in the Blackwood. */
+export const SETTLEMENT = { x: -124, z: 104 };
 
 export const AMBULANCE = { minX: -1.35, maxX: 1.35, minZ: -3.25, maxZ: 3.25 };
 export const BEACON = new THREE.Vector3(-12.5, 0, 33);
@@ -84,6 +102,8 @@ interface Mood {
 }
 
 export const MOODS = {
+  basin: { fog: 0x0f2129, density: 0.017, hemi: 1.1, tint: [0.7, 1.25, 1.35], sun: 1.2 },
+  choir: { fog: 0xd9e4e8, density: 0.03, hemi: 2.6, tint: [2.6, 2.7, 2.75], sun: 2.4 },
   night: { fog: 0x161a22, density: 0.0115, hemi: 1.2, tint: [1, 1, 1], sun: 1.5 },
   dusk: { fog: 0x33282a, density: 0.009, hemi: 1.4, tint: [1.45, 1.05, 0.95], sun: 1.8 },
   storm: { fog: 0x11141b, density: 0.0155, hemi: 0.9, tint: [0.75, 0.78, 0.95], sun: 1.1 },
@@ -135,6 +155,8 @@ export class World {
   caches: Cache[] = [];
   /** Trunk positions, for the map. */
   treeSpots: { x: number; z: number; kind: 0 | 1 | 2 }[] = [];
+  /** Fires other than the campfire (the settlement's). */
+  otherFires: THREE.Vector3[] = [];
   /** 0..1: extra fog while inside the Blackwood. */
   fogBoost = 0;
   private fogBoostNow = 0;
@@ -150,6 +172,13 @@ export class World {
   private trail: { s: THREE.Sprite; life: number; vel: THREE.Vector3 }[] = [];
   private trailT = 0;
   private mood: Mood = MOODS.night as Mood;
+  /** A place's own weather (the Basin, the Choir) overrides the story mood. */
+  zoneMood: MoodName | null = null;
+  /** Things the loop has switched off. */
+  mastDark = false;
+  stationDark = false;
+  /** The way north past the Warden's circle (opened in Chapter Six). */
+  basinOpen = false;
   private moodFog = new THREE.Color(0x1d1533);
   private moodDensity = 0.0115;
   private ghostMat!: THREE.MeshBasicMaterial;
@@ -233,10 +262,10 @@ export class World {
     scene.add(this.sun, this.sun.target);
 
     // ---------- Terrain ----------
-    const size = 420;
-    const seg = 180;
-    const geo = new THREE.PlaneGeometry(size, size, seg, seg);
+    // 420 wide, and long enough north to hold the Basin and the Choir
+    const geo = new THREE.PlaneGeometry(420, 580, 180, 248);
     geo.rotateX(-Math.PI / 2);
+    geo.translate(0, 0, 80);
     const pos = geo.attributes.position as THREE.BufferAttribute;
     const colors = new Float32Array(pos.count * 3);
     const cA = new THREE.Color(0x2b2a2c);
@@ -253,6 +282,10 @@ export class World {
       c.lerp(cScorch, scorch * 0.8);
       const arena = 1 - smoothstep(16, 26, Math.hypot(x - ARENA.x, z - ARENA.z));
       c.lerp(new THREE.Color(0x2e1d1c), arena * 0.7);
+      const basin = 1 - smoothstep(50, 74, Math.hypot(x - BASIN_C.x, z - BASIN_C.z));
+      c.lerp(new THREE.Color(0x1a2a30), basin * 0.85);
+      const choir = 1 - smoothstep(14, 30, Math.hypot(x - CHOIR_C.x, z - CHOIR_C.z));
+      c.lerp(new THREE.Color(0xc9d2d4), choir);
       colors.set([c.r, c.g, c.b], i * 3);
     }
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
@@ -553,8 +586,11 @@ export class World {
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
     trunks.castShadow = canopy.castShadow = true;
     canopy.receiveShadow = true;
-    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST];
-    const clearR = (v: THREE.Vector3) => (v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : 14);
+    const BASIN_V = new THREE.Vector3(BASIN_C.x, 0, BASIN_C.z);
+    const SETTLE_V = new THREE.Vector3(SETTLEMENT.x, 0, SETTLEMENT.z);
+    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V];
+    const clearR = (v: THREE.Vector3) =>
+      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : 14;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
@@ -647,7 +683,7 @@ export class World {
     for (let i = 0; i < F; i++) {
       const x = (rand() - 0.5) * 2 * WORLD_RADIUS;
       const z = (rand() - 0.5) * 2 * WORLD_RADIUS + 30;
-      if (Math.hypot(x + 6, z - 16) < 14) {
+      if (Math.hypot(x + 6, z - 16) < 14 || Math.hypot(x - BASIN_C.x, z - BASIN_C.z) < 74) {
         m.makeScale(0, 0, 0);
       } else {
         const sc = 0.5 + rand();
@@ -938,6 +974,7 @@ export class World {
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * Math.PI * 2;
       if (Math.abs(a - Math.PI * 1.5) < 0.3) continue; // entrance gap to the south
+      if (Math.abs(a - Math.PI * 0.5) < 0.3) continue; // and north, toward the Basin
       const x = ARENA.x + Math.cos(a) * 24;
       const z = ARENA.z + Math.sin(a) * 24;
       const h = 4 + (i % 3) * 1.5;
@@ -1161,6 +1198,16 @@ export class World {
     this.tears.push({ mesh: m, life: 1.6 });
   }
 
+  /** Jump straight to the target weather (a hard cut, not a drift). */
+  snapMood() {
+    const mood = this.zoneMood ? (MOODS[this.zoneMood] as Mood) : this.mood;
+    this.moodFog.set(mood.fog);
+    this.moodDensity = mood.density;
+    this.hemi.intensity = mood.hemi;
+    this.sun.intensity = mood.sun;
+    (this.skyMat.uniforms.uTint.value as THREE.Vector3).set(...mood.tint);
+  }
+
   setMood(name: MoodName, density?: number) {
     this.mood = { ...(MOODS[name] as Mood) };
     if (density) this.mood.density = density;
@@ -1216,17 +1263,18 @@ export class World {
     // mood lerp
     const k = Math.min(1, dt * 0.8);
     const fog = this.scene.fog as THREE.FogExp2;
-    this.moodFog.lerp(new THREE.Color(this.mood.fog), k);
+    const mood = this.zoneMood ? (MOODS[this.zoneMood] as Mood) : this.mood;
+    this.moodFog.lerp(new THREE.Color(mood.fog), k);
     fog.color.copy(this.moodFog);
     (this.scene.background as THREE.Color).copy(this.moodFog);
-    this.moodDensity += (this.mood.density - this.moodDensity) * k;
+    this.moodDensity += (mood.density - this.moodDensity) * k;
     this.fogBoostNow += (this.fogBoost - this.fogBoostNow) * Math.min(1, dt * 0.5);
     fog.density = this.moodDensity + this.fogBoostNow * 0.014;
-    this.hemi.intensity += (this.mood.hemi - this.hemi.intensity) * k;
-    this.sun.intensity += (this.mood.sun - this.sun.intensity) * k;
+    this.hemi.intensity += (mood.hemi - this.hemi.intensity) * k;
+    this.sun.intensity += (mood.sun - this.sun.intensity) * k;
     const tint = this.skyMat.uniforms.uTint.value as THREE.Vector3;
-    tint.lerp(new THREE.Vector3(...this.mood.tint), k);
-    this.bigMoon.color.lerp(new THREE.Color(this.mood.blood ? 0xc8473c : 0xe4e0d6), k);
+    tint.lerp(new THREE.Vector3(...mood.tint), k);
+    this.bigMoon.color.lerp(new THREE.Color(mood.blood ? 0xc8473c : 0xe4e0d6), k);
 
     // campfire
     const cf = this.campfire;
@@ -1314,8 +1362,8 @@ export class World {
     this.monitorMat.emissiveIntensity = 0.8 + (Math.sin(t * 6) > 0.85 ? 1.6 : 0);
 
     for (const m of this.mist) m.s.position.set(m.base.x + Math.sin(t * 0.05 + m.ph) * 3, m.base.y, m.base.z + Math.cos(t * 0.04 + m.ph) * 3);
-    this.mastLight.opacity = t % 1.8 < 0.25 ? 0.95 : 0.3;
-    this.stationLamp.intensity = 6 + Math.max(0, Math.sin(t * 2.4)) * 18;
+    this.mastLight.opacity = this.mastDark ? 0 : t % 1.8 < 0.25 ? 0.95 : 0.3;
+    this.stationLamp.intensity = this.stationDark ? 0 : 6 + Math.max(0, Math.sin(t * 2.4)) * 18;
     this.stationFlicker.emissiveIntensity = Math.random() < 0.08 ? 0.1 : Math.sin(t * 31) > -0.6 ? 1.6 : 0.3;
     this.beaconMat.emissiveIntensity = Math.sin(t * 5) > 0 ? 3 : 0.2;
     this.beaconLight.intensity = Math.sin(t * 5) > 0 ? 5 : 0.3;

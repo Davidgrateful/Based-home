@@ -42,8 +42,9 @@ function add(body: HTMLElement, html: string) {
   sheet.scrollTop = sheet.scrollHeight;
 }
 
-/** Show the registry. Resolves when the player closes it. */
-export async function showRecords(): Promise<void> {
+/** Show the registry. Resolves when the player closes it. With `writing`,
+ *  the last line isn't there yet: the player writes it. */
+export async function showRecords(writing = false): Promise<void> {
   const el = $("records");
   const body = $("rec-body");
   const hint = $("rec-hint");
@@ -71,18 +72,33 @@ export async function showRecords(): Promise<void> {
     await step(260);
   }
   await step(1400);
+  if (writing) {
+    el.removeEventListener("pointerdown", speedUp);
+    removeEventListener("keydown", speedUp);
+    hint.textContent = TOUCH ? "Tap to write it down" : "Press E to write it down";
+    body.parentElement!.scrollTop = 1e6;
+    await waitClose(el);
+    hint.textContent = "";
+    for (let i = 0; i < 14; i++) setTimeout(() => sfx.scratch(), i * 140);
+  }
   // Not printed. Written in by hand, below the line where the programme closed.
   add(
     body,
-    `<div class="rec-row rec-hand"><span>10001</span><span>11 MAR</span><span class="st-active">ACTIVE</span><span class="rec-note">Flight 14 MAR.</span></div>`,
+    `<div class="rec-row rec-hand${writing ? " writing" : ""}"><span>10001</span><span>11 MAR</span><span class="st-active">ACTIVE</span><span class="rec-note">Flight 14 MAR.</span></div>`,
   );
   sfx.sting();
   el.removeEventListener("pointerdown", speedUp);
   removeEventListener("keydown", speedUp);
-  await sleep(1200);
+  await sleep(writing ? 2600 : 1200);
   hint.textContent = TOUCH ? "Tap to close" : "Press E to close";
   body.parentElement!.scrollTop = 1e6;
-  await new Promise<void>((done) => {
+  await waitClose(el);
+  el.classList.remove("show");
+  await sleep(300);
+}
+
+function waitClose(el: HTMLElement) {
+  return new Promise<void>((done) => {
     const close = (e: Event) => {
       if (e instanceof KeyboardEvent && !["KeyE", "Space", "Escape", "Enter"].includes(e.code)) return;
       removeEventListener("keydown", close);
@@ -92,6 +108,4 @@ export async function showRecords(): Promise<void> {
     addEventListener("keydown", close);
     el.addEventListener("pointerdown", close);
   });
-  el.classList.remove("show");
-  await sleep(300);
 }

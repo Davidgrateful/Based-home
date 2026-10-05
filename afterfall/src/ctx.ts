@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import { Sfx } from "./audio";
 import { Cine } from "./cinematic";
+import { Farlands } from "./farlands";
 import { EnemyManager } from "./enemies";
 import { FX } from "./fx";
 import { Input, Player } from "./player";
@@ -13,7 +14,7 @@ export { persist };
 import type { Line } from "./script";
 import { TokenLink } from "./token";
 import { Voice } from "./voice";
-import { AMBULANCE, heightAt, World, WORLD_RADIUS } from "./world";
+import { AMBULANCE, BASIN_C, BASIN_R, heightAt, World, WORLD_RADIUS } from "./world";
 
 export const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -54,6 +55,10 @@ export const sfx = new Sfx();
 export const token = new TokenLink();
 export const fx = new FX(scene);
 export const cine = new Cine(voice);
+/** The settlement, the Basin and the Choir (built once, woken by the story). */
+export const farlands = new Farlands(scene, world, save.look);
+farlands.setLive(!!save.flags.settlementFound);
+world.basinOpen = !!save.flags.basinOpen;
 
 export const state = {
   mode: "title" as "title" | "story" | "night",
@@ -105,9 +110,19 @@ export const bounds = {
     const cx = p.x;
     const cz = p.z - 20;
     const d = Math.hypot(cx, cz);
-    if (d > WORLD_RADIUS - 5) {
-      p.x = (cx / d) * (WORLD_RADIUS - 5);
-      p.z = (cz / d) * (WORLD_RADIUS - 5) + 20;
+    // the Basin joins the world north of the Warden's circle once it's open
+    const bx = p.x - BASIN_C.x;
+    const bz = p.z - BASIN_C.z;
+    const db = Math.hypot(bx, bz);
+    const inBasin = world.basinOpen && db < BASIN_R - 2;
+    if (d > WORLD_RADIUS - 5 && !inBasin) {
+      if (world.basinOpen && db - (BASIN_R - 2) < d - (WORLD_RADIUS - 5)) {
+        p.x = BASIN_C.x + (bx / db) * (BASIN_R - 2);
+        p.z = BASIN_C.z + (bz / db) * (BASIN_R - 2);
+      } else {
+        p.x = (cx / d) * (WORLD_RADIUS - 5);
+        p.z = (cz / d) * (WORLD_RADIUS - 5) + 20;
+      }
     }
   },
 };

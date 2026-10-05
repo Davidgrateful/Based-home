@@ -22,6 +22,7 @@ export interface Save {
   mem: { skin: number; muscle: number; wind: number; medic: number; sense: number; keeper: number };
   regions: string[]; // region ids the player has walked into
   fog: string; // discovered map cells, base64 bitset (map.ts)
+  flags: Record<string, boolean | string>; // one-time story beats and choices
 }
 
 const KEY = "afterfall.save.v1";
@@ -37,6 +38,7 @@ const fresh = (): Save => ({
   mem: { skin: 0, muscle: 0, wind: 0, medic: 0, sense: 0, keeper: 0 },
   regions: [],
   fog: "",
+  flags: {},
 });
 
 export const save: Save = (() => {

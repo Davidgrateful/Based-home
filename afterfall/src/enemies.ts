@@ -5,12 +5,13 @@
 //   brute   — slow, armored, ignores staggers, goes for the campfire
 //   shaman  — keeps its distance and throws rift bolts you can dodge
 //   warden  — Patient One: big swings, telegraphed ground slam, summons
+//   thing   — not a patient: a native. Territorial, fears firelight, lunges
 
 import * as THREE from "three";
-import { buildClub, buildGreatAxe, buildHumanoid, buildSpear, buildStaff, type Humanoid } from "./models";
+import { buildClub, buildGreatAxe, buildHumanoid, buildSpear, buildStaff, buildThing, type Humanoid } from "./models";
 import { type Circle, glowTexture, heightAt } from "./world";
 
-export type EnemyKind = "hollow" | "runner" | "brute" | "shaman" | "warden";
+export type EnemyKind = "hollow" | "runner" | "brute" | "shaman" | "warden" | "thing";
 export type State = "spawn" | "chase" | "windup" | "strike" | "recover" | "slamUp" | "dead";
 
 export interface PlayerLike {
@@ -21,7 +22,8 @@ export interface PlayerLike {
   damage(n: number, from: THREE.Vector3): void;
 }
 
-export const KINDS: EnemyKind[] = ["hollow", "runner", "brute", "shaman", "warden"];
+// Order is the network id: only ever append.
+export const KINDS: EnemyKind[] = ["hollow", "runner", "brute", "shaman", "warden", "thing"];
 export const STATES: State[] = ["spawn", "chase", "windup", "strike", "recover", "slamUp", "dead"];
 
 /** Compact network form: [id, kind, x, z, yaw, state, timer, hp, maxHp] */
@@ -46,6 +48,7 @@ const STATS: Record<EnemyKind, { hp: number; speed: number; range: number; dmg: 
   brute: { hp: 9, speed: 3.0, range: 2.6, dmg: 22, scale: 1.45, windup: 0.85 },
   shaman: { hp: 3, speed: 4.0, range: 16, dmg: 11, scale: 1, windup: 0.9 },
   warden: { hp: 34, speed: 3.4, range: 4.2, dmg: 26, scale: 2.3, windup: 0.8 },
+  thing: { hp: 4, speed: 6.4, range: 2.8, dmg: 10, scale: 1.15, windup: 0.5 },
 };
 
 export class Enemy {
@@ -77,19 +80,27 @@ export class Enemy {
   barFill: THREE.Mesh;
   deadFor = 0;
   targetFire = false;
+  /** Natives: where they range from, and whether you've given them a reason. */
+  home = new THREE.Vector3();
+  provoked = false;
+  noticed = false;
+  wanderT = 0;
+  wanderYaw = 0;
 
   constructor(kind: EnemyKind, at: THREE.Vector3, o: SpawnOpts) {
     this.kind = kind;
     const st = STATS[kind];
-    const looks: Record<EnemyKind, Parameters<typeof buildHumanoid>[0]> = {
+    const looks: Record<Exclude<EnemyKind, "thing">, Parameters<typeof buildHumanoid>[0]> = {
       hollow: { cloth: 0x3b2e24, skin: 0x8a6a52, pants: 0x2a221c, mask: 0xe8e0cc, eye: 0xff3a1a },
       runner: { cloth: 0x6b6f78, skin: 0x9a7a62, pants: 0x3a3c44, mask: 0xf4efe2, eye: 0xffe040 },
       brute: { cloth: 0x1f1a17, skin: 0x6a4a3a, pants: 0x151210, mask: 0xbfb49c, eye: 0xff3010, bones: true },
       shaman: { cloth: 0x2a1640, skin: 0x7a6a70, pants: 0x1a1024, mask: 0xd8d0f0, eye: 0x5ee0ff },
       warden: { cloth: 0x2a0d14, skin: 0x5a4a44, pants: 0x1a1214, mask: 0xd9cfb8, eye: 0xff1030, bones: true },
     };
-    this.model = buildHumanoid(looks[kind]);
-    if (kind === "warden") this.model.weapon.add(buildGreatAxe());
+    this.model = kind === "thing" ? buildThing() : buildHumanoid(looks[kind]);
+    if (kind === "thing") {
+      /* no weapon: it is the weapon */
+    } else if (kind === "warden") this.model.weapon.add(buildGreatAxe());
     else if (kind === "brute") this.model.weapon.add(buildClub());
     else if (kind === "shaman") {
       const s = buildStaff();
@@ -99,6 +110,8 @@ export class Enemy {
     this.scale = st.scale;
     this.model.root.scale.setScalar(this.scale);
     this.pos = at.clone();
+    this.home.copy(at);
+    this.wanderYaw = Math.random() * Math.PI * 2;
     this.maxHp = this.hp = st.hp * (o.hpMul ?? 1);
     this.speed = st.speed * (o.speedMul ?? 1) * (0.92 + Math.random() * 0.16);
     this.range = st.range;
@@ -118,7 +131,7 @@ export class Enemy {
     const bg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.09), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.6, depthWrite: false }));
     this.barFill = new THREE.Mesh(
       new THREE.PlaneGeometry(0.86, 0.06),
-      new THREE.MeshBasicMaterial({ color: kind === "warden" ? 0xff2040 : 0xff8a5a, depthWrite: false }),
+      new THREE.MeshBasicMaterial({ color: kind === "warden" ? 0xff2040 : kind === "thing" ? 0xc8e8d0 : 0xff8a5a, depthWrite: false }),
     );
     this.barFill.position.z = 0.001;
     this.bar.add(bg, this.barFill);
@@ -146,6 +159,12 @@ export class EnemyManager {
   others: PlayerLike[] = [];
   private nextId = 1;
   fire: FireLike | null = null;
+  /** Seconds the Hollow hold at the edge of the firelight (a stand-off). */
+  holdT = 0;
+  /** Lit fires: natives won't come into their light. */
+  lights: THREE.Vector3[] = [];
+  /** A native has noticed someone (first growl, first sighting line). */
+  onNotice?: (e: Enemy) => void;
   onHitPlayer?: () => void;
   onDeath?: (e: Enemy) => void;
   onSlam?: (e: Enemy) => void;
@@ -186,8 +205,15 @@ export class EnemyManager {
     return out;
   }
 
+  /** Living Hollow. Natives are wildlife, not a wave: they don't count. */
   get aliveCount() {
-    return this.list.filter((e) => e.alive).length;
+    return this.list.filter((e) => e.alive && e.kind !== "thing").length;
+  }
+
+  /** Quietly drop an enemy (wildlife that wandered out of range). */
+  remove(e: Enemy) {
+    this.scene.remove(e.model.root, e.bar);
+    this.list = this.list.filter((q) => q !== e);
   }
 
   clear() {
@@ -213,6 +239,7 @@ export class EnemyManager {
       da = Math.atan2(Math.sin(da), Math.cos(da));
       if (Math.abs(da) > arc && dist > 1.0) continue;
       e.flash = 0.15;
+      e.provoked = true;
       if (!apply) {
         this.onHit?.(e, dmg, heavy);
         n++;
@@ -244,6 +271,7 @@ export class EnemyManager {
 
   update(dt: number, t: number, me: PlayerLike, camera: THREE.Camera) {
     const fire = this.fire && this.fire.alive ? this.fire : null;
+    this.holdT = Math.max(0, this.holdT - dt);
     const targets = [me, ...this.others].filter((p) => !p.down);
     if (!targets.length) targets.push(me);
     for (const e of this.list) {
@@ -266,13 +294,13 @@ export class EnemyManager {
         const dPlayerFire = Math.hypot(player.pos.x - fire.pos.x, player.pos.z - fire.pos.z);
         const dMeFire = Math.hypot(e.pos.x - fire.pos.x, e.pos.z - fire.pos.z);
         const dMePlayer = Math.hypot(e.pos.x - player.pos.x, e.pos.z - player.pos.z);
-        goFire = (e.targetFire && dMePlayer > 4) || (dPlayerFire > 22 && dMeFire < dMePlayer && e.kind !== "warden");
+        goFire = e.kind !== "thing" && ((e.targetFire && dMePlayer > 4) || (dPlayerFire > 22 && dMeFire < dMePlayer && e.kind !== "warden"));
       }
       const tgt = goFire && fire ? fire.pos : player.pos;
       const dx = tgt.x - e.pos.x;
       const dz = tgt.z - e.pos.z;
       const dist = Math.hypot(dx, dz) - (goFire ? 0.8 : 0);
-      const want = Math.atan2(dx, dz);
+      let want = Math.atan2(dx, dz);
 
       // hit flash
       e.flash = Math.max(0, e.flash - dt);
@@ -280,7 +308,8 @@ export class EnemyManager {
 
       if (e.state === "dead") {
         e.deadFor += dt;
-        m.root.rotation.x = Math.min(Math.PI / 2, m.root.rotation.x + dt * 4);
+        if (e.kind === "thing") m.root.rotation.z = Math.min(Math.PI / 2, m.root.rotation.z + dt * 4);
+        else m.root.rotation.x = Math.min(Math.PI / 2, m.root.rotation.x + dt * 4);
         m.root.position.y = ground + 0.2 * e.scale - Math.max(0, e.deadFor - 2) * 0.6;
         if (e.deadFor > 4) {
           this.scene.remove(m.root, e.bar);
@@ -336,7 +365,40 @@ export class EnemyManager {
             if (e.timer <= 0 && e.pos.y >= ground - 0.01) e.state = "chase";
             break;
           case "chase":
+            if (e.kind === "thing") {
+              // its own ecosystem: keep out of firelight, range near home,
+              // and only hunt what comes close or hurts it
+              const light = this.lights.find((l) => Math.hypot(e.pos.x - l.x, e.pos.z - l.z) < 14);
+              if (light) {
+                want = Math.atan2(e.pos.x - light.x, e.pos.z - light.z);
+                turn(5);
+                move = e.speed * 0.8;
+                break;
+              }
+              if (!e.provoked && best > 13) {
+                e.wanderT -= dt;
+                if (e.wanderT <= 0) {
+                  e.wanderT = 2 + Math.random() * 3;
+                  const home = Math.atan2(e.home.x - e.pos.x, e.home.z - e.pos.z);
+                  const far = Math.hypot(e.home.x - e.pos.x, e.home.z - e.pos.z) > 12;
+                  e.wanderYaw = far ? home : e.yaw + (Math.random() - 0.5) * 2.4;
+                }
+                want = e.wanderYaw;
+                turn(2);
+                move = e.wanderT > 1 ? e.speed * 0.22 : 0;
+                break;
+              }
+              if (!e.noticed) {
+                e.noticed = true;
+                this.onNotice?.(e);
+              }
+            }
             turn(6);
+            if (this.holdT > 0 && fire && e.kind !== "warden" && Math.hypot(e.pos.x - fire.pos.x, e.pos.z - fire.pos.z) < 22) {
+              want = Math.atan2(fire.pos.x - e.pos.x, fire.pos.z - e.pos.z);
+              move = 0; // standing at the edge of the light, staring in
+              break;
+            }
             if (e.kind === "shaman" && !goFire) {
               // kite at mid range, cast when ready
               move = dist > 13 ? e.speed : dist < 8 ? -e.speed * 0.8 : 0;
@@ -370,6 +432,8 @@ export class EnemyManager {
                 this.castBolt(e, player);
                 e.castCd = 2.6 + Math.random() * 1.2;
               } else strikeTarget();
+              // natives lunge through the bite
+              if (e.kind === "thing") e.knock.set(Math.sin(e.yaw), 0, Math.cos(e.yaw)).multiplyScalar(9);
             }
             break;
           case "strike":
@@ -492,12 +556,24 @@ export class EnemyManager {
         m.body.rotation.x += (0 - m.body.rotation.x) * Math.min(1, dt * 8);
       }
       if (e.kind === "runner") m.body.rotation.x = Math.max(m.body.rotation.x, am > 1 ? 0.35 : 0);
+      if (e.kind === "thing") {
+        // trot: diagonal pairs together
+        const g = Math.sin(e.walk * 1.4) * Math.min(1, am / 2) * 0.6;
+        m.legL.rotation.x = g;
+        m.armR.rotation.x = g;
+        m.legR.rotation.x = -g;
+        m.armL.rotation.x = -g;
+        const k = e.state === "windup" ? 1 - e.timer / e.windup : 0;
+        m.body.rotation.x = e.state === "windup" ? 0.22 * k : e.state === "strike" ? -0.18 : 0;
+        m.head.rotation.x = e.state === "windup" ? 0.3 * k : Math.sin(t * 2 + e.walk) * 0.05;
+        m.body.position.y = 0.72 + Math.abs(g) * 0.05;
+      }
       m.head.rotation.y = Math.sin(t * 1.3 + e.walk) * 0.1;
 
       // health bar
       e.bar.visible = e.hp < e.maxHp && e.kind !== "warden";
       if (e.bar.visible) {
-        e.bar.position.set(e.pos.x, e.pos.y + 2.25 * e.scale, e.pos.z);
+        e.bar.position.set(e.pos.x, e.pos.y + (e.kind === "thing" ? 1.35 : 2.25) * e.scale, e.pos.z);
         e.bar.quaternion.copy(camera.quaternion);
         const f = Math.max(0, e.hp / e.maxHp);
         e.barFill.scale.x = f;

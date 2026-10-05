@@ -6,7 +6,7 @@
 
 import type { Line } from "./script";
 
-export type SpeakerId = "RHEA" | "YOU" | "PILOT" | "DEZ" | "HOLLOW" | "WARDEN" | "CHOIR" | "ECHO";
+export type SpeakerId = "RHEA" | "YOU" | "PILOT" | "DEZ" | "HOLLOW" | "WARDEN" | "CHOIR" | "ECHO" | "INES" | "TEO";
 
 interface Speaker {
   name: string;
@@ -28,8 +28,11 @@ const SPEAKERS: Record<SpeakerId, Speaker> = {
   DEZ: { name: "Dez", color: "#c7b98f", pitch: 1.08, rate: 1.16, prefer: ["alex", "ryan", "guy", ...MALE] },
   HOLLOW: { name: "Hollow", color: "#d4887a", pitch: 0.45, rate: 0.82, prefer: MALE },
   WARDEN: { name: "The Warden", color: "#cf5f56", pitch: 0.1, rate: 0.74, prefer: MALE },
-  CHOIR: { name: "The Choir", color: "#b8a6d6", pitch: 1.7, rate: 0.68, prefer: ["whisper", ...FEMALE], ghost: true },
-  ECHO: { name: "Echo", color: "#aaa3c2", pitch: 1.0, rate: 0.9, prefer: [...FEMALE, ...MALE], ghost: true },
+  CHOIR: { name: "The Choir", color: "#e6f1f3", pitch: 1.7, rate: 0.68, prefer: ["whisper", ...FEMALE], ghost: true },
+  ECHO: { name: "Echo", color: "#a9d6de", pitch: 1.0, rate: 0.9, prefer: [...FEMALE, ...MALE], ghost: true },
+  // the Changed: patients who stayed long enough to be rewritten
+  INES: { name: "Ines", color: "#7fd3e0", pitch: 0.92, rate: 1.06, prefer: ["moira", "tessa", "fiona", ...FEMALE] },
+  TEO: { name: "Teo", color: "#c9b48e", pitch: 0.62, rate: 0.86, prefer: ["fred", "thomas", ...MALE] },
 };
 
 export class Voice {
