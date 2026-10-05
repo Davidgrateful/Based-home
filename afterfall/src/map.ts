@@ -53,7 +53,10 @@ let saveT = 0;
 let revealT = 0;
 
 /** Called every frame while playing. */
+let mapBtn: HTMLElement | null = null;
+
 export function mapUpdate(dt: number, walking: boolean) {
+  if (mapBtn) mapBtn.hidden = cine.active || state.dead;
   revealT -= dt;
   saveT -= dt;
   if (walking && revealT <= 0) {
@@ -335,6 +338,7 @@ export function initMap() {
       toggleMap();
     });
     document.body.appendChild(b);
+    mapBtn = b;
   }
 }
 
