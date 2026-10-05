@@ -68,6 +68,12 @@ The interface is deliberately plain, like a shipped console game. It uses one ac
 - **Personal progress.** Loot, shards, Memories and Echoes stay per player.
 - **Drop in, drop out.** Late joiners catch up to the current night. If the host leaves, the next player takes over the world without a restart.
 
+**Voice chat** is built in. Survivors in a room talk over WebRTC, peer to peer; the room server only helps them connect.
+- **Positional:** you hear each person from where their survivor stands, quieter with distance and panned left or right.
+- **Push to talk** on **V** by default, the **Talk** button on phones. Switch to open mic or off, and mute others, from the pause menu.
+- **Speaking indicators:** a speaker mark appears on the name tag and in the room roster when someone talks.
+- **Limit:** it uses public STUN servers. Players behind very strict networks may need a TURN server to hear each other.
+
 The co-op server is `server/server.mjs`. It's one Node process that serves the built game and relays rooms over a WebSocket at `/ws`. It only relays messages; the host's browser runs the simulation.
 
 ```bash
@@ -81,6 +87,15 @@ npm run dev          # Vite on :5173, proxies /ws to :8787
 - **Render:** `render.yaml` is included.
 - **Anywhere else:** use the included `Dockerfile` (Railway, Fly, a VPS).
 - **Game on Vercel, rooms elsewhere:** set `VITE_MP_SERVER=wss://your-server/ws`, or add `?mp=wss://…` to the URL.
+
+## On phones and tablets
+
+The game detects touch screens and switches to mobile mode automatically: lighter graphics (no shadows or glow, capped resolution) and no mouse lock. Add `?high` to the URL for full quality, or `?touch` to try the touch controls on a desktop.
+
+- **Left thumb:** a floating stick appears wherever you touch. Push it to the edge to sprint.
+- **Right thumb:** drag anywhere to look. The buttons are Swing (aim assist turns you toward the nearest Hollow), Dodge, Jump, Use (lights up when something is in reach), Heal and, in co-op, Talk.
+- **Layout:** a compact HUD keeps away from the thumbs. Holding the phone upright shows a "turn your phone sideways" prompt. Android goes fullscreen in landscape where the browser allows.
+- **iPhone:** speech and audio start on your first tap, as Safari requires.
 
 ## Token integration (Robinhood Chain Testnet, chain ID 46630)
 

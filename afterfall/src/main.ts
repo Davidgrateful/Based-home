@@ -440,4 +440,5 @@ tick();
   say,
   net,
   enterRoom,
+  voiceChat,
 };

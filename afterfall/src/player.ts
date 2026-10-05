@@ -94,6 +94,7 @@ export class Player {
   attackCd = 0;
   combo = 0;
   comboWindow = 0;
+  attackBuffer = 0;
   swingDur = 0.34;
   // stats (set from Memories upgrades)
   dmgMul = 1;
@@ -244,7 +245,11 @@ export class Player {
     // ---- attack
     // 3-hit combo: left, right, then an overhead heavy that hits harder.
     this.comboWindow = Math.max(0, this.comboWindow - dt);
-    if (!this.frozen && this.hasAxe && (input.attack || input.tap("KeyF")) && this.attackCd <= 0) {
+    // input buffer: a press during the cooldown still lands when it ends
+    if (input.attack || input.tap("KeyF")) this.attackBuffer = 0.3;
+    else this.attackBuffer = Math.max(0, this.attackBuffer - dt);
+    if (!this.frozen && this.hasAxe && this.attackBuffer > 0 && this.attackCd <= 0) {
+      this.attackBuffer = 0;
       this.combo = this.comboWindow > 0 ? (this.combo + 1) % 3 : 0;
       const heavy = this.combo === 2;
       this.swingDur = heavy ? 0.5 : 0.34;

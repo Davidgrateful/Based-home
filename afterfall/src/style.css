@@ -247,8 +247,8 @@ body.touch canvas#game { touch-action: none; }
 #t-stick { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; border: 1.5px solid rgba(233, 230, 223, 0.3); opacity: 0; pointer-events: none; transition: opacity 0.12s; }
 #t-stick.on { opacity: 1; }
 #t-knob { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%; background: rgba(233, 230, 223, 0.45); }
-#t-btns { position: absolute; right: calc(18px + env(safe-area-inset-right)); bottom: calc(16px + env(safe-area-inset-bottom)); width: 236px; height: 200px; }
-#t-btns button { position: absolute; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid rgba(233, 230, 223, 0.32); background: rgba(13, 14, 16, 0.42); color: var(--ink); font: 600 11px var(--ui); letter-spacing: 0.1em; text-transform: uppercase; touch-action: none; }
+#t-btns { position: absolute; right: calc(18px + env(safe-area-inset-right)); bottom: calc(16px + env(safe-area-inset-bottom)); width: 236px; height: 200px; pointer-events: none; }
+#t-btns button { pointer-events: auto; position: absolute; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid rgba(233, 230, 223, 0.32); background: rgba(13, 14, 16, 0.42); color: var(--ink); font: 600 11px var(--ui); letter-spacing: 0.1em; text-transform: uppercase; touch-action: none; }
 #t-btns button.down { background: rgba(233, 230, 223, 0.22); }
 #t-btns [data-act="attack"] { right: 0; bottom: 0; width: 88px; height: 88px; font-size: 13px; }
 #t-btns [data-act="dodge"] { right: 98px; bottom: 4px; width: 60px; height: 60px; }
@@ -266,7 +266,7 @@ body.touch canvas#game { touch-action: none; }
 
 /* compact HUD that stays out from under the thumbs */
 body.touch .crosshair, body.touch #voice-hud, body.touch #pause .keys { display: none !important; }
-body.touch .hud-obj { top: calc(10px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); max-width: 38vw; }
+body.touch .hud-obj { top: calc(10px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); max-width: calc(50vw - 130px); }
 body.touch #objective { font-size: 13px; }
 body.touch .hud-vitals { top: calc(10px + env(safe-area-inset-top)); bottom: auto; left: 50%; transform: translateX(-50%); width: 200px; }
 body.touch #hud-name { font-size: 14px; }
@@ -279,7 +279,7 @@ body.touch #room-list { font-size: 12px; }
 body.touch #boss { top: 92px; }
 body.touch #prompt { bottom: auto; top: 58%; font-size: 13px; }
 body.touch #prompt kbd { display: none; }
-body.touch #subtitle { bottom: 4%; width: min(46vw, 520px); font-size: 14px; }
+body.touch #subtitle { left: 43%; bottom: 4%; width: min(36vw, 440px); font-size: 14px; }
 body.touch #toast { top: 76px; font-size: 12px; }
 body.touch #card-title { font-size: clamp(26px, 6vw, 40px); }
 
