@@ -175,6 +175,13 @@ body.cine #hud { opacity: 0 !important; }
 #room-chip { text-align: right; }
 #room-code { font: 500 12px var(--ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
 #room-list { list-style: none; margin: 6px 0 0; padding: 0; font: 500 14px/1.6 var(--ui); }
+#room-list li { padding-right: 10px; border-right: 2px solid transparent; transition: border-color 0.15s; }
+#room-list li.speaking { border-right-color: var(--accent); }
+#voice-hud { position: absolute; right: 32px; bottom: 30px; width: 170px; text-align: right; font: 500 12px var(--ui); letter-spacing: 0.06em; color: var(--dim); }
+#voice-hud.live { color: var(--ink); }
+#voice-hud kbd { margin-right: 6px; }
+.bar.mic { margin-top: 8px; height: 2px; }
+.bar.mic > div { background: var(--accent); transition: width 0.08s; }
 .body.small { font-size: 13px; min-height: 1.6em; }
 #coop-code { text-transform: uppercase; letter-spacing: 0.2em; }
 .hud-vitals { position: absolute; left: 32px; bottom: 30px; width: 270px; }

@@ -8,6 +8,7 @@ import type { Look } from "./models";
 import { net } from "./net";
 import { becomeHost, nightCatchUp, onNetNightStart, onNetWorld } from "./night";
 import { playerName, save } from "./save";
+import { voiceChat } from "./voicechat";
 
 const avatars = new Map<number, RemoteAvatar>();
 let sendT = 0;
@@ -40,7 +41,8 @@ function renderRoster() {
   if (!net.active) return;
   const names = [playerName(), ...[...avatars.values()].map((a) => a.name)];
   $("room-code").textContent = `Room ${net.room}`;
-  $("room-list").innerHTML = names.map((n, i) => `<li>${n}${i === 0 ? ' <span class="dim">(you)</span>' : ""}</li>`).join("");
+  const ids = [net.id, ...avatars.keys()];
+  $("room-list").innerHTML = names.map((n, i) => `<li data-id="${ids[i]}">${n}${i === 0 ? ' <span class="dim">(you)</span>' : ""}</li>`).join("");
   $("btn-invite").hidden = false;
 }
 
@@ -89,6 +91,27 @@ net.on("sw", (m) => {
 });
 
 /** Connect to a room. Resolves once you're in (as host or guest). */
+export function renderVoiceHud() {
+  const el = $("voice-hud");
+  el.hidden = !net.active;
+  if (!net.active) return;
+  const m = voiceChat.mode;
+  el.classList.toggle("live", voiceChat.transmitting);
+  $("voice-label").innerHTML = voiceChat.micError
+    ? voiceChat.micError
+    : m === "off"
+      ? "Voice off"
+      : m === "open"
+        ? "Mic open"
+        : voiceChat.transmitting
+          ? "Talking"
+          : "<kbd>V</kbd> Push to talk";
+  $("voice-level").style.width = `${Math.min(100, voiceChat.micLevel * 400)}%`;
+  $<HTMLButtonElement>("btn-voice-mode").textContent = `Voice: ${m === "ptt" ? "push to talk (V)" : m === "open" ? "open mic" : "off"}`;
+  $<HTMLButtonElement>("btn-voice-mute").textContent = voiceChat.othersMuted ? "Unmute others" : "Mute others";
+}
+voiceChat.onChange = renderVoiceHud;
+
 export async function joinRoom(code: string) {
   await net.connect(code, playerName(), save.look);
   enemies.puppet = net.isClient;
@@ -96,8 +119,27 @@ export async function joinRoom(code: string) {
 }
 
 /** Called every frame. */
+const positions = new Map<number, THREE.Vector3>();
+let voiceUiT = 0;
+
 export function coopUpdate(dt: number, camera: THREE.Camera) {
   for (const a of avatars.values()) a.update(dt, camera);
+  if (net.active) {
+    positions.clear();
+    for (const [id, a] of avatars) positions.set(id, a.pos);
+    voiceChat.update(camera, positions);
+    voiceUiT -= dt;
+    if (voiceUiT <= 0) {
+      voiceUiT = 0.1;
+      const talking = voiceChat.peersSpeaking;
+      for (const [id, a] of avatars) a.setSpeaking(talking.has(id));
+      for (const li of document.querySelectorAll<HTMLElement>("#room-list li")) {
+        const id = Number(li.dataset.id);
+        li.classList.toggle("speaking", id === net.id ? voiceChat.transmitting && voiceChat.micLevel > 0.02 : talking.has(id));
+      }
+      renderVoiceHud();
+    }
+  }
   if (!net.active || state.mode !== "night") return;
   sendT -= dt;
   if (sendT > 0) return;

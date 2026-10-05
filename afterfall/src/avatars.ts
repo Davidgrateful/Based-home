@@ -20,7 +20,7 @@ export interface RemoteState {
   rb: boolean; // rift-bound
 }
 
-function nameTag(name: string) {
+function tagTexture(name: string, speaking: boolean) {
   const c = document.createElement("canvas");
   c.width = 512;
   c.height = 96;
@@ -30,11 +30,29 @@ function nameTag(name: string) {
   g.textBaseline = "middle";
   g.shadowColor = "rgba(0,0,0,0.9)";
   g.shadowBlur = 8;
+  const label = name.toUpperCase();
   g.fillStyle = "#e9e6df";
-  g.fillText(name.toUpperCase(), 256, 48);
+  g.fillText(label, 256, 48);
+  if (speaking) {
+    // a small speaker mark left of the name, in the accent colour
+    const w = g.measureText(label).width;
+    const x = 256 - w / 2 - 30;
+    g.fillStyle = "#d9643a";
+    g.fillRect(x - 10, 38, 8, 20);
+    g.beginPath();
+    g.moveTo(x - 2, 38);
+    g.lineTo(x + 10, 28);
+    g.lineTo(x + 10, 68);
+    g.lineTo(x - 2, 58);
+    g.fill();
+  }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false }));
+  return tex;
+}
+
+function nameTag(name: string) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTexture(name, false), transparent: true, depthWrite: false, fog: false }));
   s.scale.set(2.6, 0.49, 1);
   s.renderOrder = 10;
   return s;
@@ -53,6 +71,8 @@ export class RemoteAvatar {
   state: RemoteState | null = null;
   walk = 0;
   private rb = false;
+  private speaking = false;
+  private tagTex: THREE.Texture[] = [];
   private axe?: THREE.Group;
   private scene: THREE.Scene;
   private seen = false;
@@ -67,6 +87,7 @@ export class RemoteAvatar {
     this.model = buildPlayerModel(look ?? DEFAULT_LOOK);
     this.model.root.visible = false;
     this.tag = nameTag(name);
+    this.tagTex = [this.tag.material.map!, tagTexture(name, true)];
     this.hpBar = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.035), new THREE.MeshBasicMaterial({ color: 0xe9e6df, depthWrite: false, fog: false }));
     this.hpBar.renderOrder = 10;
     scene.add(this.model.root, this.tag, this.hpBar);
@@ -160,6 +181,13 @@ export class RemoteAvatar {
     const f = Math.max(0, s.hp / Math.max(1, s.mh));
     this.hpBar.scale.x = Math.max(0.001, f);
     (this.hpBar.material as THREE.MeshBasicMaterial).color.set(f < 0.3 ? 0xc4473a : 0xe9e6df);
+  }
+
+  setSpeaking(on: boolean) {
+    if (on === this.speaking) return;
+    this.speaking = on;
+    this.tag.material.map = this.tagTex[on ? 1 : 0];
+    this.tag.material.needsUpdate = true;
   }
 
   dispose() {

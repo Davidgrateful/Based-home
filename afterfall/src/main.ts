@@ -2,7 +2,8 @@
 
 import "./style.css";
 import * as THREE from "three";
-import { coopSwing, coopUpdate, inviteLink, joinRoom } from "./coop";
+import { coopSwing, coopUpdate, inviteLink, joinRoom, renderVoiceHud } from "./coop";
+import { voiceChat } from "./voicechat";
 import { applySaved, creator, menuCamera, menuLightOff, openCreator } from "./creator";
 import {
   $,
@@ -136,6 +137,7 @@ async function enterRoom(code: string) {
     return;
   }
   status.textContent = `Connecting to ${clean}…`;
+  if (voiceChat.mode !== "off") voiceChat.enableMic(); // ask while we still have the click
   try {
     await joinRoom(clean);
   } catch (e) {
@@ -143,6 +145,9 @@ async function enterRoom(code: string) {
     return;
   }
   history.replaceState(null, "", `?room=${net.room}`);
+  $("btn-voice-mode").hidden = false;
+  $("btn-voice-mute").hidden = false;
+  renderVoiceHud();
   status.textContent = "";
   leaveMenu();
   hud.blackout.style.transition = "none";
@@ -152,6 +157,8 @@ async function enterRoom(code: string) {
 }
 $("btn-coop-join").addEventListener("click", () => withSurvivor(() => enterRoom(coopCode.value)));
 $("btn-coop-create").addEventListener("click", () => withSurvivor(() => enterRoom(randomRoom())));
+$("btn-voice-mode").addEventListener("click", () => voiceChat.cycleMode());
+$("btn-voice-mute").addEventListener("click", () => voiceChat.setOthersMuted(!voiceChat.othersMuted));
 $("btn-invite").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(inviteLink());

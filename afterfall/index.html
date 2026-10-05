@@ -65,6 +65,7 @@
       <div id="marker"><div class="pin"></div><div id="marker-dist"></div></div>
       <div id="prompt"></div>
       <div class="crosshair"></div>
+      <div id="voice-hud" hidden><span id="voice-label"></span><div class="bar mic"><div id="voice-level"></div></div></div>
     </div>
 
     <div id="subtitle"><span id="sub-who"></span><span id="sub-text"></span></div>
@@ -126,7 +127,7 @@
       <div class="col">
         <p class="kicker">Play together</p>
         <h2>Hold the fire together</h2>
-        <p class="body">Start a room and send the link, or type a friend's room code. Everyone keeps their own survivor, upgrades and loot. The fire is shared.</p>
+        <p class="body">Start a room and send the link, or type a friend's room code. Everyone keeps their own survivor, upgrades and loot. The fire is shared. Voice chat is built in: hold V to talk, and you'll hear each other from where you stand.</p>
         <label class="field">
           <span>Room code</span>
           <input id="coop-code" maxlength="8" autocomplete="off" spellcheck="false" placeholder="e.g. K7Q2M" />
@@ -175,6 +176,8 @@
         </dl>
         <div class="actions">
           <button id="btn-invite" class="btn" hidden>Copy invite link</button>
+          <button id="btn-voice-mode" class="btn" hidden>Voice: push to talk (V)</button>
+          <button id="btn-voice-mute" class="btn" hidden>Mute others</button>
           <button id="btn-nolock" class="btn">Play without mouse lock</button>
           <button id="btn-title" class="btn">Quit to menu</button>
         </div>
