@@ -1,31 +1,51 @@
 # AFTERFALL
 
-A voiced 3D survival story built for the [vibe/vibe](https://testnet.vibevibe.fun) hackathon on **Robinhood Chain Testnet**.
+**The sky has a door. You fell through it.**
 
-> Medevac Flight 100 never landed. Something tore the sky open and pulled it through.
-> You wake up strapped in the back of a wrecked ambulance, under two moons, in a world
-> that has been waiting for people like you to fall.
+A voiced 3D survival story with an endless loop mode, built for the [vibe/vibe](https://testnet.vibevibe.fun) hackathon on **Robinhood Chain Testnet**.
 
-## Story (Chapter One)
+> Medevac Flight 100 was carrying one sedated patient and a secret. Then the sky tore open.
+> You wake up in the wreck under two moons, and the masked things in the trees are already counting.
 
-| Stage | What happens |
+## The story
+
+The full script and story bible live in [`src/script.ts`](src/script.ts).
+
+**The question that drives everything: why does the sky open for *you*?**
+
+| Act | Beat |
 | --- | --- |
-| **Prologue: Wake** | A black screen with a heartbeat and a dying siren. Rhea, the flight medic, and the pilot call the crash. You wake up in first person inside the ambulance, take the fire axe off the wall and kick open the doors. |
-| **Ch.1 The Drop** | The camera pulls out to third person and you see an alien world with two moons. Rhea, alive somewhere, guides you over the radio to the plane wreck's black-box beacon. Pick up **Rift Shards** along the way. |
-| **Ch.2 The Hollow** | Masked natives who fell through long ago ambush you in waves. |
-| **Ch.3 Resonance** | Light three resonance pylons. You have to stand in each ring while it charges and the Hollow swarm you. |
-| **Ch.4 The Warden** | The boss fight in the stone circle. He has telegraphed swings and a red-ring ground slam (jump or dodge out of it), and summons minions at 66% and 33% health. |
-| **Epilogue** | The rift opens and *someone on the other side answers*. To be continued. |
+| **Cold open** | Black screen. A typed Meridian Institute transfer manifest. You *hear* the cabin: the pilot, Rhea the flight medic, an alarm, "Mayday". Hard cut outside: a tear opens in the alien sky, a burning medevac plane dives out of it, and a masked watcher on the ridge whispers: *"Count it." "One hundred."* Then the title slams in. |
+| **I · The Drop** | Wake in first person inside the wrecked ambulance. Take the fire axe and kick the doors open. The camera cranes up to reveal two moons. Rhea guides you by radio to the black box, where the dead pilot's last log says: *"The cargo isn't a patient. He's a key."* |
+| **II · The Hollow** | The masked natives attack. They wear Meridian hospital bands like yours. Ninety-nine patients came before you. None went home. |
+| **III · Resonance** | Light three towers while they swarm you. Each tower you light makes someone tell a secret: Rhea admits her orders were to keep you *asleep* until you landed *here*. |
+| **IV · The Warden** | Patient One. "The door only opens for the hundredth. The door is mine. So are you." |
+| **Epilogue** | The rift opens and the Choir answers: "We counted every fall. We waited for you." |
 
-Every line is spoken with the browser's built-in **Web Speech API**, so it needs no API keys or audio files. Each character has their own voice, pitch and rate (Rhea, You, the Pilot, the Hollow, the Warden, and an unknown voice). Subtitles always show. All sound effects (siren, heartbeat, crash, hits, wind) are generated at runtime with WebAudio.
+## The loop: THE LONG NIGHT
+
+The game gives the loop a story reason: **the rift is looping Patient 100.**
+
+- **Dusk:** scavenge Meridian supply caches, shards and Echoes before the storm. You can call the storm early for bonus shards.
+- **Storm:** Hollow pour through purple rift tears and attack your **campfire**. Hold it until the last one falls.
+- **Dawn:** bank shards and buy **Memories**, which are permanent upgrades: Thick Skin, Muscle Memory, Second Wind, Field Medic, Shard Sense and Firekeeper.
+- **Loop reset:** if you fall or the fire dies, you wake again on Night 1. Your Memories survive, and so does the dialogue. Your character remembers dying, and Rhea's lines change every loop.
+- **Omens:** each night gets a modifier, for example Blood Moon, Choir Night, The Quiet, Starfall, Iron Hollow, Thin Sky or Drop Fog. Every fifth night the Warden's Echo hunts the fire.
+- **Echoes:** 12 ghost recordings of the patients who fell before you, spread across both modes. They build the mystery: *"There's a voice on the radio every time one of us falls. Calls herself Rhea."* The 12th only appears after the other 11, and it's your own voice.
+
+**Enemies:** the Hollow (spear), Runners (fast), Brutes (armored, go straight for the fire), Shamans (throw rift bolts you can dodge) and the Warden (telegraphed red-ring slam, summons minions).
+
+**Combat feel:** a 3-hit combo with a heavy overhead finisher, hit-stop, damage numbers, sparks, enemy health bars, a dodge with brief invulnerability, slow-motion on the boss kill, and bloom on everything that glows.
+
+All voices use the browser's Web Speech API, each with its own pitch, rate and voice choice. Subtitles type on as they're spoken. All sound is synthesized with WebAudio.
 
 ## Token integration (Robinhood Chain Testnet, chain ID 46630)
 
-- **Launch the token on vibe/vibe**: [testnet.vibevibe.fun/create](https://testnet.vibevibe.fun/create). Get testnet ETH from the [faucet](https://faucet.testnet.chain.robinhood.com).
-- **Plug it into the game**: set `VITE_TOKEN_ADDRESS=0x…` (see `.env.example`), or just add `?token=0x…` to the game URL.
-- **Holders become Rift-Bound**. Connect a wallet on the title screen. If it holds any of the token, you get a glowing Rift axe (+50% damage), an extra medkit and a bigger shard pickup radius. The game reads `balanceOf` directly from `https://rpc.testnet.chain.robinhood.com` with viem, and adds or switches the wallet to chain 46630 automatically.
-- **Trade link**: when a token is configured, the title screen links straight to its vibe/vibe page (`/t/<address>`).
-- **Proof of play**: the end screen lets the player sign their run (shards, kills, time, token, chain) with their wallet. It costs no gas and sends no transaction.
+- **Launch the token:** [testnet.vibevibe.fun/create](https://testnet.vibevibe.fun/create). Gas comes from the [faucet](https://faucet.testnet.chain.robinhood.com).
+- **Connect it:** set `VITE_TOKEN_ADDRESS=0x…` or add `?token=0x…` to the URL.
+- **Rift-Bound perk for holders:** a glowing Rift axe (+50% damage), an extra medkit every night and a wider shard pull. The game reads `balanceOf` directly from `rpc.testnet.chain.robinhood.com`.
+- **Trade link:** the title screen links straight to the token's vibe/vibe page.
+- **Proof of survival:** players can sign their record (best night, Echoes, shards) with their wallet. It costs no gas and sends no transaction.
 
 ## Run it
 
@@ -36,25 +56,25 @@ npm run dev        # http://localhost:5173
 npm run build      # static site in dist/
 ```
 
-Deploy `dist/` anywhere static: Vercel (set the root directory to `afterfall`, framework Vite), Netlify or GitHub Pages.
+Deploy `dist/` anywhere static. On Vercel, set the root directory to `afterfall`. Add `?low` to the URL on weaker laptops; it turns off bloom and shadows. Progress is saved in the browser's localStorage.
 
-Append `?low` to the URL on weaker laptops. It turns off shadows and lowers the resolution.
-
-## Controls
-
-`WASD` move · mouse look · `LMB`/`F` swing · `RMB`/`C` dodge (brief invulnerability) · `Space` jump · `Shift` sprint · `Q` medkit · `E` interact · arrow keys look if you have no mouse.
+**Controls:** `WASD` move · mouse look · `LMB`/`F` swing (×3 combo) · `RMB`/`C` dodge · `Space` jump · `Shift` sprint · `Q` medkit · `E` interact · arrow keys look · `Enter`/`Esc` skip cinematics.
 
 ## Code map
 
 | File | Purpose |
 | --- | --- |
-| `src/main.ts` | Story director: stages, dialogue, HUD, interactions, checkpoints, render loop |
-| `src/world.ts` | Terrain, shader sky with two moons and aurora, ambulance, plane wreck, forest, pylons, rift arena, particles |
-| `src/player.ts` | Input, first-person to third-person controller, combat, dodge, camera collision |
-| `src/enemies.ts` | Hollow and Warden AI (chase → telegraphed wind-up → strike → recover, ground slam, summons) |
-| `src/models.ts` | Procedural low-poly characters and weapons |
-| `src/voice.ts` | Voiced dialogue and subtitles |
-| `src/audio.ts` | Procedural WebAudio SFX |
-| `src/token.ts` | Robinhood Chain Testnet wallet connection, token balance and run signing (viem) |
+| `src/script.ts` | Story bible and every line of dialogue, the Echoes, omens and loop-wake lines |
+| `src/story.ts` | Chapter One: cold open, stages, cinematics, the boss |
+| `src/night.ts` | The Long Night: dusk/storm/dawn, waves, omens, shop, loop reset |
+| `src/cinematic.ts` | Letterboxed, skippable camera shots |
+| `src/ctx.ts` | Shared renderer, world, actors, HUD helpers, interactions |
+| `src/world.ts` | Terrain, sky and moods, wreck, ambulance, campfire, caches, ghosts, rift |
+| `src/enemies.ts` | Hollow, Runner, Brute, Shaman and Warden AI; projectiles; health bars |
+| `src/player.ts` | Controller, combo combat, dodge, camera collision |
+| `src/echo.ts`, `src/save.ts` | Echo collectibles and persistent progress (Memories) |
+| `src/fx.ts`, `src/post.ts` | Damage numbers, sparks, bloom |
+| `src/voice.ts`, `src/audio.ts` | Voiced dialogue and procedural sound |
+| `src/token.ts` | Wallet, token balance, run signing (viem) |
 
 Testnet only. No real funds.

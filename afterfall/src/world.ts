@@ -29,7 +29,8 @@ export const AMBULANCE = { minX: -1.35, maxX: 1.35, minZ: -3.25, maxZ: 3.25 };
 export const BEACON = new THREE.Vector3(-12.5, 0, 33);
 export const PYLONS = [new THREE.Vector3(58, 0, 62), new THREE.Vector3(-62, 0, 88), new THREE.Vector3(18, 0, 122)];
 export const ARENA = new THREE.Vector3(0, 0, 165);
-for (const p of [BEACON, ...PYLONS, ARENA]) p.y = heightAt(p.x, p.z);
+export const CAMP = new THREE.Vector3(6, 0, 9);
+for (const p of [BEACON, ...PYLONS, ARENA, CAMP]) p.y = heightAt(p.x, p.z);
 
 export interface Circle {
   x: number;
@@ -51,7 +52,40 @@ export interface Shard {
   mesh: THREE.Mesh;
   taken: boolean;
   base: number;
+  dynamic?: boolean;
+  value?: number;
 }
+
+export interface Cache {
+  group: THREE.Group;
+  pos: THREE.Vector3;
+  opened: boolean;
+}
+
+export interface Ghost {
+  group: THREE.Group;
+  pos: THREE.Vector3;
+  echoId: number;
+}
+
+interface Mood {
+  fog: number;
+  density: number;
+  hemi: number;
+  tint: [number, number, number];
+  sun: number;
+  blood?: boolean;
+}
+
+export const MOODS = {
+  night: { fog: 0x1d1533, density: 0.0115, hemi: 1.25, tint: [1, 1, 1], sun: 1.6 },
+  dusk: { fog: 0x3b1a3c, density: 0.009, hemi: 1.45, tint: [1.6, 0.85, 0.95], sun: 1.9 },
+  storm: { fog: 0x160b26, density: 0.0155, hemi: 0.95, tint: [0.75, 0.6, 1.25], sun: 1.15 },
+  blood: { fog: 0x2c0810, density: 0.0135, hemi: 1.0, tint: [1.7, 0.45, 0.5], sun: 1.2, blood: true },
+  dawn: { fog: 0x3c3354, density: 0.0075, hemi: 1.7, tint: [1.35, 1.15, 1.35], sun: 2.1 },
+  fog: { fog: 0x6c6a84, density: 0.03, hemi: 1.3, tint: [1.2, 1.2, 1.3], sun: 1.4 },
+} satisfies Record<string, Mood>;
+export type MoodName = keyof typeof MOODS;
 
 export interface Pylon {
   pos: THREE.Vector3;
@@ -87,6 +121,23 @@ export class World {
   riftMat: THREE.ShaderMaterial;
   riftLight: THREE.PointLight;
   riftOpen = 0;
+  hemi!: THREE.HemisphereLight;
+  bigMoon!: THREE.MeshBasicMaterial;
+  campfire!: { group: THREE.Group; light: THREE.PointLight; flames: THREE.Mesh[]; logs: THREE.Group; lit: boolean; hp: number; maxHp: number };
+  caches: Cache[] = [];
+  ghosts: Ghost[] = [];
+  fallingPlane!: THREE.Group;
+  skyTear!: THREE.Mesh;
+  skyTearMat!: THREE.ShaderMaterial;
+  private tears: { mesh: THREE.Mesh; life: number }[] = [];
+  private trail: { s: THREE.Sprite; life: number; vel: THREE.Vector3 }[] = [];
+  private trailT = 0;
+  private mood: Mood = MOODS.night as Mood;
+  private moodFog = new THREE.Color(0x1d1533);
+  private moodDensity = 0.0115;
+  private ghostMat!: THREE.MeshBasicMaterial;
+  private shardGeo = new THREE.OctahedronGeometry(0.32);
+  private shardMat = new THREE.MeshStandardMaterial({ color: 0x9ff6ff, emissive: 0x22c8ff, emissiveIntensity: 1.8, flatShading: true, metalness: 0.3, roughness: 0.2 });
   private spores: THREE.Points;
   private embers: THREE.Points;
   private emberData: Float32Array;
@@ -103,10 +154,10 @@ export class World {
       side: THREE.BackSide,
       depthWrite: false,
       fog: false,
-      uniforms: { uTime: { value: 0 } },
+      uniforms: { uTime: { value: 0 }, uTint: { value: new THREE.Vector3(1, 1, 1) } },
       vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);} `,
       fragmentShader: `
-        varying vec3 vDir; uniform float uTime;
+        varying vec3 vDir; uniform float uTime; uniform vec3 uTint;
         float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }
         void main(){
           float h = clamp(vDir.y, -0.2, 1.0);
@@ -123,7 +174,7 @@ export class World {
           vec3 p = floor(vDir*300.0);
           float s = step(0.997, hash(p)) * smoothstep(0.05,0.3,h);
           c += vec3(s) * (0.6+0.4*sin(uTime*3.0+hash(p)*20.0));
-          gl_FragColor = vec4(c,1.0);
+          gl_FragColor = vec4(c * uTint,1.0);
         }`,
     });
     const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), this.skyMat);
@@ -144,12 +195,14 @@ export class World {
       halo.scale.setScalar(r * 5);
       halo.position.copy(pos);
       scene.add(halo);
+      return m.material;
     };
-    moon(38, 0xe6d9ff, new THREE.Vector3(-180, 220, 420));
+    this.bigMoon = moon(38, 0xe6d9ff, new THREE.Vector3(-180, 220, 420));
     moon(16, 0x9ff3e4, new THREE.Vector3(120, 150, 450));
 
     // ---------- Lights ----------
-    scene.add(new THREE.HemisphereLight(0x9a8be6, 0x24343a, 1.25));
+    this.hemi = new THREE.HemisphereLight(0x9a8be6, 0x24343a, 1.25);
+    scene.add(this.hemi);
     this.sun = new THREE.DirectionalLight(0xd8ccff, 1.6);
     this.sun.position.set(-40, 80, 60);
     this.sun.castShadow = true;
@@ -227,6 +280,9 @@ export class World {
     this.riftMat = r.mat;
     this.riftLight = r.light;
     this.buildShards();
+    this.buildCampfire();
+    this.buildFallingPlane();
+    this.ghostMat = new THREE.MeshBasicMaterial({ color: 0x9a86ff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false });
 
     // ---------- Particles ----------
     const sporeGeo = new THREE.BufferGeometry();
@@ -258,7 +314,7 @@ export class World {
     const g = new THREE.Group();
     const white = std(0xe9ecef, { roughness: 0.6 });
     const red = std(0xc4161c);
-    const inner = std(0xb9c4c9, { roughness: 0.9 });
+    const inner = std(0x8a979c, { roughness: 0.9 });
     const floorM = std(0x3e4a4f);
     const W = 2.7;
     const H = 2.6;
@@ -351,7 +407,7 @@ export class World {
     const doorL = mkDoor(-1);
     const doorR = mkDoor(1);
 
-    const light = new THREE.PointLight(0xff3030, 6, 7, 1.6);
+    const light = new THREE.PointLight(0xff3030, 3.2, 7, 1.6);
     light.position.set(0, 2.5, 0.5);
     g.add(light);
 
@@ -424,7 +480,7 @@ export class World {
     this.colliders.push({ x: -16, z: 17.5, r: 1.5 });
 
     // fires
-    for (const [x, z, s] of [[-15, 30, 1.4], [-16, 17.5, 1], [-1.8, 36, 1.1], [4, 9, 0.6]] as const) {
+    for (const [x, z, s] of [[-15, 30, 1.4], [-16, 17.5, 1], [-1.8, 36, 1.1], [-3.5, 6, 0.5]] as const) {
       const y = heightAt(x, z);
       const light = new THREE.PointLight(0xff7a2a, 18 * s, 22, 1.7);
       light.position.set(x, y + 2.2, z);
@@ -668,22 +724,301 @@ export class World {
       // secrets
       [90, 20], [-95, 30], [80, 130], [-90, 140],
     ];
-    for (const [x, z] of spots) {
-      const mesh = new THREE.Mesh(geo, m);
-      const y = heightAt(x, z) + 1.1;
-      mesh.position.set(x, y, z);
-      const glow = new THREE.Sprite(this.shardGlow);
-      glow.scale.setScalar(1.6);
-      mesh.add(glow);
-      this.scene.add(mesh);
-      this.shards.push({ mesh, taken: false, base: y });
+    for (const [x, z] of spots) this.addShard(x, z);
+    void geo;
+    void m;
+  }
+
+  /** Place a shard. Dynamic ones (drops, caches) are removed once taken. */
+  addShard(x: number, z: number, dynamic = false, value = 1) {
+    const mesh = new THREE.Mesh(this.shardGeo, this.shardMat);
+    const y = heightAt(x, z) + 1.1;
+    mesh.position.set(x, y, z);
+    const glow = new THREE.Sprite(this.shardGlow);
+    glow.scale.setScalar(1.6);
+    mesh.add(glow);
+    this.scene.add(mesh);
+    const s: Shard = { mesh, taken: false, base: y, dynamic, value };
+    this.shards.push(s);
+    return s;
+  }
+
+  clearDynamicShards() {
+    for (const s of this.shards) if (s.dynamic) this.scene.remove(s.mesh);
+    this.shards = this.shards.filter((s) => !s.dynamic);
+  }
+
+  // ---------------------------------------------------------------- loop props
+
+  private buildCampfire() {
+    const g = new THREE.Group();
+    g.position.copy(CAMP);
+    const stone = std(0x4a4458);
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2;
+      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.28, 0), stone);
+      st.position.set(Math.cos(a) * 0.9, 0.12, Math.sin(a) * 0.9);
+      st.castShadow = true;
+      g.add(st);
     }
+    const logs = new THREE.Group();
+    const wood = std(0x3a2416);
+    for (let i = 0; i < 4; i++) {
+      const l = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 1.3, 6), wood);
+      l.rotation.z = Math.PI / 2 - 0.35;
+      l.rotation.y = (i / 4) * Math.PI;
+      l.position.y = 0.3;
+      logs.add(l);
+    }
+    g.add(logs);
+    const ash = new THREE.Mesh(new THREE.CircleGeometry(0.75, 16), std(0x111014));
+    ash.rotation.x = -Math.PI / 2;
+    ash.position.y = 0.03;
+    g.add(ash);
+    const flames: THREE.Mesh[] = [];
+    for (let i = 0; i < 5; i++) {
+      const f = new THREE.Mesh(
+        new THREE.ConeGeometry(0.35 - i * 0.04, 1.4 - i * 0.12, 6),
+        new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffc35a : 0xff6a1f, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      f.position.set(Math.cos(i * 1.3) * 0.18, 0.75, Math.sin(i * 1.3) * 0.18);
+      f.visible = false;
+      g.add(f);
+      flames.push(f);
+    }
+    const light = new THREE.PointLight(0xff8a3a, 0, 26, 1.5);
+    light.position.y = 1.4;
+    g.add(light);
+    this.scene.add(g);
+    this.colliders.push({ x: CAMP.x, z: CAMP.z, r: 1.0 });
+    this.campfire = { group: g, light, flames, logs, lit: false, hp: 100, maxHp: 100 };
+  }
+
+  setCampfire(lit: boolean, maxHp = 100) {
+    const c = this.campfire;
+    c.lit = lit;
+    c.maxHp = maxHp;
+    c.hp = maxHp;
+    for (const f of c.flames) f.visible = lit;
+  }
+
+  spawnCache(x: number, z: number): Cache {
+    const g = new THREE.Group();
+    const y = heightAt(x, z);
+    g.position.set(x, y, z);
+    g.rotation.y = Math.random() * Math.PI;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.75, 0.85), std(0x59626b, { metalness: 0.5, roughness: 0.5 }));
+    body.position.y = 0.38;
+    body.castShadow = true;
+    g.add(body);
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.14, 0.87), std(0xff6a00));
+    stripe.position.y = 0.5;
+    g.add(stripe);
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.1, 0.9), std(0x454d55, { metalness: 0.5 }));
+    lid.position.y = 0.8;
+    lid.name = "lid";
+    g.add(lid);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xff9a3a, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));
+    glow.position.y = 1.4;
+    glow.scale.setScalar(1.6);
+    glow.name = "glow";
+    g.add(glow);
+    this.scene.add(g);
+    const c: Cache = { group: g, pos: new THREE.Vector3(x, y, z), opened: false };
+    this.caches.push(c);
+    return c;
+  }
+
+  openCache(c: Cache) {
+    c.opened = true;
+    const lid = c.group.getObjectByName("lid");
+    if (lid) {
+      lid.position.set(0, 0.6, -0.6);
+      lid.rotation.x = -1.2;
+    }
+    const glow = c.group.getObjectByName("glow");
+    if (glow) glow.visible = false;
+  }
+
+  clearCaches() {
+    for (const c of this.caches) this.scene.remove(c.group);
+    this.caches = [];
+  }
+
+  /** An Echo: the flickering ghost of a patient who fell before you. */
+  spawnGhost(echoId: number, x: number, z: number, model: THREE.Group): Ghost {
+    model.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        m.material = this.ghostMat;
+        m.castShadow = false;
+      }
+    });
+    const y = heightAt(x, z);
+    model.position.set(x, y, z);
+    model.rotation.y = Math.random() * Math.PI * 2;
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0x8a6bff, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }));
+    halo.position.y = 1.2;
+    halo.scale.set(2.5, 4, 1);
+    model.add(halo);
+    this.scene.add(model);
+    const g: Ghost = { group: model, pos: new THREE.Vector3(x, y, z), echoId };
+    this.ghosts.push(g);
+    return g;
+  }
+
+  removeGhost(g: Ghost) {
+    this.scene.remove(g.group);
+    this.ghosts = this.ghosts.filter((x) => x !== g);
+  }
+
+  /** Purple tear in the air where Hollow step through. */
+  spawnTear(x: number, z: number, big = false) {
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0xb05aff, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+    );
+    const s = big ? 2.2 : 1;
+    m.position.set(x, heightAt(x, z) + 1.6 * s, z);
+    m.scale.set(0.2, 4 * s, 1);
+    m.userData.s = s;
+    this.scene.add(m);
+    this.tears.push({ mesh: m, life: 1.6 });
+  }
+
+  setMood(name: MoodName, density?: number) {
+    this.mood = { ...(MOODS[name] as Mood) };
+    if (density) this.mood.density = density;
+  }
+
+  private buildFallingPlane() {
+    const g = new THREE.Group();
+    const hull = std(0xc9ced6, { metalness: 0.5, roughness: 0.45 });
+    const fus = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 15, 14), hull);
+    fus.rotation.x = Math.PI / 2;
+    g.add(fus);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3, 14), hull);
+    nose.rotation.x = Math.PI / 2;
+    nose.position.z = 9;
+    g.add(nose);
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(22, 0.3, 3.2), hull);
+    wing.position.z = 1;
+    g.add(wing);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4, 2.6), hull);
+    tail.position.set(0, 2.4, -6.5);
+    g.add(tail);
+    const stripe = new THREE.Mesh(new THREE.CylinderGeometry(1.53, 1.53, 15, 14, 1, true, 1.2, 0.4), std(0x1f6bd1));
+    stripe.rotation.x = Math.PI / 2;
+    g.add(stripe);
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 0.32), std(0xc4161c));
+    cross.position.set(0, 2.6, -6.5);
+    g.add(cross);
+    for (const x of [-5, 5]) {
+      const eng = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 2.6, 10), std(0x2a2c30));
+      eng.rotation.x = Math.PI / 2;
+      eng.position.set(x, -0.7, 1.8);
+      g.add(eng);
+    }
+    g.visible = false;
+    this.scene.add(g);
+    this.fallingPlane = g;
+
+    this.skyTearMat = this.riftMat.clone();
+    this.skyTearMat.uniforms = { uTime: { value: 0 }, uOpen: { value: 0 } };
+    this.skyTear = new THREE.Mesh(new THREE.CircleGeometry(30, 64), this.skyTearMat);
+    this.skyTear.scale.set(0.01, 0.01, 1);
+    this.skyTear.visible = false;
+    this.skyTearMat.fog = false;
+    this.scene.add(this.skyTear);
   }
 
   // ---------------------------------------------------------------- runtime
 
-  update(dt: number, t: number, focus: THREE.Vector3) {
+  update(dt: number, t: number, focus: THREE.Vector3, camera?: THREE.Camera) {
     this.skyMat.uniforms.uTime.value = t;
+    this.skyTearMat.uniforms.uTime.value = t;
+
+    // mood lerp
+    const k = Math.min(1, dt * 0.8);
+    const fog = this.scene.fog as THREE.FogExp2;
+    this.moodFog.lerp(new THREE.Color(this.mood.fog), k);
+    fog.color.copy(this.moodFog);
+    (this.scene.background as THREE.Color).copy(this.moodFog);
+    this.moodDensity += (this.mood.density - this.moodDensity) * k;
+    fog.density = this.moodDensity;
+    this.hemi.intensity += (this.mood.hemi - this.hemi.intensity) * k;
+    this.sun.intensity += (this.mood.sun - this.sun.intensity) * k;
+    const tint = this.skyMat.uniforms.uTint.value as THREE.Vector3;
+    tint.lerp(new THREE.Vector3(...this.mood.tint), k);
+    this.bigMoon.color.lerp(new THREE.Color(this.mood.blood ? 0xff3a3a : 0xe6d9ff), k);
+
+    // campfire
+    const cf = this.campfire;
+    if (cf.lit) {
+      const f = Math.max(0.15, cf.hp / cf.maxHp);
+      cf.light.intensity = (10 + 26 * f) * (0.8 + Math.random() * 0.4);
+      cf.flames.forEach((m, i) => {
+        m.scale.set(f, f * (0.75 + Math.sin(t * 10 + i * 1.9) * 0.25 + Math.random() * 0.15), f);
+        m.rotation.y += dt * (i % 2 ? 2.5 : -2.5);
+      });
+    } else cf.light.intensity = 0;
+
+    for (const c of this.caches) {
+      const glow = c.group.getObjectByName("glow");
+      if (glow && glow.visible) glow.scale.setScalar(1.4 + Math.sin(t * 4) * 0.3);
+    }
+    for (const g of this.ghosts) {
+      this.ghostMat.opacity = 0.25 + Math.random() * 0.15 + Math.sin(t * 3) * 0.05;
+      g.group.position.x = g.pos.x + (Math.random() < 0.03 ? (Math.random() - 0.5) * 0.4 : 0);
+      g.group.position.y = g.pos.y + Math.sin(t * 1.5) * 0.1;
+    }
+    for (const tr of this.tears) {
+      tr.life -= dt;
+      const a = tr.life / 1.6;
+      const s = tr.mesh.userData.s as number;
+      tr.mesh.scale.x = Math.sin(Math.min(1, (1 - a) * 3) * Math.PI * 0.5) * 2.2 * s * Math.min(1, a * 3);
+      if (camera) tr.mesh.quaternion.copy(camera.quaternion);
+      (tr.mesh.material as THREE.MeshBasicMaterial).opacity = Math.min(1, a * 2);
+      if (tr.life <= 0) this.scene.remove(tr.mesh);
+    }
+    this.tears = this.tears.filter((x) => x.life > 0);
+
+    // falling plane fire/smoke trail
+    if (this.fallingPlane.visible) {
+      this.trailT -= dt;
+      if (this.trailT <= 0) {
+        this.trailT = 0.025;
+        const fire = this.trail.length % 3 !== 0;
+        const sp = new THREE.Sprite(
+          new THREE.SpriteMaterial({
+            map: glowTexture(),
+            color: fire ? 0xff7a2a : 0x2a2030,
+            transparent: true,
+            opacity: fire ? 0.9 : 0.7,
+            depthWrite: false,
+            blending: fire ? THREE.AdditiveBlending : THREE.NormalBlending,
+            fog: false,
+          }),
+        );
+        const tail = new THREE.Vector3(fire ? 5 : 0, 0, -5).applyMatrix4(this.fallingPlane.matrixWorld);
+        sp.position.copy(tail);
+        sp.scale.setScalar(fire ? 3 : 5);
+        this.scene.add(sp);
+        this.trail.push({ s: sp, life: fire ? 0.9 : 2.5, vel: new THREE.Vector3((Math.random() - 0.5) * 2, 1 + Math.random(), (Math.random() - 0.5) * 2) });
+      }
+    }
+    for (const p of this.trail) {
+      p.life -= dt;
+      p.s.position.addScaledVector(p.vel, dt);
+      p.s.scale.multiplyScalar(1 + dt * 0.8);
+      (p.s.material as THREE.SpriteMaterial).opacity *= 1 - dt * 0.9;
+      if (p.life <= 0) {
+        this.scene.remove(p.s);
+        p.s.material.dispose();
+      }
+    }
+    this.trail = this.trail.filter((p) => p.life > 0);
+
     this.riftMat.uniforms.uTime.value = t;
     this.riftMat.uniforms.uOpen.value = this.riftOpen;
     this.riftLight.intensity = 2 + this.riftOpen * 40 + Math.sin(t * 3) * 0.5;
@@ -697,7 +1032,7 @@ export class World {
     this.doorL.rotation.y = -this.doorsOpen * 1.9;
     this.doorR.rotation.y = this.doorsOpen * 1.9;
     const flick = Math.sin(t * 23) * Math.sin(t * 7.3) > 0.2 ? 0.25 : 1;
-    this.interiorLight.intensity = 6 * flick;
+    this.interiorLight.intensity = 3.2 * flick;
     this.roofLights[0].emissiveIntensity = Math.sin(t * 8) > 0 ? 3 : 0.1;
     this.roofLights[1].emissiveIntensity = Math.sin(t * 8) > 0 ? 0.1 : 3;
     this.monitorMat.emissiveIntensity = 0.8 + (Math.sin(t * 6) > 0.85 ? 1.6 : 0);
@@ -713,6 +1048,10 @@ export class World {
       });
     }
 
+    if (this.shards.some((s) => s.dynamic && s.taken)) {
+      for (const s of this.shards) if (s.dynamic && s.taken) this.scene.remove(s.mesh);
+      this.shards = this.shards.filter((s) => !(s.dynamic && s.taken));
+    }
     for (const s of this.shards) {
       if (s.taken) continue;
       s.mesh.rotation.y += dt * 1.6;

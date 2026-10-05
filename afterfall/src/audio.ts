@@ -62,7 +62,47 @@ export class Sfx {
   }
 
   swing() { this.noise(0.18, 1800, 0.8, 0.35, "bandpass"); }
-  hit() { this.noise(0.12, 400, 1, 0.8, "lowpass"); this.tone(120, 0.15, 0.4, "square", 50); }
+  hit(heavy = false) {
+    this.noise(heavy ? 0.22 : 0.12, heavy ? 250 : 400, 1, heavy ? 1.2 : 0.8, "lowpass");
+    this.tone(heavy ? 90 : 120, heavy ? 0.25 : 0.15, 0.4, "square", 40);
+  }
+  kill() { this.noise(0.35, 180, 0.8, 0.9, "lowpass"); this.tone(300, 0.3, 0.15, "triangle", 80); }
+  sting() {
+    this.tone(55, 2.2, 0.7, "sine", 40);
+    this.noise(1.6, 120, 0.6, 0.7, "lowpass");
+    this.tone(1760, 1.6, 0.06, "sine", 1700, 0.05);
+    this.tone(2637, 1.4, 0.04, "sine", 2600, 0.12);
+  }
+  alarm() { for (let i = 0; i < 6; i++) this.tone(i % 2 ? 660 : 880, 0.18, 0.18, "square", undefined, i * 0.22); }
+  whoosh() { this.noise(3.5, 500, 0.4, 0.9, "bandpass"); this.tone(220, 3.5, 0.25, "sawtooth", 60); }
+  rumble() { this.noise(3, 60, 0.5, 1.0, "lowpass"); this.tone(32, 3, 0.6, "sine", 25); }
+  ghost() { this.tone(523, 1.4, 0.12, "sine", 784); this.tone(659, 1.6, 0.1, "sine", 988, 0.1); this.noise(1.2, 3000, 2, 0.15, "bandpass"); }
+  coin() { this.tone(1320, 0.08, 0.12, "triangle", 1760); }
+
+  /** Engine drone for the cabin scene. */
+  private droneNodes?: { o: OscillatorNode; g: GainNode };
+  drone(on: boolean) {
+    const ctx = this.ctx;
+    if (!ctx || !this.master) return;
+    if (on && !this.droneNodes) {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = 62;
+      const f = ctx.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = 240;
+      const g = ctx.createGain();
+      g.gain.value = 0.12;
+      o.connect(f).connect(g).connect(this.master);
+      o.start();
+      this.droneNodes = { o, g };
+    } else if (!on && this.droneNodes) {
+      const { o, g } = this.droneNodes;
+      g.gain.setTargetAtTime(0, ctx.currentTime, 0.1);
+      setTimeout(() => o.stop(), 800);
+      this.droneNodes = undefined;
+    }
+  }
   hurt() { this.tone(220, 0.25, 0.35, "sawtooth", 90); this.noise(0.2, 600, 1, 0.5, "lowpass"); }
   pickup() { this.tone(880, 0.12, 0.25, "triangle", 1320); this.tone(1320, 0.18, 0.18, "sine", 1760, 0.07); }
   dash() { this.noise(0.25, 900, 0.5, 0.4, "highpass"); }

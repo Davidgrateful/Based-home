@@ -171,3 +171,37 @@ export function buildGreatAxe() {
   g.position.z = 0.2;
   return g;
 }
+
+export function buildClub() {
+  const g = new THREE.Group();
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 1.3, 6), mat(0x3a2416));
+  g.add(shaft);
+  const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), mat(0x5a5248));
+  head.position.y = 0.7;
+  g.add(head);
+  for (let i = 0; i < 4; i++) {
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.18, 4), mat(0xd9cfb8));
+    const a = (i / 4) * Math.PI * 2;
+    sp.position.set(Math.cos(a) * 0.22, 0.7, Math.sin(a) * 0.22);
+    sp.rotation.z = -Math.cos(a) * 1.5;
+    sp.rotation.x = Math.sin(a) * 1.5;
+    g.add(sp);
+  }
+  g.rotation.x = Math.PI / 2;
+  g.position.z = 0.2;
+  return g;
+}
+
+/** Shaman staff; returns the orb material so it can glow while casting. */
+export function buildStaff() {
+  const g = new THREE.Group();
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.7, 5), mat(0x2b1d14));
+  g.add(shaft);
+  const orbMat = mat(0x220033, { emissive: 0xb05aff, emissiveIntensity: 1.5 });
+  const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.13, 0), orbMat);
+  orb.position.y = 0.95;
+  g.add(orb);
+  g.rotation.x = 0.3;
+  g.position.z = 0.1;
+  return { group: g, orbMat };
+}

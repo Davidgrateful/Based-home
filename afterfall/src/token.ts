@@ -142,13 +142,15 @@ export class TokenLink {
   }
 
   /** Wallet-signed proof of a finished run (no gas, no transaction). */
-  async signRun(stats: { shards: number; kills: number; seconds: number }): Promise<string> {
+  async signRun(stats: { shards: number; kills: number; seconds: number; night: number; echoes: number }): Promise<string> {
     const provider = eth();
     if (!provider || !this.account) throw new Error("Connect a wallet first");
     const wallet = createWalletClient({ account: this.account, chain: robinhoodTestnet, transport: custom(provider) });
     const msg = [
-      "AFTERFALL — Chapter One cleared",
+      "AFTERFALL · proof of survival",
       `Rift Shards: ${stats.shards}`,
+      `Best Long Night: ${stats.night}`,
+      `Echoes recovered: ${stats.echoes}/12`,
       `Hollow defeated: ${stats.kills}`,
       `Time: ${stats.seconds}s`,
       `Token: ${this.tokenAddress ?? "not launched"}`,

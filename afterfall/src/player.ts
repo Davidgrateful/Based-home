@@ -84,11 +84,18 @@ export class Player {
   attackT = 0; // >0 while swinging
   attackCd = 0;
   combo = 0;
+  comboWindow = 0;
+  swingDur = 0.34;
+  // stats (set from Memories upgrades)
+  dmgMul = 1;
+  regenMul = 1;
+  dodgeCost = 25;
+  pickupBonus = 0;
   dashT = 0;
   dashDir = new THREE.Vector3();
   walk = 0;
   shake = 0;
-  onSwingHit?: (facing: number, dmg: number) => number;
+  onSwingHit?: (facing: number, dmg: number, heavy: boolean) => number;
   onHurt?: () => void;
   cameraBlockers: THREE.Object3D[] = [];
   private ray = new THREE.Raycaster();
@@ -143,7 +150,7 @@ export class Player {
   }
 
   get damagePerHit() {
-    return this.riftBound ? 1.5 : 1;
+    return (this.riftBound ? 1.5 : 1) * this.dmgMul;
   }
 
   update(dt: number, input: Input, bounds: Bounds, camera: THREE.PerspectiveCamera) {
@@ -171,13 +178,13 @@ export class Player {
     const moving = wish.lengthSq() > 0;
     if (moving) wish.normalize();
     const sprint = moving && input.down("ShiftLeft") && this.stamina > 1 && !this.firstPerson;
-    this.stamina = THREE.MathUtils.clamp(this.stamina + (sprint ? -22 : 18) * dt, 0, 100);
+    this.stamina = THREE.MathUtils.clamp(this.stamina + (sprint ? -22 : 18 * this.regenMul) * dt, 0, 100);
     let speed = this.firstPerson ? 2.4 : sprint ? 9.5 : 5.6;
     if (this.attackT > 0) speed *= 0.45;
 
     // dash / dodge
-    if (!this.frozen && !this.firstPerson && (input.dash || input.tap("KeyC")) && this.stamina >= 25 && this.dashT === 0) {
-      this.stamina -= 25;
+    if (!this.frozen && !this.firstPerson && (input.dash || input.tap("KeyC")) && this.stamina >= this.dodgeCost && this.dashT === 0) {
+      this.stamina -= this.dodgeCost;
       this.dashT = 0.28;
       this.invuln = Math.max(this.invuln, 0.32);
       this.dashDir.copy(moving ? wish : fwd).multiplyScalar(19);
@@ -210,20 +217,26 @@ export class Player {
     }
 
     // ---- attack
+    // 3-hit combo: left, right, then an overhead heavy that hits harder.
+    this.comboWindow = Math.max(0, this.comboWindow - dt);
     if (!this.frozen && this.hasAxe && (input.attack || input.tap("KeyF")) && this.attackCd <= 0) {
-      this.attackT = 0.36;
-      this.attackCd = 0.42;
-      this.combo = (this.combo + 1) % 2;
+      this.combo = this.comboWindow > 0 ? (this.combo + 1) % 3 : 0;
+      const heavy = this.combo === 2;
+      this.swingDur = heavy ? 0.5 : 0.34;
+      this.attackT = this.swingDur;
+      this.attackCd = heavy ? 0.62 : 0.38;
+      this.comboWindow = this.attackCd + 0.45;
       this.swingDone = false;
       this.facing = this.yaw;
-      this.onSwing?.();
+      this.onSwing?.(heavy);
     }
     if (this.attackT > 0) {
       this.attackT = Math.max(0, this.attackT - dt);
-      if (!this.swingDone && this.attackT < 0.2) {
+      if (!this.swingDone && this.attackT < this.swingDur * 0.5) {
         this.swingDone = true;
-        const hits = this.onSwingHit?.(this.facing, this.damagePerHit) ?? 0;
-        if (hits) this.shake = Math.max(this.shake, 0.12);
+        const heavy = this.combo === 2;
+        const hits = this.onSwingHit?.(this.facing, this.damagePerHit * (heavy ? 2 : 1), heavy) ?? 0;
+        if (hits) this.shake = Math.max(this.shake, heavy ? 0.25 : 0.12);
       }
     }
 
@@ -243,12 +256,19 @@ export class Player {
     m.armL.rotation.x = -sw * 0.7;
     m.body.rotation.y = 0;
     if (this.attackT > 0) {
-      const k = 1 - this.attackT / 0.36; // 0→1
-      const raise = k < 0.35 ? k / 0.35 : 1 - (k - 0.35) / 0.65;
-      m.armR.rotation.x = -0.4 - raise * 2.4 + (k > 0.35 ? (k - 0.35) * 1.5 : 0);
-      m.armR.rotation.z = this.combo ? -0.3 : 0.3;
-      m.body.rotation.y = (this.combo ? 1 : -1) * (k - 0.5) * 0.8;
-      m.body.rotation.x = k > 0.35 ? 0.2 : -0.1;
+      const k = 1 - this.attackT / this.swingDur; // 0→1
+      const raise = k < 0.4 ? k / 0.4 : 1 - (k - 0.4) / 0.6;
+      if (this.combo === 2) {
+        m.armR.rotation.x = -0.3 - raise * 3.0 + (k > 0.4 ? (k - 0.4) * 2.2 : 0);
+        m.armL.rotation.x = m.armR.rotation.x;
+        m.armR.rotation.z = 0;
+        m.body.rotation.x = k > 0.4 ? 0.4 : -0.25;
+      } else {
+        m.armR.rotation.x = -0.4 - raise * 2.4 + (k > 0.4 ? (k - 0.4) * 1.5 : 0);
+        m.armR.rotation.z = this.combo ? -0.3 : 0.3;
+        m.body.rotation.y = (this.combo ? 1 : -1) * (k - 0.5) * 0.8;
+        m.body.rotation.x = k > 0.4 ? 0.2 : -0.1;
+      }
     } else {
       m.armR.rotation.x += ((this.hasAxe ? -0.5 : 0) + sw * 0.5 - m.armR.rotation.x) * Math.min(1, dt * 10);
       m.armR.rotation.z = 0;
@@ -287,7 +307,7 @@ export class Player {
     camera.lookAt(head.clone().addScaledVector(dir, 10).addScaledVector(right, side));
   }
 
-  onSwing?: () => void;
+  onSwing?: (heavy: boolean) => void;
   onDash?: () => void;
 }
 
