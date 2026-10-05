@@ -190,6 +190,7 @@ export async function startStory() {
   player.pos.set(0, 0.36, -1.2);
   player.yaw = 0;
   world.setMood("night");
+  world.setCampfire(false); // the pit is cold until the Long Night
   for (const [id, x, z] of [
     [0, -31, 23],
     [3, -46, 72],
@@ -346,7 +347,7 @@ const interacts: Interact[] = [
       player.equipAxe();
       world.axeProp.visible = false;
       sfx.pickup();
-      toast("Fire axe: LMB / F to swing. Third hit in a row is a heavy.", 3500);
+      toast("Fire axe. Left mouse or F to swing. The third hit in a row is heavy.", 3500);
       setObjective("PROLOGUE · WAKE", "Kick open the rear doors.");
       voice.interrupt();
       say(S.TAKE_AXE);
@@ -404,7 +405,7 @@ function echoInteract(): Interact | null {
   }
   if (!best) return null;
   const g = best;
-  return { pos: () => g.pos, r: 2.4, label: `Listen to the Echo <span class="dim">(${echoProgress()})</span>`, when: () => state.exited, run: () => listenEcho(g) };
+  return { pos: () => g.pos, r: 2.4, label: `Listen to the Echo <span class="dim">${echoProgress()}</span>`, when: () => state.exited, run: () => listenEcho(g) };
 }
 
 // ------------------------------------------------------------------ hooks

@@ -22,17 +22,19 @@ const FEMALE = ["samantha", "zira", "female", "victoria", "karen", "moira", "tes
 const MALE = ["daniel", "alex", "guy", "male", "david", "mark", "fred", "ryan", "thomas"];
 
 const SPEAKERS: Record<SpeakerId, Speaker> = {
-  RHEA: { name: "RHEA · Flight Medic", color: "#7fe3d4", pitch: 1.12, rate: 1.03, prefer: FEMALE, radio: true },
-  YOU: { name: "YOU · Patient 100", color: "#ffd27a", pitch: 0.95, rate: 0.98, prefer: MALE },
-  PILOT: { name: "CAPT. OKAFOR · Medevac 100", color: "#a9b8ff", pitch: 0.82, rate: 1.12, prefer: ["fred", ...MALE], radio: true },
-  HOLLOW: { name: "THE HOLLOW", color: "#ff7b6b", pitch: 0.45, rate: 0.82, prefer: MALE },
-  WARDEN: { name: "THE WARDEN · Patient One", color: "#ff3d5a", pitch: 0.1, rate: 0.74, prefer: MALE },
-  CHOIR: { name: "THE CHOIR", color: "#d59bff", pitch: 1.7, rate: 0.68, prefer: ["whisper", ...FEMALE], ghost: true },
-  ECHO: { name: "ECHO", color: "#b9a4ff", pitch: 1.0, rate: 0.9, prefer: [...FEMALE, ...MALE], ghost: true },
+  RHEA: { name: "Rhea", color: "#8fc7bd", pitch: 1.12, rate: 1.03, prefer: FEMALE, radio: true },
+  YOU: { name: "You", color: "#e2c48a", pitch: 0.95, rate: 0.98, prefer: MALE },
+  PILOT: { name: "Okafor", color: "#a8b3d0", pitch: 0.82, rate: 1.12, prefer: ["fred", ...MALE], radio: true },
+  HOLLOW: { name: "Hollow", color: "#d4887a", pitch: 0.45, rate: 0.82, prefer: MALE },
+  WARDEN: { name: "The Warden", color: "#cf5f56", pitch: 0.1, rate: 0.74, prefer: MALE },
+  CHOIR: { name: "The Choir", color: "#b8a6d6", pitch: 1.7, rate: 0.68, prefer: ["whisper", ...FEMALE], ghost: true },
+  ECHO: { name: "Echo", color: "#aaa3c2", pitch: 1.0, rate: 0.9, prefer: [...FEMALE, ...MALE], ghost: true },
 };
 
 export class Voice {
   muted = false;
+  /** Substituted for {name} in every line and used as YOUR speaker label. */
+  playerName = "Hundred";
   private voices: SpeechSynthesisVoice[] = [];
   private box: HTMLElement;
   private who: HTMLElement;
@@ -90,11 +92,12 @@ export class Voice {
     this.queue = Promise.resolve();
   }
 
-  private speakOne([id, line, opts]: Line, t: number): Promise<void> {
+  private speakOne([id, raw, opts]: Line, t: number): Promise<void> {
     const s = SPEAKERS[id];
+    const line = raw.replace(/\{name\}/g, this.playerName);
     const pitch = opts?.pitch ?? s.pitch;
     const rate = opts?.rate ?? s.rate;
-    this.who.textContent = opts?.name ?? s.name;
+    this.who.textContent = (opts?.name ?? (id === "YOU" ? this.playerName : s.name)).replace(/\{name\}/g, this.playerName);
     this.who.style.color = s.color;
     this.box.classList.toggle("radio", !!s.radio);
     this.box.classList.toggle("ghost", !!s.ghost);

@@ -67,7 +67,6 @@ const fire: FireLike = {
   damage(n: number) {
     if (night.phase !== "storm") return;
     world.campfire.hp = Math.max(0, world.campfire.hp - n);
-    fx.number(CAMP.clone().add(new THREE.Vector3(0, 2, 0)), `-${Math.round(n)}`, "fire");
     if (world.campfire.hp <= 0) loopReset("The fire went out.");
   },
 };
@@ -159,7 +158,7 @@ function startNight() {
     const p = randomSpot(35, 95);
     spawnEcho(pick(pool), p.x, p.z);
   }
-  $("night-chip").textContent = `NIGHT ${n}`;
+  $("night-chip").textContent = `Night ${n}`;
   card(`NIGHT ${n}`, night.omen.name, night.omen.text, 3800);
   const opener = n - 1 < S.NIGHT_OPENERS.length ? S.NIGHT_OPENERS[n - 1] : pick(S.NIGHT_OPENERS);
   setTimeout(() => {
@@ -174,7 +173,7 @@ function beginStorm() {
   world.setMood(o.blood ? "blood" : o.fog ? "fog" : "storm", o.fog);
   sfx.roar();
   sfx.rumble();
-  toast("THE STORM IS HERE. Defend the fire.", 3000);
+  toast("The storm is here. Defend the fire.", 3000);
   toSpawn = 6 + n * 3 + (o.bias ? 2 : 0);
   spawnGap = (n > 5 ? 4.5 : 6) * (o.waveGap ?? 1);
   spawnTimer = 1;
@@ -269,8 +268,8 @@ async function loopReset(reason: string) {
 function openShop(kind: "dawn" | "over") {
   document.exitPointerLock?.();
   const el = $("shop");
-  $("shop-kicker").textContent = kind === "dawn" ? `DAWN · NIGHT ${night.n} SURVIVED` : `LOOP ${save.loops} ENDED · BEST NIGHT ${save.bestNight}`;
-  $("shop-title").textContent = kind === "dawn" ? "Spend what you carried back" : "What leaks through the loop";
+  $("shop-kicker").textContent = kind === "dawn" ? `Dawn. Night ${night.n} survived` : `Loop ${save.loops} ended. Best night ${save.bestNight}`;
+  $("shop-title").textContent = kind === "dawn" ? "Memories" : "The loop resets";
   $("shop-sub").textContent =
     kind === "dawn"
       ? "Rift Shards become Memories. Memories survive every reset."
@@ -305,8 +304,8 @@ export function renderShop() {
       <div class="mem-info"><b>${m.name}</b><span>${m.desc}</span>
         <div class="pips">${Array.from({ length: m.max }, (_, i) => `<i class="${i < lvl ? "on" : ""}"></i>`).join("")}</div></div>`;
     const btn = document.createElement("button");
-    btn.className = maxed ? "ghost" : "secondary";
-    btn.textContent = maxed ? "Mastered" : `◆ ${cost}`;
+    btn.className = maxed ? "btn" : save.bank >= cost ? "btn primary" : "btn";
+    btn.textContent = maxed ? "Complete" : `Buy · ${cost}`;
     btn.disabled = maxed || save.bank < cost;
     btn.onclick = () => {
       if (save.bank < cost) return;
@@ -346,12 +345,12 @@ const interacts = (): Interact[] => {
       },
     }));
   for (const g of world.ghosts) {
-    list.push({ pos: () => g.pos, r: 2.4, label: `Listen to the Echo <span class="dim">(${echoProgress()})</span>`, when: () => true, run: () => listenEcho(g) });
+    list.push({ pos: () => g.pos, r: 2.4, label: `Listen to the Echo <span class="dim">${echoProgress()}</span>`, when: () => true, run: () => listenEcho(g) });
   }
   list.push({
     pos: () => CAMP,
     r: 2.6,
-    label: "Call the storm early <span class=\"dim\">(+10 shards)</span>",
+    label: "Call the storm early <span class=\"dim\">+10 shards</span>",
     when: () => night.phase === "dusk" && phaseT > 5,
     run: () => {
       collectShard(10);

@@ -4,28 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AFTERFALL</title>
-    <meta name="description" content="The sky has a door. You fell through it. A voiced 3D survival story built for vibe/vibe on Robinhood Chain Testnet." />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='26' fill='%2310081c' stroke='%2355e8ff' stroke-width='5'/><path d='M32 14l9 18-9 18-9-18z' fill='%2355e8ff'/></svg>" />
+    <meta name="description" content="The sky has a door. You fell through it. A voiced survival story for vibe/vibe on Robinhood Chain Testnet." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%230d0e10'/><path d='M14 50 32 12l18 38' fill='none' stroke='%23e9e6df' stroke-width='5'/><path d='M22 38h20' stroke='%23d9643a' stroke-width='5'/></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   </head>
   <body>
     <canvas id="game"></canvas>
 
     <div id="blur"></div>
     <div id="vignette"></div>
-    <div id="grain"></div>
     <div id="numbers"></div>
     <div class="bars"><i></i><i></i></div>
     <div id="flash"></div>
     <div id="blackout"></div>
     <div id="captions"></div>
-    <button id="skip">Skip ▸▸</button>
+    <button id="skip" class="link">Skip</button>
 
     <div id="titlecard">
-      <div class="tc-logo" data-text="AFTERFALL">AFTERFALL</div>
-      <div class="tc-line"></div>
+      <div class="tc-logo">AFTERFALL</div>
       <div class="tc-tag">The sky has a door. You fell through it.</div>
     </div>
 
@@ -35,20 +33,9 @@
       <div id="card-sub"></div>
     </div>
 
-    <!-- In-game HUD -->
+    <!-- ============================================================ HUD -->
     <div id="hud">
-      <div class="hud-tl">
-        <div class="bar hp"><div id="hp-fill"></div><span>VITALS</span></div>
-        <div class="bar st"><div id="st-fill"></div></div>
-        <div class="inv">
-          <span title="Medkits (Q)">✚ <b id="medkits">2</b></span>
-          <span title="Rift Shards">◆ <b id="shards">0</b></span>
-          <span title="Echoes recovered" class="echo">◎ <b id="echo-count">0/12</b></span>
-          <span id="perk" class="perk" hidden>RIFT-BOUND</span>
-        </div>
-        <div id="firebar" class="bar fire" hidden><div id="fire-fill"></div><span>CAMPFIRE</span></div>
-      </div>
-      <div class="hud-tc">
+      <div class="hud-obj">
         <div id="chapter"></div>
         <div id="objective"></div>
       </div>
@@ -56,124 +43,158 @@
         <div id="night-chip" hidden></div>
         <div id="wallet-chip" hidden></div>
       </div>
-      <div id="boss"><label id="boss-name">THE WARDEN</label><div class="track"><div id="boss-fill"></div></div></div>
-      <div id="marker"><div class="pin">◆</div><div id="marker-dist"></div></div>
+      <div class="hud-vitals">
+        <div class="who"><span id="hud-name">Hundred</span><span id="perk" hidden>Rift-bound</span></div>
+        <div class="bar hp"><div id="hp-fill"></div></div>
+        <div class="bar st"><div id="st-fill"></div></div>
+        <div class="inv">
+          <span>Medkits <b id="medkits">2</b></span>
+          <span>Shards <b id="shards">0</b></span>
+          <span>Echoes <b id="echo-count">0/12</b></span>
+        </div>
+        <div id="firebar" hidden>
+          <span>Campfire</span>
+          <div class="bar fire"><div id="fire-fill"></div></div>
+        </div>
+      </div>
+      <div id="boss"><label id="boss-name">The Warden</label><div class="track"><div id="boss-fill"></div></div></div>
+      <div id="marker"><div class="pin"></div><div id="marker-dist"></div></div>
       <div id="prompt"></div>
       <div class="crosshair"></div>
-      <div class="keys">WASD move · Mouse look · LMB/F swing (×3 combo) · RMB/C dodge · Space jump · Shift sprint · Q medkit · E interact</div>
     </div>
 
-    <div id="subtitle"><div id="sub-who"></div><div id="sub-text"></div></div>
+    <div id="subtitle"><span id="sub-who"></span><span id="sub-text"></span></div>
     <div id="toast"></div>
 
-    <!-- Title -->
-    <section id="title">
-      <div class="title-inner">
-        <p class="eyebrow">A vibe/vibe original · Robinhood Chain Testnet</p>
-        <h1 class="glitch" data-text="AFTERFALL">AFTER<span>FALL</span></h1>
-        <p class="tagline">The sky has a door. You fell through it.</p>
-        <p class="lede">
-          Medevac Flight 100 was carrying one sedated patient and a secret. Then the sky tore open.
-          You wake up in the wreck under two moons, and the masked things in the trees are already counting.
-        </p>
+    <!-- ============================================================ MAIN MENU -->
+    <section id="title" class="screen">
+      <div class="scrim"></div>
+      <div class="col">
+        <header class="brand">
+          <h1 class="logo">AFTERFALL</h1>
+          <p class="tag">The sky has a door. You fell through it.</p>
+        </header>
+        <nav class="menu">
+          <button class="mi" id="btn-story"><span class="mi-t">Chapter One</span><span class="mi-d">The Drop. Story, about fifteen minutes.</span></button>
+          <button class="mi" id="btn-night"><span class="mi-t">The Long Night</span><span class="mi-d" id="night-sub">Survive until dawn. Then do it again.</span></button>
+          <button class="mi" id="btn-character"><span class="mi-t">Survivor</span><span class="mi-d" id="char-sub">Name and dress your character.</span></button>
+          <button class="mi" id="btn-wallet"><span class="mi-t">Wallet</span><span class="mi-d" id="wallet-sub">Robinhood Chain Testnet</span></button>
+          <button class="mi" id="btn-mute"><span class="mi-t">Sound</span><span class="mi-d" id="mute-sub">On</span></button>
+        </nav>
+      </div>
+      <footer class="foot">
+        <dl class="records">
+          <div><dt>Best night</dt><dd id="stat-best">None</dd></div>
+          <div><dt>Loops</dt><dd id="stat-loops">0</dd></div>
+          <div><dt>Echoes</dt><dd id="stat-echoes">0/12</dd></div>
+          <div><dt>Shards</dt><dd id="stat-bank">0</dd></div>
+        </dl>
+        <p class="legal">Testnet build. No real funds. Not affiliated with Robinhood. <button id="btn-reset" class="link">Reset progress</button></p>
+      </footer>
+    </section>
 
-        <div class="modes">
-          <button id="btn-story" class="mode">
-            <span class="mode-k">STORY · ~15 MIN</span>
-            <span class="mode-t">Chapter One: The Drop</span>
-            <span class="mode-d">The crash. The black box. The Hollow. Patient One.</span>
-            <span class="mode-go">Wake up ▸</span>
-          </button>
-          <button id="btn-night" class="mode night">
-            <span class="mode-k">ENDLESS · <span id="night-lock">AFTER CH.1</span></span>
-            <span class="mode-t">The Long Night</span>
-            <span class="mode-d">Scavenge at dusk. Hold the fire through the storm. Die, loop, remember.</span>
-            <span class="mode-go">Light the fire ▸</span>
-          </button>
+    <!-- ============================================================ WALLET -->
+    <section id="wallet" class="screen">
+      <div class="scrim"></div>
+      <div class="col">
+        <p class="kicker">Wallet</p>
+        <h2>Rift token <span data-token-sym></span></h2>
+        <p class="body" id="token-status"></p>
+        <dl class="facts">
+          <div><dt>Network</dt><dd>Robinhood Chain Testnet</dd></div>
+          <div><dt>Chain ID</dt><dd>46630</dd></div>
+          <div><dt>Holder perk</dt><dd>Rift axe (+50% damage), an extra medkit each night, wider shard pull</dd></div>
+        </dl>
+        <div class="actions">
+          <button id="btn-connect" class="btn primary">Connect wallet</button>
+          <a id="btn-trade" class="btn" target="_blank" rel="noopener" hidden>Trade on vibe/vibe</a>
+          <a id="btn-launch" class="btn" target="_blank" rel="noopener">Launch on vibe/vibe</a>
+          <a id="btn-faucet" class="btn" target="_blank" rel="noopener">Testnet faucet</a>
         </div>
-
-        <div class="records">
-          <div><b id="stat-best">—</b><span>Best night</span></div>
-          <div><b id="stat-loops">0</b><span>Loops</span></div>
-          <div><b id="stat-echoes">0/12</b><span>Echoes</span></div>
-          <div><b id="stat-bank">0</b><span>Shards banked</span></div>
-        </div>
-
-        <div class="token-card">
-          <div class="token-head">
-            <h2>Rift token <span data-token-sym>token</span></h2>
-            <span class="net">Chain 46630 · testnet</span>
-          </div>
-          <p id="token-status"></p>
-          <div class="row">
-            <button id="btn-connect" class="secondary">Connect wallet</button>
-            <a id="btn-trade" class="secondary" target="_blank" rel="noopener" hidden>Trade on vibe/vibe ↗</a>
-            <a id="btn-launch" class="secondary" target="_blank" rel="noopener">Launch on vibe/vibe ↗</a>
-            <a id="btn-faucet" class="ghost" target="_blank" rel="noopener">Testnet ETH faucet ↗</a>
-          </div>
-        </div>
-
-        <div class="row small">
-          <button id="btn-mute" class="ghost">Sound: on</button>
-          <button id="btn-reset" class="ghost">Reset progress</button>
-          <span class="hint">Headphones on. Every character is voiced in your browser.</span>
-        </div>
-        <p class="fine">Testnet only. No real funds. Not affiliated with Robinhood.</p>
+        <button class="back" data-back>Back</button>
       </div>
     </section>
 
-    <div id="pause">
-      <div>
-        <h2>Paused</h2>
-        <p>Click to resume</p>
-        <div class="row center">
-          <button id="btn-nolock" class="ghost">Play without mouse lock</button>
-          <button id="btn-title" class="ghost">Quit to title</button>
+    <!-- ============================================================ CHARACTER -->
+    <section id="creator" class="screen">
+      <div class="col creator-col">
+        <p class="kicker">Survivor</p>
+        <h2>Who fell?</h2>
+        <label class="field">
+          <span>Name</span>
+          <input id="cc-name" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Hundred" />
+        </label>
+        <div id="cc-rows"></div>
+        <div class="actions">
+          <button id="cc-done" class="btn primary">Confirm</button>
+          <button id="cc-random" class="btn">Randomize</button>
+        </div>
+        <button class="back" id="cc-back">Back</button>
+      </div>
+      <p class="creator-hint">Drag to turn</p>
+    </section>
+
+    <!-- ============================================================ OVERLAYS -->
+    <div id="pause" class="screen">
+      <div class="scrim"></div>
+      <div class="col">
+        <p class="kicker">Paused</p>
+        <h2>Click to resume</h2>
+        <dl class="facts keys">
+          <div><dt>Move</dt><dd>W A S D</dd></div>
+          <div><dt>Look</dt><dd>Mouse, or arrow keys</dd></div>
+          <div><dt>Attack</dt><dd>Left mouse or F. Third hit is heavy.</dd></div>
+          <div><dt>Dodge</dt><dd>Right mouse or C</dd></div>
+          <div><dt>Jump / Sprint</dt><dd>Space / Shift</dd></div>
+          <div><dt>Medkit / Interact</dt><dd>Q / E</dd></div>
+        </dl>
+        <div class="actions">
+          <button id="btn-nolock" class="btn">Play without mouse lock</button>
+          <button id="btn-title" class="btn">Quit to menu</button>
         </div>
       </div>
     </div>
-    <div id="dead"><h2 id="dead-title">YOU WENT DOWN</h2><p id="dead-sub">Rhea's voice cuts through the static…</p></div>
 
-    <!-- Dawn / loop-reset shop -->
-    <section id="shop">
-      <div class="shop-inner">
-        <p class="eyebrow" id="shop-kicker"></p>
+    <div id="dead"><h2 id="dead-title">You went down</h2><p id="dead-sub">Rhea's voice cuts through the static.</p></div>
+
+    <section id="shop" class="screen">
+      <div class="scrim"></div>
+      <div class="col wide">
+        <p class="kicker" id="shop-kicker"></p>
         <h2 id="shop-title"></h2>
-        <p class="lede" id="shop-sub"></p>
-        <div class="bank">
-          <div><b>◆ <span id="shop-bank">0</span></b><span>shards banked</span></div>
-          <div><b>◎ <span id="shop-echoes">0/12</span></b><span>echoes recovered</span></div>
-        </div>
+        <p class="body" id="shop-sub"></p>
+        <dl class="records inline">
+          <div><dt>Shards</dt><dd id="shop-bank">0</dd></div>
+          <div><dt>Echoes</dt><dd id="shop-echoes">0/12</dd></div>
+        </dl>
         <div id="shop-list"></div>
-        <div class="row">
-          <button id="shop-go" class="primary">Continue</button>
-          <button id="shop-sign" class="secondary">Sign my record</button>
+        <div class="actions">
+          <button id="shop-go" class="btn primary">Continue</button>
+          <button id="shop-sign" class="btn">Sign record</button>
         </div>
         <p id="shop-sign-out" class="mono"></p>
       </div>
     </section>
 
-    <section id="end">
-      <div class="title-inner">
-        <p class="eyebrow">Chapter One complete</p>
-        <h1>THROUGH THE <span>RIFT</span></h1>
-        <p class="lede">Patient One is dust. The door is open. And something on the other side knows your name.</p>
-        <div class="stats">
-          <div><b id="end-shards">0</b><span>Rift Shards</span></div>
-          <div><b id="end-kills">0</b><span>Hollow defeated</span></div>
-          <div><b id="end-echoes">0/12</b><span>Echoes</span></div>
-          <div><b id="end-time">0</b><span>Time</span></div>
+    <section id="end" class="screen">
+      <div class="scrim"></div>
+      <div class="col wide">
+        <p class="kicker">Chapter One complete</p>
+        <h2>Through the rift</h2>
+        <p class="body">Patient One is dust. The door is open. And something on the other side knows <span id="end-name">your</span> name.</p>
+        <dl class="records inline">
+          <div><dt>Shards</dt><dd id="end-shards">0</dd></div>
+          <div><dt>Hollow</dt><dd id="end-kills">0</dd></div>
+          <div><dt>Echoes</dt><dd id="end-echoes">0/12</dd></div>
+          <div><dt>Time</dt><dd id="end-time">0</dd></div>
+        </dl>
+        <p class="body">The Long Night is open. The rift is looping you. Hold the fire, recover the Echoes of the ninety-nine before you, and find out who is really on the radio.</p>
+        <div class="actions">
+          <button id="btn-end-night" class="btn primary">Enter the Long Night</button>
+          <button id="btn-sign" class="btn">Sign my run</button>
+          <button id="btn-again" class="btn">Main menu</button>
         </div>
-        <div class="token-card">
-          <p><b>The Long Night is open.</b> The rift is looping you. Hold the fire, collect the Echoes of the 99 before you, and find out who's really on the radio.</p>
-          <div class="row">
-            <button id="btn-end-night" class="primary">Enter the Long Night</button>
-            <button id="btn-sign" class="secondary">Sign my run</button>
-            <button id="btn-again" class="ghost">Title</button>
-          </div>
-          <p id="sign-out" class="mono"></p>
-        </div>
-        <p class="fine">Chapter Two: <i>The Other Side</i>. Coming soon.</p>
+        <p id="sign-out" class="mono"></p>
       </div>
     </section>
 

@@ -2,7 +2,7 @@
 // third-person over-the-shoulder camera once outside.
 
 import * as THREE from "three";
-import { buildAxe, buildHumanoid, type Humanoid } from "./models";
+import { buildAxe, buildPlayerModel, DEFAULT_LOOK, type Humanoid, type Look } from "./models";
 
 export class Input {
   keys = new Set<string>();
@@ -12,6 +12,7 @@ export class Input {
   attack = false;
   dash = false;
   locked = false;
+  private settleUntil = 0;
   private el: HTMLElement;
 
   constructor(el: HTMLElement) {
@@ -31,9 +32,12 @@ export class Input {
     addEventListener("contextmenu", (e) => e.preventDefault());
     document.addEventListener("pointerlockchange", () => {
       this.locked = document.pointerLockElement === el;
+      this.settleUntil = performance.now() + 150;
     });
     addEventListener("mousemove", (e) => {
       if (!this.locked) return;
+      // Browsers can report one huge bogus delta right after locking the pointer.
+      if (performance.now() < this.settleUntil || Math.abs(e.movementX) > 250 || Math.abs(e.movementY) > 250) return;
       this.mdx += e.movementX;
       this.mdy += e.movementY;
     });
@@ -103,12 +107,20 @@ export class Player {
   private axe?: THREE.Group;
 
   constructor(scene: THREE.Scene) {
-    this.model = buildHumanoid({ cloth: 0x2f6f73, skin: 0xc79a7a, pants: 0x2c2c3a, eye: 0x111111, hair: 0x2a1a12 });
-    // hospital wristband
-    const band = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.16), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    band.position.y = -0.55;
-    this.model.armL.add(band);
+    this.model = buildPlayerModel(DEFAULT_LOOK);
     scene.add(this.model.root);
+  }
+
+  /** Rebuild the survivor from a wardrobe look (character creator). */
+  setLook(look: Look) {
+    const parent = this.model.root.parent;
+    const visible = this.model.root.visible;
+    parent?.remove(this.model.root);
+    this.model = buildPlayerModel(look);
+    this.model.root.visible = visible;
+    parent?.add(this.model.root);
+    this.axe = undefined;
+    this.refreshAxe();
   }
 
   equipAxe() {

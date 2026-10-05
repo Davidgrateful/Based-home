@@ -46,7 +46,7 @@ function rng(seed: number) {
 }
 
 const std = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true, ...extra });
+  new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...extra });
 
 export interface Shard {
   mesh: THREE.Mesh;
@@ -78,12 +78,12 @@ interface Mood {
 }
 
 export const MOODS = {
-  night: { fog: 0x1d1533, density: 0.0115, hemi: 1.25, tint: [1, 1, 1], sun: 1.6 },
-  dusk: { fog: 0x3b1a3c, density: 0.009, hemi: 1.45, tint: [1.6, 0.85, 0.95], sun: 1.9 },
-  storm: { fog: 0x160b26, density: 0.0155, hemi: 0.95, tint: [0.75, 0.6, 1.25], sun: 1.15 },
-  blood: { fog: 0x2c0810, density: 0.0135, hemi: 1.0, tint: [1.7, 0.45, 0.5], sun: 1.2, blood: true },
-  dawn: { fog: 0x3c3354, density: 0.0075, hemi: 1.7, tint: [1.35, 1.15, 1.35], sun: 2.1 },
-  fog: { fog: 0x6c6a84, density: 0.03, hemi: 1.3, tint: [1.2, 1.2, 1.3], sun: 1.4 },
+  night: { fog: 0x161a22, density: 0.0115, hemi: 1.2, tint: [1, 1, 1], sun: 1.5 },
+  dusk: { fog: 0x33282a, density: 0.009, hemi: 1.4, tint: [1.45, 1.05, 0.95], sun: 1.8 },
+  storm: { fog: 0x11141b, density: 0.0155, hemi: 0.9, tint: [0.75, 0.78, 0.95], sun: 1.1 },
+  blood: { fog: 0x24100f, density: 0.0135, hemi: 1.0, tint: [1.5, 0.6, 0.55], sun: 1.2, blood: true },
+  dawn: { fog: 0x3a3a40, density: 0.0075, hemi: 1.65, tint: [1.4, 1.25, 1.15], sun: 2.0 },
+  fog: { fog: 0x5c6066, density: 0.03, hemi: 1.3, tint: [1.2, 1.22, 1.25], sun: 1.4 },
 } satisfies Record<string, Mood>;
 export type MoodName = keyof typeof MOODS;
 
@@ -137,7 +137,7 @@ export class World {
   private moodDensity = 0.0115;
   private ghostMat!: THREE.MeshBasicMaterial;
   private shardGeo = new THREE.OctahedronGeometry(0.32);
-  private shardMat = new THREE.MeshStandardMaterial({ color: 0x9ff6ff, emissive: 0x22c8ff, emissiveIntensity: 1.8, flatShading: true, metalness: 0.3, roughness: 0.2 });
+  private shardMat = new THREE.MeshStandardMaterial({ color: 0xa8dbe4, emissive: 0x3aa8c8, emissiveIntensity: 1.3, flatShading: true, metalness: 0.3, roughness: 0.2 });
   private spores: THREE.Points;
   private embers: THREE.Points;
   private emberData: Float32Array;
@@ -146,8 +146,8 @@ export class World {
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
-    scene.fog = new THREE.FogExp2(0x1d1533, 0.0115);
-    scene.background = new THREE.Color(0x1d1533);
+    scene.fog = new THREE.FogExp2(0x161a22, 0.0115);
+    scene.background = new THREE.Color(0x161a22);
 
     // ---------- Sky ----------
     this.skyMat = new THREE.ShaderMaterial({
@@ -161,15 +161,15 @@ export class World {
         float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }
         void main(){
           float h = clamp(vDir.y, -0.2, 1.0);
-          vec3 horizon = vec3(0.114,0.082,0.2);
-          vec3 mid = vec3(0.16,0.05,0.28);
-          vec3 top = vec3(0.02,0.01,0.06);
+          vec3 horizon = vec3(0.086,0.102,0.133);
+          vec3 mid = vec3(0.06,0.07,0.115);
+          vec3 top = vec3(0.012,0.016,0.03);
           vec3 c = mix(horizon, mid, smoothstep(0.0,0.25,h));
           c = mix(c, top, smoothstep(0.25,0.9,h));
           // aurora band
           float band = sin(vDir.x*6.0 + uTime*0.05) * 0.08 + 0.35;
           float a = exp(-pow((h-band)*9.0, 2.0)) * (0.5+0.5*sin(vDir.z*10.0+uTime*0.2));
-          c += vec3(0.05,0.45,0.4) * a * 0.35;
+          c += vec3(0.08,0.3,0.28) * a * 0.16;
           // stars
           vec3 p = floor(vDir*300.0);
           float s = step(0.997, hash(p)) * smoothstep(0.05,0.3,h);
@@ -190,20 +190,20 @@ export class World {
       m.position.copy(pos);
       scene.add(m);
       const halo = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, opacity: 0.5, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }),
+        new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, opacity: 0.22, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }),
       );
-      halo.scale.setScalar(r * 5);
+      halo.scale.setScalar(r * 3.2);
       halo.position.copy(pos);
       scene.add(halo);
       return m.material;
     };
-    this.bigMoon = moon(38, 0xe6d9ff, new THREE.Vector3(-180, 220, 420));
-    moon(16, 0x9ff3e4, new THREE.Vector3(120, 150, 450));
+    this.bigMoon = moon(38, 0xe4e0d6, new THREE.Vector3(-180, 220, 420));
+    moon(16, 0xbfd6d0, new THREE.Vector3(120, 150, 450));
 
     // ---------- Lights ----------
-    this.hemi = new THREE.HemisphereLight(0x9a8be6, 0x24343a, 1.25);
+    this.hemi = new THREE.HemisphereLight(0x8d98b5, 0x2a2622, 1.2);
     scene.add(this.hemi);
-    this.sun = new THREE.DirectionalLight(0xd8ccff, 1.6);
+    this.sun = new THREE.DirectionalLight(0xc9d2e6, 1.5);
     this.sun.position.set(-40, 80, 60);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
@@ -222,8 +222,8 @@ export class World {
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
     const colors = new Float32Array(pos.count * 3);
-    const cA = new THREE.Color(0x2a2340);
-    const cB = new THREE.Color(0x1f3b3a);
+    const cA = new THREE.Color(0x2b2a2c);
+    const cB = new THREE.Color(0x26302a);
     const cScorch = new THREE.Color(0x141014);
     const c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
@@ -235,12 +235,12 @@ export class World {
       const scorch = 1 - smoothstep(6, 26, Math.hypot(x + 6, z - 18));
       c.lerp(cScorch, scorch * 0.8);
       const arena = 1 - smoothstep(16, 26, Math.hypot(x - ARENA.x, z - ARENA.z));
-      c.lerp(new THREE.Color(0x3a1424), arena * 0.7);
+      c.lerp(new THREE.Color(0x2e1d1c), arena * 0.7);
       colors.set([c.r, c.g, c.b], i * 3);
     }
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geo.computeVertexNormals();
-    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
+    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
     ground.receiveShadow = true;
     scene.add(ground);
 
@@ -254,9 +254,9 @@ export class World {
 
     this.shardGlow = new THREE.SpriteMaterial({
       map: glowTexture(),
-      color: 0x55e8ff,
+      color: 0x6ac0d6,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.45,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
@@ -291,7 +291,7 @@ export class World {
     sporeGeo.setAttribute("position", new THREE.BufferAttribute(sp, 3));
     this.spores = new THREE.Points(
       sporeGeo,
-      new THREE.PointsMaterial({ color: 0x9dffe0, size: 0.18, map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
+      new THREE.PointsMaterial({ color: 0xb8d8cc, size: 0.12, map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
     );
     this.spores.frustumCulled = false;
     scene.add(this.spores);
@@ -523,9 +523,9 @@ export class World {
   private buildForest() {
     const rand = rng(1001);
     const N = 230;
-    const trunkGeo = new THREE.CylinderGeometry(0.25, 0.55, 1, 6);
+    const trunkGeo = new THREE.CylinderGeometry(0.22, 0.5, 1, 10);
     trunkGeo.translate(0, 0.5, 0);
-    const canopyGeo = new THREE.IcosahedronGeometry(1, 0);
+    const canopyGeo = new THREE.IcosahedronGeometry(1, 2);
     const bulbGeo = new THREE.SphereGeometry(0.22, 6, 4);
     const trunks = new THREE.InstancedMesh(trunkGeo, std(0x1c1426), N);
     const canopy = new THREE.InstancedMesh(canopyGeo, std(0xffffff), N * 2);
@@ -537,8 +537,8 @@ export class World {
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
     const p = new THREE.Vector3();
-    const palette = [0x5b2a86, 0x1f7a6e, 0x7a2a5e, 0x2c4f9a];
-    const bulbCols = [0x7dffe9, 0xff8af0, 0xb6ff6a];
+    const palette = [0x3a3448, 0x2b453f, 0x45303a, 0x2c3848];
+    const bulbCols = [0x6fa89c, 0xa87f98, 0x95a874];
     let ti = 0;
     let ci = 0;
     let bi = 0;
@@ -576,7 +576,7 @@ export class World {
 
     // rocks
     const R = 70;
-    const rocks = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), std(0x3a3548), R);
+    const rocks = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), std(0x3a3a3c, { flatShading: true }), R);
     rocks.castShadow = rocks.receiveShadow = true;
     let ri = 0;
     tries = 0;
@@ -608,7 +608,7 @@ export class World {
         m.compose(p.set(x, heightAt(x, z) + 0.2 * sc, z), q.identity(), s.setScalar(sc));
       }
       flora.setMatrixAt(i, m);
-      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x3affc8 : 0x9a6bff).multiplyScalar(0.7));
+      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x5fa894 : 0x7a6e9a).multiplyScalar(0.55));
     }
     this.scene.add(flora);
   }
@@ -753,11 +753,13 @@ export class World {
   private buildCampfire() {
     const g = new THREE.Group();
     g.position.copy(CAMP);
-    const stone = std(0x4a4458);
-    for (let i = 0; i < 9; i++) {
-      const a = (i / 9) * Math.PI * 2;
-      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.28, 0), stone);
-      st.position.set(Math.cos(a) * 0.9, 0.12, Math.sin(a) * 0.9);
+    const stone = std(0x3c3a38, { flatShading: true, roughness: 1 });
+    for (let i = 0; i < 11; i++) {
+      const a = (i / 11) * Math.PI * 2;
+      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.17 + (i % 3) * 0.03, 0), stone);
+      st.position.set(Math.cos(a) * 0.82, 0.08, Math.sin(a) * 0.82);
+      st.rotation.set(i, i * 2, 0);
+      st.scale.y = 0.7;
       st.castShadow = true;
       g.add(st);
     }
@@ -778,8 +780,8 @@ export class World {
     const flames: THREE.Mesh[] = [];
     for (let i = 0; i < 5; i++) {
       const f = new THREE.Mesh(
-        new THREE.ConeGeometry(0.35 - i * 0.04, 1.4 - i * 0.12, 6),
-        new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffc35a : 0xff6a1f, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }),
+        new THREE.ConeGeometry(0.3 - i * 0.04, 1.15 - i * 0.12, 10),
+        new THREE.MeshBasicMaterial({ color: i % 2 ? 0xe8a24a : 0xd9561c, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
       );
       f.position.set(Math.cos(i * 1.3) * 0.18, 0.75, Math.sin(i * 1.3) * 0.18);
       f.visible = false;
@@ -950,7 +952,7 @@ export class World {
     this.sun.intensity += (this.mood.sun - this.sun.intensity) * k;
     const tint = this.skyMat.uniforms.uTint.value as THREE.Vector3;
     tint.lerp(new THREE.Vector3(...this.mood.tint), k);
-    this.bigMoon.color.lerp(new THREE.Color(this.mood.blood ? 0xff3a3a : 0xe6d9ff), k);
+    this.bigMoon.color.lerp(new THREE.Color(this.mood.blood ? 0xc8473c : 0xe4e0d6), k);
 
     // campfire
     const cf = this.campfire;

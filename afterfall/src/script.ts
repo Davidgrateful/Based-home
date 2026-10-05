@@ -19,7 +19,8 @@
 //                               99 before you. Echo #12 is your own voice.
 //
 // Characters
-//   YOU / "HUNDRED" — Patient 100. Dry, stubborn, gets braver as he gets scared.
+//   YOU / "HUNDRED" — Patient 100, named and dressed by the player. Dry,
+//                     stubborn, gets braver the more scared they get.
 //   RHEA VANCE      — Flight medic. Warm and funny under fire, and guilty. The
 //                     Echoes hint that "Rhea" has been on every transfer.
 //                     (Seeded, unresolved: Chapter Two's hook.)
@@ -48,8 +49,8 @@ export const COLD_OPEN_CAPTIONS = [
 
 export const COLD_OPEN_CABIN: Line[] = [
   ["PILOT", "Meridian Control, Medevac One Zero Zero. Level at three one zero. Cargo is sedated and stable."],
-  ["RHEA", "Stable is a strong word, Captain. His heart rate just doubled. In his sleep."],
-  ["PILOT", "Then put him deeper. We don't get paid to ask questions, Vance."],
+  ["RHEA", "Stable is a strong word, Captain. Their heart rate just doubled. In their sleep."],
+  ["PILOT", "Then put them under deeper. We don't get paid to ask questions, Vance."],
   ["RHEA", "Hey. Hundred. Whatever you're dreaming about, stop it. Please."],
   ["PILOT", "What is that? There's a light ahead of us. It's opening."],
   ["RHEA", "Captain, pull up. Pull up!"],
@@ -68,7 +69,7 @@ export const WAKE: Line[] = [
   ["YOU", "Rhea?"],
   ["RHEA", "Hundred. Hundred, if you can hear me, tap the radio. Anything."],
   ["YOU", "I'm here. I think. Where is here?"],
-  ["RHEA", "Good. Stay grumpy, it keeps you alive. The ambulance tore out of the cargo hold when we hit. I got thrown clear. I'm hurt, but I'm moving."],
+  ["RHEA", "{name}, right? It's on your wristband. Stay grumpy, it keeps you alive. The ambulance tore out of the cargo hold when we hit. I got thrown clear. I'm hurt, but I'm moving."],
   ["RHEA", "Listen. That smell is fuel. Find something heavy and get out of that box."],
 ];
 
@@ -92,7 +93,7 @@ export const FIRST_SHARD: Line[] = [
 
 export const BLACK_BOX: Line[] = [
   ["YOU", "Black box. It's still recording."],
-  ["PILOT", "Okafor. Final log. Meridian lied to us. The cargo isn't a patient. He's a key.", { name: "BLACK BOX · CAPT. OKAFOR" }],
+  ["PILOT", "Okafor. Final log. Meridian lied to us. Patient one hundred isn't a patient. They're a key.", { name: "BLACK BOX · CAPT. OKAFOR" }],
   ["PILOT", "The light opened the second he woke up. If anyone hears this, keep Hundred away from the towers.", { name: "BLACK BOX · CAPT. OKAFOR" }],
   ["RHEA", "Hundred, I didn't know. I swear I didn't know that part."],
   ["YOU", "That part?"],
@@ -158,7 +159,7 @@ export const EPILOGUE: Line[] = [
 ];
 
 export const RESPAWN: Line[][] = [
-  [["RHEA", "Hundred! Get up! Don't you dare quit on me!"]],
+  [["RHEA", "{name}! Get up! Don't you dare quit on me!"]],
   [["RHEA", "Breathe. In. Out. You're not done. I'm not done with you."]],
   [["RHEA", "Up! Up! You can bleed later, that's an order."]],
 ];
@@ -189,7 +190,7 @@ export const LOOP_WAKE: Line[][] = [
   [],
   [
     ["YOU", "Rhea. I died. I felt it."],
-    ["RHEA", "What? You're right here. You never left the fire."],
+    ["RHEA", "What? You're right here, {name}. You never left the fire."],
     ["YOU", "Then why do I remember the dark?"],
   ],
   [
@@ -250,7 +251,7 @@ export const FIRST_NIGHT_OMEN: Omen = { id: "first", name: "THE FIRST NIGHT", te
 export const WARDEN_OMEN: Omen = { id: "warden", name: "WARDEN'S ECHO", text: "Patient One won't stay dead. He's coming for the fire.", bias: "brute" };
 
 export const DAWN_LINES: Line[][] = [
-  [["RHEA", "Sun's up. Or whatever that is. You made it."]],
+  [["RHEA", "Sun's up. Or whatever that is. You made it, {name}."]],
   [["RHEA", "Dawn. I could hear you fighting from here. Rest."]],
   [["YOU", "Still here."], ["RHEA", "Still here."]],
   [["RHEA", "That's another night. I'm marking them on my arm."]],
@@ -285,7 +286,7 @@ export const ECHOES: Echo[] = [
     id: 11,
     patient: "100",
     lines: [
-      ["YOU", "Patient one hundred. If you're hearing this, it's already happened. I've done this before. Many times.", { name: "ECHO · PATIENT 100" }],
+      ["YOU", "Patient one hundred. {name}. If you're hearing this, it's already happened. I've done this before. Many times.", { name: "ECHO · PATIENT 100" }],
       ["YOU", "Stop counting the nights. Start counting the people. Find Rhea.", { name: "ECHO · PATIENT 100" }],
       ["RHEA", "Hundred? Who were you talking to?"],
       ["YOU", "Me."],

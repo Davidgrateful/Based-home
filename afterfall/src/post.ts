@@ -13,7 +13,7 @@ export function makePost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, came
   }
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new Vector2(innerWidth / 2, innerHeight / 2), 0.7, 0.55, 0.72);
+  const bloom = new UnrealBloomPass(new Vector2(innerWidth / 2, innerHeight / 2), 0.42, 0.4, 0.82);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
   return {

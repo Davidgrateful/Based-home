@@ -1,3 +1,5 @@
+import type { Look } from "./models";
+
 // Persistent progress (per browser). Wrapped in try/catch: private windows or
 // blocked storage just mean progress isn't kept.
 
@@ -10,6 +12,8 @@ export interface Memory {
 }
 
 export interface Save {
+  name: string; // what's written on your wristband
+  look: Look | null; // null until the player has made a character
   storyDone: boolean;
   bank: number; // Rift Shards banked, spent on Memories
   echoes: number[];
@@ -21,6 +25,8 @@ export interface Save {
 const KEY = "afterfall.save.v1";
 
 const fresh = (): Save => ({
+  name: "",
+  look: null,
   storyDone: false,
   bank: 0,
   echoes: [],
@@ -40,6 +46,9 @@ export const save: Save = (() => {
   } catch {}
   return fresh();
 })();
+
+/** The survivor's name, or the nickname everyone uses for Patient 100. */
+export const playerName = () => save.name.trim() || "Hundred";
 
 export function persist() {
   try {

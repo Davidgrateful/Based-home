@@ -39,6 +39,24 @@ The game gives the loop a story reason: **the rift is looping Patient 100.**
 
 All voices use the browser's Web Speech API, each with its own pitch, rate and voice choice. Subtitles type on as they're spoken. All sound is synthesized with WebAudio.
 
+## Your survivor
+
+The first time you play, you name your survivor and dress them in the firelight next to the wreck. The preview is the in-game model, and you can drag to turn it.
+
+- **Name:** written on the wristband. Rhea and the Echoes say it out loud, and it appears on your HUD and in your signed record.
+- **Frame:** lean, standard or heavy.
+- **Skin tone:** six options.
+- **Hair:** six styles and six colors.
+- **Clothing:** medevac hoodie, field jacket, scrubs, bomber or patient gown, in seven colors.
+- **Trousers:** five colors.
+- **Accessory:** beanie, scarf, backpack, glasses or bandana.
+
+Change any of it later from **Survivor** on the main menu. Everything is saved in the browser.
+
+## Design
+
+The interface is deliberately plain, like a shipped console game. It uses one accent color (medevac orange), Barlow and Barlow Condensed type, thin rules instead of boxes, plain subtitles with the speaker's name in color, and a text-only main menu over the live campfire scene. The world uses a muted night palette, smooth-shaded characters and restrained bloom.
+
 ## Token integration (Robinhood Chain Testnet, chain ID 46630)
 
 - **Launch the token:** [testnet.vibevibe.fun/create](https://testnet.vibevibe.fun/create). Gas comes from the [faucet](https://faucet.testnet.chain.robinhood.com).
@@ -71,7 +89,9 @@ Deploy `dist/` anywhere static. On Vercel, set the root directory to `afterfall`
 | `src/ctx.ts` | Shared renderer, world, actors, HUD helpers, interactions |
 | `src/world.ts` | Terrain, sky and moods, wreck, ambulance, campfire, caches, ghosts, rift |
 | `src/enemies.ts` | Hollow, Runner, Brute, Shaman and Warden AI; projectiles; health bars |
+| `src/models.ts` | Smooth-shaded characters, the full wardrobe, weapons |
 | `src/player.ts` | Controller, combo combat, dodge, camera collision |
+| `src/creator.ts` | Survivor creator and menu camera |
 | `src/echo.ts`, `src/save.ts` | Echo collectibles and persistent progress (Memories) |
 | `src/fx.ts`, `src/post.ts` | Damage numbers, sparks, bloom |
 | `src/voice.ts`, `src/audio.ts` | Voiced dialogue and procedural sound |
