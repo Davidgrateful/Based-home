@@ -30,7 +30,13 @@ export const BEACON = new THREE.Vector3(-12.5, 0, 33);
 export const PYLONS = [new THREE.Vector3(58, 0, 62), new THREE.Vector3(-62, 0, 88), new THREE.Vector3(18, 0, 122)];
 export const ARENA = new THREE.Vector3(0, 0, 165);
 export const CAMP = new THREE.Vector3(6, 0, 9);
-for (const p of [BEACON, ...PYLONS, ARENA, CAMP]) p.y = heightAt(p.x, p.z);
+/** Meridian's abandoned field station, east of the crash. Red trees around it. */
+export const STATION = new THREE.Vector3(80, 0, 26);
+/** A broken Meridian relay mast behind the ambulance: the landmark you navigate home by. */
+export const MAST = new THREE.Vector3(8, 0, -22);
+/** West of this line the forest closes in: the Blackwood. */
+export const BLACKWOOD_X = -38;
+for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST]) p.y = heightAt(p.x, p.z);
 
 export interface Circle {
   x: number;
@@ -127,6 +133,15 @@ export class World {
   bigMoon!: THREE.MeshBasicMaterial;
   campfire!: { group: THREE.Group; light: THREE.PointLight; flames: THREE.Mesh[]; logs: THREE.Group; lit: boolean; hp: number; maxHp: number };
   caches: Cache[] = [];
+  /** Trunk positions, for the map. */
+  treeSpots: { x: number; z: number; kind: 0 | 1 | 2 }[] = [];
+  /** 0..1: extra fog while inside the Blackwood. */
+  fogBoost = 0;
+  private fogBoostNow = 0;
+  private mastLight!: THREE.SpriteMaterial;
+  private mist: { s: THREE.Sprite; base: THREE.Vector3; ph: number }[] = [];
+  private stationFlicker!: THREE.MeshStandardMaterial;
+  private stationLamp!: THREE.PointLight;
   ghosts: Ghost[] = [];
   fallingPlane!: THREE.Group;
   skyTear!: THREE.Mesh;
@@ -276,6 +291,9 @@ export class World {
     this.beaconLight = bea.light;
     this.beaconMat = bea.mat;
     this.buildForest();
+    this.buildStation();
+    this.buildMast();
+    this.buildMist();
     for (const p of PYLONS) this.pylons.push(this.buildPylon(p));
     const r = this.buildArena();
     this.rift = r.rift;
@@ -284,7 +302,7 @@ export class World {
     this.buildShards();
     this.buildCampfire();
     this.buildFallingPlane();
-    this.ghostMat = new THREE.MeshBasicMaterial({ color: 0x9a86ff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false });
+    this.ghostMat = new THREE.MeshBasicMaterial({ color: 0xcfeef5, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false });
 
     // ---------- Particles ----------
     const sporeGeo = new THREE.BufferGeometry();
@@ -525,51 +543,77 @@ export class World {
   private buildForest() {
     const rand = rng(1001);
     const N = 230;
+    const NB = 120; // extra trunks packed into the Blackwood
     const trunkGeo = new THREE.CylinderGeometry(0.22, 0.5, 1, 10);
     trunkGeo.translate(0, 0.5, 0);
     const canopyGeo = new THREE.IcosahedronGeometry(1, 2);
     const bulbGeo = new THREE.SphereGeometry(0.22, 6, 4);
-    const trunks = new THREE.InstancedMesh(trunkGeo, std(0x1c1426), N);
-    const canopy = new THREE.InstancedMesh(canopyGeo, std(0xffffff), N * 2);
+    const trunks = new THREE.InstancedMesh(trunkGeo, std(0xffffff), N + NB);
+    const canopy = new THREE.InstancedMesh(canopyGeo, std(0xffffff), (N + NB) * 2);
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
     trunks.castShadow = canopy.castShadow = true;
     canopy.receiveShadow = true;
-    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA];
+    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST];
+    const clearR = (v: THREE.Vector3) => (v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : 14);
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
     const p = new THREE.Vector3();
     const palette = [0x3a3448, 0x2b453f, 0x45303a, 0x2c3848];
+    // Blackwood: near-black, no glow. Station: red, the colour of what's wrong there.
+    const darkPalette = [0x15181a, 0x1a1f1c, 0x1d1a1e];
+    const redPalette = [0x5a1712, 0x6e2018, 0x461310];
     const bulbCols = [0x6fa89c, 0xa87f98, 0x95a874];
     let ti = 0;
     let ci = 0;
     let bi = 0;
     let tries = 0;
+    const plant = (x: number, z: number) => {
+      const y = heightAt(x, z);
+      const dark = x < BLACKWOOD_X;
+      const red = Math.hypot(x - STATION.x, z - STATION.z) < 46;
+      const kind: 0 | 1 | 2 = dark ? 1 : red ? 2 : 0;
+      const h = dark ? 7 + rand() * 7 : 4 + rand() * 6;
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand() * 6.28);
+      m.compose(p.set(x, y - 0.2, z), q, s.set(dark ? 1.25 : 1, h, dark ? 1.25 : 1));
+      trunks.setMatrixAt(ti, m);
+      trunks.setColorAt(ti, new THREE.Color(dark ? 0x0c0b0d : red ? 0x2a1412 : 0x1c1426));
+      for (let k = 0; k < 2; k++) {
+        const cs = (dark ? 2.2 : 1.6) + rand() * 1.6;
+        m.compose(p.set(x + (rand() - 0.5) * 1.5, y + h + k * 1.2, z + (rand() - 0.5) * 1.5), q, s.set(cs, cs * 0.8, cs));
+        canopy.setMatrixAt(ci, m);
+        const pal = dark ? darkPalette : red ? redPalette : palette;
+        canopy.setColorAt(ci++, new THREE.Color(pal[Math.floor(rand() * pal.length)]));
+      }
+      if (!dark && !red && bi < N * 3 - 3) {
+        for (let k = 0; k < 3; k++) {
+          m.compose(p.set(x + (rand() - 0.5) * 3, y + h - 0.6 - rand() * 1.5, z + (rand() - 0.5) * 3), q, s.setScalar(1));
+          bulbs.setMatrixAt(bi, m);
+          bulbs.setColorAt(bi++, new THREE.Color(bulbCols[Math.floor(rand() * 3)]));
+        }
+      }
+      this.colliders.push({ x, z, r: dark ? 0.85 : 0.7 });
+      this.treeSpots.push({ x, z, kind });
+      ti++;
+    };
+    const free = (x: number, z: number) =>
+      Math.hypot(x, z - 20) < WORLD_RADIUS - 2 && !avoid.some((v) => Math.hypot(v.x - x, v.z - z) < clearR(v));
     while (ti < N && tries++ < 5000) {
       const a = rand() * Math.PI * 2;
       const r = 26 + rand() * (WORLD_RADIUS - 20);
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r + 30;
       if (Math.hypot(x, z) > WORLD_RADIUS + 15) continue;
-      if (avoid.some((v) => Math.hypot(v.x - x, v.z - z) < (v === ARENA ? 32 : 14))) continue;
-      const y = heightAt(x, z);
-      const h = 4 + rand() * 6;
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand() * 6.28);
-      m.compose(p.set(x, y - 0.2, z), q, s.set(1, h, 1));
-      trunks.setMatrixAt(ti, m);
-      for (let k = 0; k < 2; k++) {
-        const cs = 1.6 + rand() * 1.6;
-        m.compose(p.set(x + (rand() - 0.5) * 1.5, y + h + k * 1.2, z + (rand() - 0.5) * 1.5), q, s.set(cs, cs * 0.8, cs));
-        canopy.setMatrixAt(ci, m);
-        canopy.setColorAt(ci++, new THREE.Color(palette[Math.floor(rand() * palette.length)]));
-      }
-      for (let k = 0; k < 3; k++) {
-        m.compose(p.set(x + (rand() - 0.5) * 3, y + h - 0.6 - rand() * 1.5, z + (rand() - 0.5) * 3), q, s.setScalar(1));
-        bulbs.setMatrixAt(bi, m);
-        bulbs.setColorAt(bi++, new THREE.Color(bulbCols[Math.floor(rand() * 3)]));
-      }
-      this.colliders.push({ x, z, r: 0.7 });
-      ti++;
+      if (!free(x, z)) continue;
+      plant(x, z);
+    }
+    tries = 0;
+    while (ti < N + NB && tries++ < 5000) {
+      const x = BLACKWOOD_X - 4 - rand() * 150;
+      const z = -150 + rand() * 340;
+      if (!free(x, z)) continue;
+      if (this.treeSpots.some((t) => Math.hypot(t.x - x, t.z - z) < 3.2)) continue;
+      plant(x, z);
     }
     trunks.count = ti;
     canopy.count = ci;
@@ -610,9 +654,235 @@ export class World {
         m.compose(p.set(x, heightAt(x, z) + 0.2 * sc, z), q.identity(), s.setScalar(sc));
       }
       flora.setMatrixAt(i, m);
-      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x5fa894 : 0x7a6e9a).multiplyScalar(0.55));
+      // nothing grows light in the Blackwood
+      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x5fa894 : 0x7a6e9a).multiplyScalar(x < BLACKWOOD_X ? 0.08 : 0.55));
     }
     this.scene.add(flora);
+  }
+
+  /** Meridian Field Station: tents, a lab cabin, dead floodlights. Someone left
+   *  in a hurry, and something came in after they did. */
+  private buildStation() {
+    const S = STATION;
+    const canvas = std(0xcfcac0, { roughness: 0.95 });
+    const steel = std(0x8d939a, { metalness: 0.6, roughness: 0.45 });
+    const dark = std(0x24262a);
+    const red = std(0xc4161c);
+    const at = (dx: number, dz: number) => new THREE.Vector3(S.x + dx, heightAt(S.x + dx, S.z + dz), S.z + dz);
+    const place = (o: THREE.Object3D, dx: number, dz: number, ry = 0, r = 0) => {
+      o.position.copy(at(dx, dz));
+      o.rotation.y = ry;
+      o.traverse((c) => {
+        const m = c as THREE.Mesh;
+        if (m.isMesh) m.castShadow = m.receiveShadow = true;
+      });
+      this.scene.add(o);
+      if (r) this.colliders.push({ x: S.x + dx, z: S.z + dz, r });
+      return o;
+    };
+    const tent = (collapsed: boolean) => {
+      const g = new THREE.Group();
+      const w = 4, d = 3.2;
+      const base = new THREE.Mesh(new THREE.BoxGeometry(w, collapsed ? 0.6 : 1.4, d), canvas);
+      base.position.y = collapsed ? 0.3 : 0.7;
+      g.add(base);
+      const roof = new THREE.Mesh(new THREE.CylinderGeometry(d * 0.58, d * 0.58, w, 3, 1), canvas);
+      roof.rotation.z = Math.PI / 2;
+      roof.rotation.x = Math.PI / 2 + Math.PI / 6;
+      roof.position.y = collapsed ? 0.75 : 1.9;
+      roof.scale.set(1, 1, collapsed ? 0.4 : 0.7);
+      if (collapsed) roof.rotation.y = 0.25;
+      g.add(roof);
+      const cross = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.5), red);
+      cross.position.set(w / 2 + 0.01, collapsed ? 0.35 : 0.9, 0);
+      g.add(cross);
+      return g;
+    };
+    place(tent(false), -7, -4, 0.3, 2.2);
+    place(tent(false), 6, -7, -0.4, 2.2);
+    place(tent(true), 1, 8, 1.2, 2.2);
+
+    // lab cabin, door hanging open, one cold light still alive inside
+    const cabin = new THREE.Group();
+    const shell = new THREE.Mesh(new THREE.BoxGeometry(6, 2.6, 3), std(0xb9bec4, { roughness: 0.7 }));
+    shell.position.y = 1.5;
+    cabin.add(shell);
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(6.02, 0.25, 3.02), red);
+    stripe.position.y = 1.1;
+    cabin.add(stripe);
+    const skirt = new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, 3), dark);
+    skirt.position.y = 0.15;
+    cabin.add(skirt);
+    this.stationFlicker = std(0x0a0c10, { emissive: 0xdfe8ff, emissiveIntensity: 1.5 });
+    for (const x of [-1.8, 1.8]) {
+      const win = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.6, 0.02), x < 0 ? this.stationFlicker : std(0x0a0c10));
+      win.position.set(x, 1.9, 1.51);
+      cabin.add(win);
+    }
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2, 0.06), std(0x9aa0a6));
+    door.geometry.translate(0.45, 0, 0);
+    door.position.set(0.1, 1.3, 1.53);
+    door.rotation.y = 1.9;
+    cabin.add(door);
+    place(cabin, 9, 5, -0.2);
+    // the emergency lamp over the door still turns: the only light for a hundred metres
+    this.stationLamp = new THREE.PointLight(0xff2a1a, 14, 24, 1.6);
+    this.stationLamp.position.copy(at(9, 7)).add(new THREE.Vector3(0, 3.2, 0));
+    this.scene.add(this.stationLamp);
+    this.colliders.push({ x: S.x + 7.6, z: S.z + 5.3, r: 1.8 }, { x: S.x + 10.4, z: S.z + 4.7, r: 1.8 });
+    // what came out of it: drag marks from the door into the trees
+    const drag = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 9), std(0x2a0d0b, { roughness: 1, transparent: true, opacity: 0.8, depthWrite: false }));
+    drag.rotation.set(-Math.PI / 2, 0, -0.9);
+    const dp = at(13, 10);
+    drag.position.set(dp.x, dp.y + 0.03, dp.z);
+    this.scene.add(drag);
+
+    // floodlight mast: three lamps dead, one flickering
+    const flood = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 7, 6), steel);
+    pole.position.y = 3.5;
+    flood.add(pole);
+    for (let i = 0; i < 4; i++) {
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.2), i === 2 ? this.stationFlicker : dark);
+      lamp.position.set(-0.6 + (i % 2) * 1.2, 6.6 + Math.floor(i / 2) * 0.45, 0.15);
+      lamp.rotation.x = 0.4;
+      flood.add(lamp);
+    }
+    place(flood, -2, -1, 0.6, 0.4);
+
+    // generator, gurneys, crates
+    const gen = new THREE.Group();
+    const gb = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 1), std(0x3d4248, { metalness: 0.4 }));
+    gb.position.y = 0.55;
+    gen.add(gb);
+    const gs = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.12, 1.02), std(0xd8a21c));
+    gs.position.y = 0.8;
+    gen.add(gs);
+    place(gen, -3, 3, 0.2, 1);
+    const gurney = (flipped: boolean) => {
+      const g = new THREE.Group();
+      const top = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.08, 2), std(0xd8dde0));
+      top.position.y = 0.85;
+      g.add(top);
+      for (const [x, z] of [[-0.3, -0.85], [0.3, -0.85], [-0.3, 0.85], [0.3, 0.85]]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.8, 5), steel);
+        leg.position.set(x, 0.42, z);
+        g.add(leg);
+      }
+      // restraint straps: these were not for comfort
+      for (const z of [-0.5, 0.4]) {
+        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.03, 0.09), dark);
+        strap.position.set(0, 0.9, z);
+        g.add(strap);
+      }
+      if (flipped) {
+        g.rotation.z = Math.PI / 2;
+        g.position.y = 0.4;
+      }
+      return g;
+    };
+    place(gurney(false), 3, 1, 1.1);
+    const fg = place(gurney(true), 5.5, 1.8, 0.3);
+    fg.position.y += 0.35;
+    for (const [dx, dz] of [[-9, 3], [-8.2, 4.1], [12, -2]]) {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(1, 0.7, 0.8), std(0x59626b, { metalness: 0.5, roughness: 0.5 }));
+      c.position.y = 0.35;
+      const g = new THREE.Group();
+      g.add(c);
+      const st = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.12, 0.82), std(0xff6a00));
+      st.position.y = 0.5;
+      g.add(st);
+      place(g, dx, dz, dx * 0.7, 0.7);
+    }
+    // perimeter fence, broken in places
+    for (let i = 0; i < 22; i++) {
+      if (i % 7 === 3 || i === 10 || i === 11) continue;
+      const a = (i / 22) * Math.PI * 2;
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 5), steel);
+      post.position.y = 0.8;
+      const g = new THREE.Group();
+      g.add(post);
+      g.rotation.z = Math.sin(i * 5.1) * 0.25;
+      place(g, Math.cos(a) * 16, Math.sin(a) * 16);
+    }
+  }
+
+  /** Low ground mist: soft cards lying in the hollows of the forest edge and
+   *  through the Blackwood. Cheap (one shared material, no lights) and they give
+   *  the fog a floor, which flat exponential fog never has. */
+  private buildMist() {
+    const mat = new THREE.SpriteMaterial({ map: glowTexture(), color: 0x9aa6b4, transparent: true, opacity: 0.09, depthWrite: false });
+    const rand = rng(77);
+    const spots: [number, number][] = [];
+    for (let i = 0; i < 26; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = 30 + rand() * 22;
+      spots.push([-6 + Math.cos(a) * r, 18 + Math.sin(a) * r]);
+    }
+    for (let i = 0; i < 30; i++) spots.push([BLACKWOOD_X - 8 - rand() * 130, -120 + rand() * 300]);
+    for (let i = 0; i < 8; i++) spots.push([STATION.x + (rand() - 0.5) * 50, STATION.z + (rand() - 0.5) * 50]);
+    for (const [x, z] of spots) {
+      if (Math.hypot(x, z - 20) > WORLD_RADIUS) continue;
+      const s = new THREE.Sprite(mat);
+      const base = new THREE.Vector3(x, heightAt(x, z) + 0.9, z);
+      s.position.copy(base);
+      s.scale.set(16 + rand() * 12, 3.2 + rand() * 1.6, 1);
+      s.renderOrder = 2;
+      this.scene.add(s);
+      this.mist.push({ s, base, ph: rand() * 6.28 });
+    }
+  }
+
+  /** Broken relay mast behind the ambulance. Tall enough to see over the trees;
+   *  its red light is how you find your way back to the fire. */
+  private buildMast() {
+    const g = new THREE.Group();
+    const steel = std(0x5d6168, { metalness: 0.6, roughness: 0.5 });
+    const H = 26;
+    const legGeo = new THREE.CylinderGeometry(0.07, 0.1, H, 5);
+    for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const leg = new THREE.Mesh(legGeo, steel);
+      leg.position.set(x * 0.7, H / 2, z * 0.7);
+      leg.rotation.set(-z * 0.025, 0, x * 0.025);
+      g.add(leg);
+    }
+    const braceGeo = new THREE.BoxGeometry(0.05, 0.05, 1.9);
+    for (let y = 2; y < H - 1; y += 2.6) {
+      const k = 1 - (y / H) * 0.6;
+      for (let i = 0; i < 4; i++) {
+        const b = new THREE.Mesh(braceGeo, steel);
+        b.position.set(Math.cos((i * Math.PI) / 2) * 0.7 * k, y, Math.sin((i * Math.PI) / 2) * 0.7 * k);
+        b.rotation.set(0.6, (i * Math.PI) / 2, 0);
+        b.scale.z = k;
+        g.add(b);
+      }
+    }
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.2, 0.3, 12, 1, true), std(0xc9ced6, { side: THREE.DoubleSide }));
+    dish.position.set(0.6, H - 3, 0);
+    dish.rotation.z = -1.2;
+    g.add(dish);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), std(0x330000, { emissive: 0xff2a1a, emissiveIntensity: 3 }));
+    lamp.position.y = H + 0.2;
+    g.add(lamp);
+    this.mastLight = new THREE.SpriteMaterial({ map: glowTexture(), color: 0xff3020, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+    const glow = new THREE.Sprite(this.mastLight);
+    glow.scale.setScalar(3.2);
+    glow.position.y = H + 0.2;
+    g.add(glow);
+    g.position.copy(MAST);
+    g.rotation.set(0.1, 0.5, -0.07); // leaning: something hit it
+    g.traverse((c) => {
+      const m = c as THREE.Mesh;
+      if (m.isMesh) m.castShadow = true;
+    });
+    this.scene.add(g);
+    // the top section that snapped off, lying in the scrub
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.9, 7), steel);
+    piece.position.set(MAST.x + 4, heightAt(MAST.x + 4, MAST.z + 3) + 0.4, MAST.z + 3);
+    piece.rotation.set(0.1, 0.9, 0.3);
+    piece.castShadow = true;
+    this.scene.add(piece);
+    this.colliders.push({ x: MAST.x, z: MAST.z, r: 1.6 }, { x: MAST.x + 4, z: MAST.z + 3, r: 1.6 });
   }
 
   private buildPylon(pos: THREE.Vector3): Pylon {
@@ -693,7 +963,8 @@ export class World {
           float swirl = sin(a*5.0 + r*14.0 - uTime*3.0)*0.5+0.5;
           float edge = smoothstep(1.0,0.85,r);
           float core = smoothstep(0.9, 0.0, r);
-          vec3 col = mix(vec3(0.5,0.1,0.9), vec3(0.2,1.0,0.9), swirl) * (0.4+core);
+          // rift colour language: cyan for the unknown, white at the heart of it
+          vec3 col = mix(vec3(0.08,0.45,0.62), vec3(0.85,1.0,1.0), swirl * 0.7 + core * 0.5) * (0.4+core);
           float alpha = edge * (0.08 + 0.9*uOpen) * (0.4 + 0.6*swirl);
           gl_FragColor = vec4(col, alpha);
         }`,
@@ -701,10 +972,10 @@ export class World {
     const rift = new THREE.Mesh(new THREE.CircleGeometry(9, 64), mat);
     rift.position.set(ARENA.x, ARENA.y + 11, ARENA.z + 14);
     this.scene.add(rift);
-    const frame = new THREE.Mesh(new THREE.TorusGeometry(9.3, 0.5, 8, 48), std(0x1a1520, { emissive: 0x5a1a8a, emissiveIntensity: 0.6 }));
+    const frame = new THREE.Mesh(new THREE.TorusGeometry(9.3, 0.5, 8, 48), std(0x15191c, { emissive: 0x1d6c7c, emissiveIntensity: 0.6 }));
     frame.position.copy(rift.position);
     this.scene.add(frame);
-    const light = new THREE.PointLight(0x8a4aff, 2, 60, 1.2);
+    const light = new THREE.PointLight(0x7ae2ff, 2, 60, 1.2);
     light.position.copy(rift.position).add(new THREE.Vector3(0, 0, -3));
     this.scene.add(light);
     return { rift, mat, light };
@@ -861,7 +1132,7 @@ export class World {
     const y = heightAt(x, z);
     model.position.set(x, y, z);
     model.rotation.y = Math.random() * Math.PI * 2;
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0x8a6bff, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xa9e6f2, transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending }));
     halo.position.y = 1.2;
     halo.scale.set(2.5, 4, 1);
     model.add(halo);
@@ -876,11 +1147,11 @@ export class World {
     this.ghosts = this.ghosts.filter((x) => x !== g);
   }
 
-  /** Purple tear in the air where Hollow step through. */
+  /** Cyan tear in the air where Hollow step through. */
   spawnTear(x: number, z: number, big = false) {
     const m = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0xb05aff, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+      new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x8fe8ff, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
     );
     const s = big ? 2.2 : 1;
     m.position.set(x, heightAt(x, z) + 1.6 * s, z);
@@ -949,7 +1220,8 @@ export class World {
     fog.color.copy(this.moodFog);
     (this.scene.background as THREE.Color).copy(this.moodFog);
     this.moodDensity += (this.mood.density - this.moodDensity) * k;
-    fog.density = this.moodDensity;
+    this.fogBoostNow += (this.fogBoost - this.fogBoostNow) * Math.min(1, dt * 0.5);
+    fog.density = this.moodDensity + this.fogBoostNow * 0.014;
     this.hemi.intensity += (this.mood.hemi - this.hemi.intensity) * k;
     this.sun.intensity += (this.mood.sun - this.sun.intensity) * k;
     const tint = this.skyMat.uniforms.uTint.value as THREE.Vector3;
@@ -1041,6 +1313,10 @@ export class World {
     this.roofLights[1].emissiveIntensity = Math.sin(t * 8) > 0 ? 0.1 : 3;
     this.monitorMat.emissiveIntensity = 0.8 + (Math.sin(t * 6) > 0.85 ? 1.6 : 0);
 
+    for (const m of this.mist) m.s.position.set(m.base.x + Math.sin(t * 0.05 + m.ph) * 3, m.base.y, m.base.z + Math.cos(t * 0.04 + m.ph) * 3);
+    this.mastLight.opacity = t % 1.8 < 0.25 ? 0.95 : 0.3;
+    this.stationLamp.intensity = 6 + Math.max(0, Math.sin(t * 2.4)) * 18;
+    this.stationFlicker.emissiveIntensity = Math.random() < 0.08 ? 0.1 : Math.sin(t * 31) > -0.6 ? 1.6 : 0.3;
     this.beaconMat.emissiveIntensity = Math.sin(t * 5) > 0 ? 3 : 0.2;
     this.beaconLight.intensity = Math.sin(t * 5) > 0 ? 5 : 0.3;
 

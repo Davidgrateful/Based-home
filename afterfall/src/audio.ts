@@ -150,6 +150,48 @@ export class Sfx {
     }
   }
 
+  /** Something breathing close by: slow filtered swells, in and out. */
+  breath(n = 3) {
+    const ctx = this.ctx;
+    if (!ctx || !this.master || !this.noiseBuf) return;
+    for (let i = 0; i < n; i++) {
+      const t = ctx.currentTime + i * 2.6;
+      for (const [start, len, freq, peak] of [[0, 1.1, 520, 0.22], [1.25, 1.2, 380, 0.16]] as const) {
+        const src = ctx.createBufferSource();
+        src.buffer = this.noiseBuf;
+        const f = ctx.createBiquadFilter();
+        f.type = "bandpass";
+        f.frequency.value = freq;
+        f.Q.value = 0.9;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t + start);
+        g.gain.exponentialRampToValueAtTime(peak, t + start + len * 0.45);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + start + len);
+        src.connect(f).connect(g).connect(this.master);
+        src.start(t + start, Math.random());
+        src.stop(t + start + len + 0.05);
+      }
+    }
+  }
+  /** A struck match catching, then the kindling going up. */
+  ignite() {
+    this.noise(0.12, 3200, 1, 0.5, "highpass");
+    this.noise(1.6, 700, 0.5, 0.55, "bandpass", 0.1);
+    this.tone(90, 1.2, 0.18, "sine", 140, 0.1);
+  }
+  /** One pop of burning wood; call at random intervals near a fire. */
+  crackle(gain = 0.2) {
+    this.noise(0.03 + Math.random() * 0.04, 1800 + Math.random() * 2400, 1.2, gain, "bandpass");
+  }
+  /** Fade the wind bed; near-silence is a tool, not a bug. */
+  ambienceTo(level: number, secs = 2) {
+    const ctx = this.ctx;
+    if (!ctx || !this.ambience) return;
+    this.ambience.gain.cancelScheduledValues(ctx.currentTime);
+    this.ambience.gain.setValueAtTime(this.ambience.gain.value, ctx.currentTime);
+    this.ambience.gain.linearRampToValueAtTime(level, ctx.currentTime + secs);
+  }
+
   /** Alien wind bed. */
   startAmbience() {
     const ctx = this.ctx;

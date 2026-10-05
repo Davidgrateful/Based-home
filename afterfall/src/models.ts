@@ -466,7 +466,7 @@ export function buildStaff() {
   const g = new THREE.Group();
   const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.028, 1.7, 8), mat(0x2b1d14));
   g.add(shaft);
-  const orbMat = mat(0x220033, { emissive: 0x9a5ad8, emissiveIntensity: 1.3 });
+  const orbMat = mat(0x0a2a33, { emissive: 0x3ec8e6, emissiveIntensity: 1.3 });
   const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12, 1), orbMat);
   orb.position.y = 0.95;
   g.add(orb);

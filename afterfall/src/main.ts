@@ -35,6 +35,8 @@ import { playerName, resetSave, save } from "./save";
 import { story, storyOnDeath, storyOnSummon, storySkip, storyTarget, storyUpdate, startStory } from "./story";
 import { net, randomRoom } from "./net";
 import { LINKS } from "./token";
+import { initMap, mapUpdate } from "./map";
+import { regionsUpdate } from "./regions";
 
 // ------------------------------------------------------------------ hooks
 voice.onLine = (id, radio) => {
@@ -219,6 +221,7 @@ function resume() {
   state.paused = false;
   $("pause").classList.remove("show");
 }
+initMap();
 initTouch(() => {
   state.paused = true;
   $("pause").classList.add("show");
@@ -393,6 +396,15 @@ function tick(now?: number) {
   coopUpdate(dt, camera);
   world.update(dt, t, player.pos, camera);
   fx.update(dt, camera);
+  if (state.mode !== "title") {
+    mapUpdate(dt, running && state.exited !== false);
+    if (running) regionsUpdate(dt, player.pos.x, player.pos.z);
+  }
+  // the fire is the one warm sound out here
+  if (world.campfire.lit && state.mode !== "title") {
+    const d = world.campfire.group.position.distanceTo(player.pos);
+    if (d < 14 && Math.random() < dt * 7 * (1 - d / 14)) sfx.crackle(0.05 + 0.2 * (1 - d / 14));
+  }
 
   hud.hp.style.width = `${(player.hp / player.maxHp) * 100}%`;
   hud.st.style.width = `${player.stamina}%`;

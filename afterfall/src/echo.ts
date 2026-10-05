@@ -1,4 +1,4 @@
-// Echoes: ghostly recordings of the 99 patients who fell before you.
+// Echoes: ghostly recordings of subjects who fell before you.
 
 import { $, card, persist, say, sfx, voice, world } from "./ctx";
 import { buildHumanoid } from "./models";

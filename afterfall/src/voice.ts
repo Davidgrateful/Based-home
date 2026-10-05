@@ -35,7 +35,7 @@ const SPEAKERS: Record<SpeakerId, Speaker> = {
 export class Voice {
   muted = false;
   /** Substituted for {name} in every line and used as YOUR speaker label. */
-  playerName = "Hundred";
+  playerName = "Sleeper";
   private voices: SpeechSynthesisVoice[] = [];
   private box: HTMLElement;
   private who: HTMLElement;

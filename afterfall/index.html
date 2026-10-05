@@ -51,7 +51,7 @@
         </div>
       </div>
       <div class="hud-vitals">
-        <div class="who"><span id="hud-name">Hundred</span><span id="perk" hidden>Rift-bound</span></div>
+        <div class="who"><span id="hud-name">Sleeper</span><span id="perk" hidden>Rift-bound</span></div>
         <div class="bar hp"><div id="hp-fill"></div></div>
         <div class="bar st"><div id="st-fill"></div></div>
         <div class="inv">
@@ -71,6 +71,31 @@
       <div id="voice-hud" hidden><span id="voice-label"></span><div class="bar mic"><div id="voice-level"></div></div></div>
     </div>
 
+    <!-- Region name card (regions.ts). -->
+    <div id="region"><div id="region-no"></div><div id="region-name"></div><div id="region-line"></div></div>
+
+    <!-- Field map (map.ts): drawn as you walk. -->
+    <div id="map">
+      <div class="map-frame">
+        <canvas id="map-canvas"></canvas>
+        <div class="map-key"><span><i class="k-you"></i>You</span><span><i class="k-fire"></i>Fire</span><span><i class="k-mark"></i>Landmark</span><span class="map-close">M to close</span></div>
+      </div>
+    </div>
+
+    <!-- The registry found beside the fire pit (records.ts). -->
+    <div id="records">
+      <div class="rec-sheet">
+        <div class="rec-head">
+          <span>Meridian Institute</span>
+          <span>Transit Programme · Subject Registry</span>
+          <span class="rec-stamp">Restricted</span>
+        </div>
+        <div class="rec-row rec-cols"><span>Designation</span><span>Intake</span><span>Status</span><span></span></div>
+        <div id="rec-body"></div>
+        <div id="rec-hint"></div>
+      </div>
+    </div>
+
     <div id="subtitle"><span id="sub-who"></span><span id="sub-text"></span></div>
     <div id="toast"></div>
 
@@ -83,7 +108,7 @@
           <p class="tag">The sky has a door. You fell through it.</p>
         </header>
         <nav class="menu">
-          <button class="mi" id="btn-story"><span class="mi-t">Chapter One</span><span class="mi-d">The Drop. Story, about fifteen minutes.</span></button>
+          <button class="mi" id="btn-story"><span class="mi-t">Chapter One</span><span class="mi-d">The Fallsite. Story, about twenty minutes.</span></button>
           <button class="mi" id="btn-night"><span class="mi-t">The Long Night</span><span class="mi-d" id="night-sub">Survive until dawn. Then do it again.</span></button>
           <button class="mi" id="btn-coop"><span class="mi-t">Play together</span><span class="mi-d">The Long Night with friends. Up to eight survivors.</span></button>
           <button class="mi" id="btn-character"><span class="mi-t">Survivor</span><span class="mi-d" id="char-sub">Name and dress your character.</span></button>
@@ -151,7 +176,7 @@
         <h2>Who fell?</h2>
         <label class="field">
           <span>Name</span>
-          <input id="cc-name" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Hundred" />
+          <input id="cc-name" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Sleeper" />
         </label>
         <div id="cc-rows"></div>
         <div class="actions">
@@ -220,7 +245,7 @@
           <div><dt>Echoes</dt><dd id="end-echoes">0/12</dd></div>
           <div><dt>Time</dt><dd id="end-time">0</dd></div>
         </dl>
-        <p class="body">The Long Night is open. The rift is looping you. Hold the fire, recover the Echoes of the ninety-nine before you, and find out who is really on the radio.</p>
+        <p class="body">The Long Night is open. The rift is looping you. Hold the fire, recover the Echoes of the ones who fell before you, and find out who is really on the radio.</p>
         <div class="actions">
           <button id="btn-end-night" class="btn primary">Enter the Long Night</button>
           <button id="btn-sign" class="btn">Sign my run</button>

@@ -30,12 +30,17 @@ import {
 import { echoProgress, listenEcho, spawnEcho } from "./echo";
 import type { Enemy } from "./enemies";
 import { PlaneSet } from "./cinesets";
+import { showRecords } from "./records";
+import { markRegion } from "./regions";
+import { CASE_POS, SHAPE_POS, Signs } from "./signs";
 import { buildHumanoid, buildSpear, DEFAULT_LOOK } from "./models";
 import { save } from "./save";
 import * as S from "./script";
 import { ARENA, BEACON, CAMP, heightAt, PYLONS } from "./world";
+const SHAPE_X = SHAPE_POS.x;
+const SHAPE_Z = SHAPE_POS.z;
 
-type Stage = "intro" | "wake" | "outside" | "ambush" | "pylons" | "boss" | "ending" | "done";
+type Stage = "intro" | "wake" | "outside" | "signs" | "fire" | "records" | "first" | "ambush" | "pylons" | "boss" | "ending" | "done";
 
 export const story = {
   stage: "intro" as Stage,
@@ -53,6 +58,15 @@ let bossHalf = false;
 let bossLow = false;
 let firstShardSaid = false;
 const waveTimers: { at: number; n: number; kind: "hollow" | "runner" }[] = [];
+
+// Chapter One set dressing lives in the world for every mode (the tracks are
+// still there on the hundredth night).
+const signs = new Signs(world.scene, world.ambulance);
+let signStep = 0;
+let seenFor = 0;
+let fireFoundSaid = false;
+let firstHollow: Enemy | null = null;
+const AMB_SIDE = new THREE.Vector3(2.8, 0, 0.3);
 
 // ------------------------------------------------------------------ COLD OPEN
 async function coldOpen() {
@@ -262,21 +276,101 @@ async function goOutside() {
   await cine.say(S.REVEAL.slice(0, 4));
   cine.end();
   player.pitch = -0.1;
-  card("CHAPTER ONE", "THE DROP", "Find the black-box beacon", 3000);
-  setObjective("CHAPTER 1 · THE DROP", "Reach the plane wreck and find the black-box beacon.");
+  markRegion("fallsite");
+  card("CHAPTER ONE", "THE FALLSITE", "Find the black box", 3000);
+  setObjective("CHAPTER 1 · THE FALLSITE", "Reach the plane wreck and find the black-box beacon.");
   await say(S.REVEAL.slice(4));
 }
 
 async function beaconFound() {
-  story.stage = "ambush";
-  stageClock = -999;
+  story.stage = "signs";
+  signStep = -1; // nothing triggers until the recording is done
   checkpoint = BEACON.clone().add(new THREE.Vector3(3, 0, -4));
-  setObjective("CHAPTER 1 · THE DROP", "Listen.");
+  setObjective("CHAPTER 1 · THE FALLSITE", "Listen.");
   await say(S.BLACK_BOX_FIND);
-  if (story.stage !== "ambush") return;
+  if (story.stage !== "signs") return;
   await blackBoxFlashback();
   await say(S.BLACK_BOX);
-  if (story.stage !== "ambush") return;
+  if (story.stage !== "signs") return;
+  startSigns();
+}
+
+// ------------------------------------------------------------------ THE SIGNS
+// Tracks → marks → breath → a shape → a voice. Then the fire, the records,
+// and one Hollow walking into the light.
+function startSigns() {
+  story.stage = "signs";
+  signStep = 0;
+  seenFor = 0;
+  checkpoint = new THREE.Vector3(3.5, 0, -3);
+  sfx.ambienceTo(0.07, 6); // the wind drops away
+  setObjective("CHAPTER 1 · THE FALLSITE", "Go back to the ambulance.");
+}
+
+async function signsSequence(step: number) {
+  signStep = step;
+  if (step === 1) {
+    await say(S.SIGN_TRACKS);
+  } else if (step === 2) {
+    await say(S.SIGN_MARKS);
+    await wait(1200);
+    if (story.stage !== "signs") return;
+    sfx.breath(3);
+    await wait(2600);
+    await say(S.SIGN_BREATH);
+    if (story.stage !== "signs") return;
+    signs.showShape(true);
+    signStep = 3;
+    setObjective("CHAPTER 1 · THE FALLSITE", "Look around.");
+  } else if (step === 4) {
+    await say(S.SIGN_SHAPE.slice(0, 2));
+    signs.showShape(false); // gone between one look and the next
+    sfx.ambienceTo(0.02, 0.4);
+    await say(S.SIGN_SHAPE.slice(2));
+    await wait(900);
+    await say(S.SIGN_VOICE);
+    if (story.stage !== "signs") return;
+    sfx.ambienceTo(0.1, 4);
+    story.stage = "fire";
+    checkpoint = CAMP.clone().add(new THREE.Vector3(-2, 0, -2));
+    setObjective("CHAPTER 1 · THE FALLSITE", "Light the fire pit beside the ambulance.");
+  }
+}
+
+async function readRecords() {
+  story.stage = "first";
+  player.frozen = true;
+  hud.prompt.classList.remove("show");
+  await showRecords();
+  player.frozen = false;
+  setObjective("CHAPTER 1 · THE FALLSITE", "Patient 10001. Active.");
+  await say(S.RECORDS_READ);
+  if (story.stage !== "first") return;
+  spawnFirstHollow(true);
+}
+
+/** One of them walks into the firelight. Not a wave: one. */
+async function spawnFirstHollow(cinematic: boolean) {
+  const dir = new THREE.Vector3(SHAPE_X - CAMP.x, 0, SHAPE_Z - CAMP.z).normalize();
+  const at = CAMP.clone().addScaledVector(dir, 15);
+  firstHollow = enemies.spawn("hollow", at, { rise: false, speedMul: 0.55, hpMul: 1.4 });
+  barkCd = 14; // let it speak its own line first
+  setObjective("CHAPTER 1 · THE FALLSITE", "It's coming into the light.");
+  sfx.ambienceTo(0.03, 1);
+  if (!cinematic) return;
+  cine.begin(false);
+  const eye = player.pos.clone().addScaledVector(dir, -2.2).add(new THREE.Vector3(0.6, 1.7, 0));
+  const look = at.clone().setY(at.y + 1.4);
+  cine.shot(key(eye, look), key(eye.clone().addScaledVector(dir, 0.8), look), 4.2);
+  await cine.say(S.FIRST_HOLLOW);
+  cine.end();
+}
+
+async function firstHollowDown() {
+  firstHollow = null;
+  sfx.ambienceTo(0.18, 3);
+  await say(S.FIRST_HOLLOW_DOWN);
+  if (story.stage !== "first") return;
   startAmbush();
 }
 
@@ -308,6 +402,8 @@ async function blackBoxFlashback() {
 
 // ------------------------------------------------------------------ ACT II
 function startAmbush() {
+  story.stage = "ambush";
+  checkpoint = CAMP.clone().add(new THREE.Vector3(-2, 0, -2));
   stageClock = 0;
   waveTimers.length = 0;
   waveTimers.push({ at: 0.2, n: 3, kind: "hollow" }, { at: 7, n: 2, kind: "runner" }, { at: 14, n: 2, kind: "hollow" });
@@ -431,6 +527,30 @@ const interacts: Interact[] = [
       beaconFound();
     },
   },
+  {
+    pos: () => CAMP,
+    r: 3.2,
+    label: "Light the fire",
+    when: () => story.stage === "fire",
+    run: async () => {
+      story.stage = "records";
+      world.setCampfire(true);
+      sfx.ignite();
+      sfx.ambienceTo(0.16, 3);
+      setObjective("CHAPTER 1 · THE FALLSITE", "Read the Meridian case by the stones.");
+      voice.interrupt();
+      await say(S.FIRE_LIT);
+    },
+  },
+  {
+    pos: () => CASE_POS,
+    r: 2.0,
+    label: "Read the Meridian records",
+    when: () => story.stage === "records" && !voice.busy,
+    run: () => {
+      readRecords();
+    },
+  },
   ...PYLONS.map((p, i) => ({
     pos: () => p,
     r: 6,
@@ -467,6 +587,7 @@ function echoInteract(): Interact | null {
 // ------------------------------------------------------------------ hooks
 export function storyOnDeath(e: Enemy) {
   if (e.kind === "warden" && state.mode === "story") bossDefeated();
+  if (e === firstHollow && state.mode === "story") firstHollowDown();
 }
 
 export async function storyPlayerDown() {
@@ -482,6 +603,7 @@ export async function storyPlayerDown() {
   player.hp = player.maxHp;
   player.medkits = Math.max(player.medkits, 1);
   player.invuln = 2;
+  if (story.stage === "first") spawnFirstHollow(false);
   if (story.stage === "ambush") startAmbush();
   if (story.stage === "pylons" && activePylon >= 0) {
     world.pylons[activePylon].charge = 0;
@@ -501,6 +623,12 @@ export function storyTarget(): THREE.Vector3 | null {
   switch (story.stage) {
     case "outside":
       return BEACON;
+    case "signs":
+      return signStep >= 0 && signStep < 2 ? AMB_SIDE : null;
+    case "fire":
+      return CAMP;
+    case "records":
+      return CASE_POS;
     case "pylons": {
       if (activePylon >= 0) return null;
       let best: THREE.Vector3 | null = null;
@@ -544,6 +672,21 @@ export function storyUpdate(dt: number) {
         say(S.FIRST_SHARD);
       }
     });
+
+  signs.update(dt, state.elapsed);
+  if (story.stage === "signs" && signStep >= 0 && !cine.active) {
+    const p = player.pos;
+    if (signStep === 0 && signs.nearTrack(p) < 1.6) signsSequence(1);
+    else if (signStep <= 1 && !voice.busy && Math.hypot(p.x - AMB_SIDE.x, p.z - AMB_SIDE.z) < 2.6) signsSequence(2);
+    else if (signStep === 3) {
+      seenFor += signs.shapeSeen(camera) ? dt : 0;
+      if (seenFor > 0.9 || (signs.shapeT > 14 && !voice.busy)) signsSequence(4);
+    }
+  }
+  if (story.stage === "fire" && !fireFoundSaid && !voice.busy && Math.hypot(player.pos.x - CAMP.x, player.pos.z - CAMP.z) < 6) {
+    fireFoundSaid = true;
+    say(S.FIRE_FOUND);
+  }
 
   if (story.stage === "ambush") {
     for (const w of waveTimers) {
@@ -615,8 +758,22 @@ export function storySkip(to: Stage) {
   player.firstPerson = false;
   story.stage = to;
   if (to === "outside") player.pos.set(0, 0, 6);
-  if (to === "ambush") {
+  if (["signs", "fire"].includes(to)) world.setCampfire(false);
+  if (to === "signs") {
     player.pos.copy(BEACON).add(new THREE.Vector3(3, 0, -4));
+    startSigns();
+  }
+  if (to === "fire") {
+    player.pos.set(3, 0, 4);
+    story.stage = "fire";
+  }
+  if (to === "records") {
+    world.setCampfire(true);
+    player.pos.set(CAMP.x - 1, 0, CAMP.z - 2);
+  }
+  if (to === "ambush") {
+    world.setCampfire(true);
+    player.pos.copy(CAMP).add(new THREE.Vector3(-2, 0, -2));
     startAmbush();
   }
   if (to === "pylons") ambushCleared();

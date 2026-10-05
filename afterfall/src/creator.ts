@@ -62,7 +62,7 @@ export function openCreator(done?: () => void) {
   onDone = done ?? null;
   look = { ...(save.look ?? DEFAULT_LOOK) };
   input.value = save.name;
-  input.placeholder = "Hundred";
+  input.placeholder = "Sleeper";
   $("cc-done").textContent = done ? "Confirm and play" : "Confirm";
   render();
   player.setLook(look);

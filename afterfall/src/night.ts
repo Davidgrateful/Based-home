@@ -5,7 +5,7 @@
 //   DAWN   bank shards, buy Memories (permanent upgrades), face the next night
 //   RESET  if the fire dies (or everyone falls) the loop resets to Night 1, but
 //          Memories, banked shards and Echoes carry over. That's the story
-//          reason the game repeats: the rift is looping Patient 100.
+//          reason the game repeats: the rift is looping Patient 10001.
 //
 // Co-op: the room's host runs this director (timers, spawns, campfire) and
 // streams it; everyone else mirrors it. Loot is per player.

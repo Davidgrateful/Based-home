@@ -20,6 +20,8 @@ export interface Save {
   bestNight: number;
   loops: number;
   mem: { skin: number; muscle: number; wind: number; medic: number; sense: number; keeper: number };
+  regions: string[]; // region ids the player has walked into
+  fog: string; // discovered map cells, base64 bitset (map.ts)
 }
 
 const KEY = "afterfall.save.v1";
@@ -33,6 +35,8 @@ const fresh = (): Save => ({
   bestNight: 0,
   loops: 0,
   mem: { skin: 0, muscle: 0, wind: 0, medic: 0, sense: 0, keeper: 0 },
+  regions: [],
+  fog: "",
 });
 
 export const save: Save = (() => {
@@ -47,8 +51,8 @@ export const save: Save = (() => {
   return fresh();
 })();
 
-/** The survivor's name, or the nickname everyone uses for Patient 100. */
-export const playerName = () => save.name.trim() || "Hundred";
+/** The survivor's name, or Rhea's nickname for her sleeping patient. */
+export const playerName = () => save.name.trim() || "Sleeper";
 
 export function persist() {
   try {

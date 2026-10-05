@@ -82,10 +82,10 @@ export class Enemy {
     this.kind = kind;
     const st = STATS[kind];
     const looks: Record<EnemyKind, Parameters<typeof buildHumanoid>[0]> = {
-      hollow: { cloth: 0x3b2e24, skin: 0x8a6a52, pants: 0x2a221c, mask: 0xe8e0cc, eye: 0xff6a20 },
+      hollow: { cloth: 0x3b2e24, skin: 0x8a6a52, pants: 0x2a221c, mask: 0xe8e0cc, eye: 0xff3a1a },
       runner: { cloth: 0x6b6f78, skin: 0x9a7a62, pants: 0x3a3c44, mask: 0xf4efe2, eye: 0xffe040 },
       brute: { cloth: 0x1f1a17, skin: 0x6a4a3a, pants: 0x151210, mask: 0xbfb49c, eye: 0xff3010, bones: true },
-      shaman: { cloth: 0x2a1640, skin: 0x7a6a70, pants: 0x1a1024, mask: 0xd8d0f0, eye: 0xc070ff },
+      shaman: { cloth: 0x2a1640, skin: 0x7a6a70, pants: 0x1a1024, mask: 0xd8d0f0, eye: 0x5ee0ff },
       warden: { cloth: 0x2a0d14, skin: 0x5a4a44, pants: 0x1a1214, mask: 0xd9cfb8, eye: 0xff1030, bones: true },
     };
     this.model = buildHumanoid(looks[kind]);
@@ -155,7 +155,7 @@ export class EnemyManager {
   private bolts: Bolt[] = [];
   private scene: THREE.Scene;
   private colliders: Circle[];
-  private boltMat = new THREE.SpriteMaterial({ map: glowTexture(), color: 0xc070ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  private boltMat = new THREE.SpriteMaterial({ map: glowTexture(), color: 0x6fe6ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
 
   constructor(scene: THREE.Scene, colliders: Circle[]) {
     this.scene = scene;

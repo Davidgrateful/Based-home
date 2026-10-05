@@ -304,3 +304,55 @@ body.touch #card-title { font-size: clamp(26px, 6vw, 40px); }
 /* black-box flashback */
 body.flashback canvas#game { filter: grayscale(0.7) sepia(0.25) contrast(1.15) brightness(0.92); }
 body.flashback::after { content: "Flight recorder · 03:14:52"; position: fixed; left: clamp(20px, 8vw, 140px); top: calc(10vh + 18px); z-index: 35; font: 400 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); pointer-events: none; }
+
+/* ------------------------------------------------------------ the registry (records.ts) */
+#records { position: fixed; inset: 0; z-index: 45; display: grid; place-items: center; padding: 16px; background: rgba(6, 7, 9, 0.82); opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+#records.show { opacity: 1; pointer-events: auto; }
+.rec-sheet { width: min(640px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; padding: 22px 26px 18px; background: #e4dfd3; color: #1d1c1a; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); transform: rotate(-0.6deg); font: 13px/1.5 var(--mono); }
+.rec-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 2px solid #1d1c1a; font: 600 13px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; }
+.rec-stamp { color: #a3302a; border: 1.5px solid #a3302a; padding: 0 6px; transform: rotate(-4deg); }
+.rec-row { display: grid; grid-template-columns: 76px 64px 120px 1fr; gap: 10px; padding: 2px 0; border-bottom: 1px dotted rgba(29, 28, 26, 0.25); animation: rec-in 0.25s ease-out; }
+.rec-cols { font: 600 11px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: #5d5a54; animation: none; }
+.rec-note { color: #5d5a54; font-size: 12px; }
+.st-terminated { color: #1d1c1a; text-decoration: line-through; text-decoration-color: rgba(29, 28, 26, 0.5); }
+.st-missing, .st-unknown { color: #8a5a1c; }
+.st-transferred { color: #3d5470; }
+.st-not { color: #a3302a; }
+.rec-gap { padding: 10px 0; text-align: center; color: #5d5a54; letter-spacing: 0.1em; font-size: 12px; }
+.rec-hand { margin-top: 14px; border-bottom: 0; font: italic 600 20px/1.2 var(--display); color: #23377e; transform: rotate(-1.4deg); animation: rec-ink 1.6s ease-out; }
+.rec-hand .rec-note { color: #23377e; font-size: 16px; }
+.st-active { color: #23377e; }
+#rec-hint { min-height: 20px; margin-top: 14px; font: 500 11px var(--ui); letter-spacing: 0.14em; text-transform: uppercase; color: #5d5a54; text-align: right; }
+@keyframes rec-in { from { opacity: 0; transform: translateY(3px); } }
+@keyframes rec-ink { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+@media (max-height: 600px) { .rec-sheet { font-size: 12px; line-height: 1.35; padding: 14px 18px; } .rec-hand { margin-top: 8px; } }
+@media (max-width: 520px) { .rec-row { grid-template-columns: 58px 54px 1fr; } .rec-note { grid-column: 1 / -1; } .rec-sheet { padding: 16px; } }
+
+/* ------------------------------------------------------------ region card (regions.ts) */
+#region { position: fixed; left: 0; right: 0; top: 18%; z-index: 22; text-align: center; pointer-events: none; opacity: 0; }
+#region.show { animation: region 5.2s ease forwards; }
+#region.quiet.show { animation-duration: 2.8s; }
+#region-no { font: 500 11px var(--ui); letter-spacing: 0.3em; text-transform: uppercase; color: var(--dim); }
+#region-name { margin-top: 6px; font: 600 clamp(26px, 3.6vw, 40px)/1 var(--display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); text-shadow: 0 2px 18px rgba(0, 0, 0, 0.7); }
+#region.quiet #region-name { font-size: clamp(18px, 2.2vw, 24px); color: var(--ink-2); }
+#region-line { margin-top: 10px; font: italic 400 14px var(--ui); color: var(--ink-2); }
+#region-name::after { content: ""; display: block; width: 46px; height: 1px; margin: 12px auto 0; background: var(--line-2); }
+#region.quiet #region-name::after { display: none; }
+@keyframes region { 0% { opacity: 0; transform: translateY(6px); } 14% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ------------------------------------------------------------ field map (map.ts) */
+#map { position: fixed; inset: 0; z-index: 44; display: grid; place-items: center; padding: 16px; background: rgba(8, 9, 11, 0.9); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+#map.show { opacity: 1; pointer-events: auto; }
+.map-frame { display: flex; flex-direction: column; gap: 8px; width: min(calc(100dvh - 72px), 100%); }
+#map-canvas { width: 100%; aspect-ratio: 1; max-width: 100%; border: 1px solid var(--line); background: #0d0e10; }
+.map-key { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 500 11px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.map-key i { display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: 0; }
+.k-you { background: #e0873e; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.k-fire { background: #e0873e; border-radius: 50%; }
+.k-mark { border: 1.5px solid var(--ink); transform: rotate(45deg) scale(0.8); }
+.map-close { margin-left: auto; }
+body.touch .map-close::before { content: "Tap to close"; }
+body.touch .map-close { font-size: 0; }
+body.touch .map-close::before { font-size: 11px; }
+#t-map { position: fixed; z-index: 41; top: calc(10px + env(safe-area-inset-top)); right: calc(84px + env(safe-area-inset-right)); height: 32px; padding: 0 12px; border: 1px solid rgba(233, 230, 223, 0.3); border-radius: 2px; font: 600 11px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); background: rgba(13, 14, 16, 0.4); }
+body:not(.playing) #t-map { display: none; }

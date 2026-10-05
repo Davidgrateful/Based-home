@@ -4,8 +4,9 @@
 // STORY BIBLE
 // ----------
 // Logline: A sedated patient on a black-site medevac flight wakes up on the far
-// side of a tear in the sky. They're the hundredth person to fall, and the
-// world on the other side has been counting.
+// side of a tear in the sky. Meridian sent ten thousand subjects through. The
+// registry says the player is number 10001, ACTIVE, dated three days before the
+// flight, in handwriting. The world on the other side has been counting.
 //
 // The engine of the story is one question: why does the sky open for YOU?
 //   Cold open:  we SEE the flight. A tired captain, a rookie co-pilot, a medic
@@ -14,15 +15,17 @@
 //               shown in flashback.
 //   Act II  (Hollow → Towers):  the Hollow are former patients. Rhea is hiding
 //               something. Every tower lit costs a secret.
-//   Act III (Warden → Rift):    Patient One explains the hundredth is a key.
-//               The door opens, and something answers.
-//   The Long Night (the loop):  the rift loops Patient 100. Every death
+//   Act III (Warden → Rift):    Patient One was waiting for 10000. You are
+//               not the one he expected. The door opens, and something answers.
+//   The Long Night (the loop):  the rift loops Patient 10001. Every death
 //               resets the night; memories leak through. Echo #12 is your own
-//               voice.
+//               voice: you built the fire, carried the case and wrote yourself
+//               into the registry on an earlier cycle. (Kept unspoken until then.)
 //
 // Characters (and how they talk)
-//   YOU / "HUNDRED" — Patient 100, named and dressed by the player. Dry. Says
-//                     less than they feel. Jokes when scared.
+//   YOU             — Patient 10001 (they don't know it yet), named and dressed
+//                     by the player. Rhea calls them "sleeper". Dry. Says less
+//                     than they feel. Jokes when scared.
 //   RHEA VANCE      — Flight medic. Talks to unconscious patients because "they
 //                     can hear more than you think". Warm, quick, a little bossy.
 //                     Jokes first, bad news second. Hiding orders she hates.
@@ -31,8 +34,10 @@
 //   DEZ REYES       — First officer. First black-site run. Over-checks gauges,
 //                     talks too much when nervous. In the log: "Dez is gone."
 //                     Not dead. Gone. (Chapter Two.)
-//   THE HOLLOW      — The 98 patients before you, masked so they can't see who
-//                     they were. Their barks are scraps of hospital life.
+//   THE HOLLOW      — Some of the subjects before you, masked so they can't see
+//                     who they were. Their barks are scraps of hospital life.
+//                     (Not every threat is a patient: the Things were here first,
+//                     and the Changed adapted. See docs/PRODUCTION.md.)
 //   THE WARDEN      — Patient One. Speaks in pronouncements; cracks at the end.
 //   THE CHOIR       — The voice behind the rift. "The ones who didn't forget."
 //
@@ -58,7 +63,7 @@ const COM = { radio: true, name: "Okafor (intercom)" };
 
 // ---------------------------------------------------------------- COLD OPEN
 export const COLD_OPEN_CAPTIONS = [
-  "MERIDIAN INSTITUTE · PATIENT TRANSFER 100",
+  "MERIDIAN INSTITUTE · PATIENT TRANSFER · DESIGNATION WITHHELD",
   "03:12 · 31,000 FT · FLIGHT PLAN: [REDACTED]",
 ];
 
@@ -66,7 +71,7 @@ export const COLD_OPEN_CAPTIONS = [
 export const COLD_OPEN_BEATS: Beat[] = [
   {
     shot: "exterior",
-    lines: [["PILOT", "Meridian Control, Medevac One Zero Zero. Level three one zero. Cargo's asleep. Crew's awake. Mostly."]],
+    lines: [["PILOT", "Meridian Control, Medevac Two Six. Level three one zero. Cargo's asleep. Crew's awake. Mostly."]],
   },
   {
     shot: "cockpitWide",
@@ -107,7 +112,7 @@ export const COLD_OPEN_BEATS: Beat[] = [
   {
     shot: "rheaClose",
     lines: [
-      ["RHEA", "Hey. Hundred. It's Rhea again. Whatever you're dreaming about, you can let it go.", IN],
+      ["RHEA", "Hey, sleeper. It's Rhea again. Whatever you're dreaming about, you can let it go.", IN],
       ["RHEA", "I've got you. Nobody's going anywhere tonight.", IN],
     ],
     hold: 0.8,
@@ -135,19 +140,21 @@ export const COLD_OPEN_BEATS: Beat[] = [
     lines: [
       ["RHEA", "Captain, talk to me!", IN],
       ["PILOT", "Vance, strap in. Strap the patient in!", COM],
-      ["RHEA", "Already done. Hundred, hold on to me. Hold on.", IN],
+      ["RHEA", "Already done. Sleeper, hold on to me. Hold on.", IN],
     ],
   },
   {
     shot: "okaforClose",
     cue: ["alarm", "shake", "flood"],
-    lines: [["PILOT", "Mayday, mayday, Medevac One Zero Zero. We're going in. God help whoever's down there.", IN]],
+    lines: [["PILOT", "Mayday, mayday, Medevac Two Six. We're going in. God help whoever's down there.", IN]],
   },
 ];
 
 export const COLD_OPEN_WATCHERS: Line[] = [
   ["HOLLOW", "Count it.", { name: "Watcher", pitch: 0.4 }],
-  ["HOLLOW", "One hundred.", { name: "Watcher", pitch: 0.65 }],
+  ["HOLLOW", "Ten thousand.", { name: "Watcher", pitch: 0.65 }],
+  ["HOLLOW", "No. Count again.", { name: "Watcher", pitch: 0.4 }],
+  ["HOLLOW", "Ten thousand. And one.", { name: "Watcher", pitch: 0.65, rate: 0.8 }],
 ];
 
 export const TITLE_TAGLINE = "The sky has a door. You fell through it.";
@@ -155,11 +162,13 @@ export const TITLE_TAGLINE = "The sky has a door. You fell through it.";
 // ---------------------------------------------------------------- ACT I
 export const WAKE: Line[] = [
   ["YOU", "Rhea?"],
-  ["RHEA", "Hundred? Hundred. Oh, thank God. Tap the radio if you can hear me. Anything."],
+  ["RHEA", "Sleeper? Oh, thank God. Tap the radio if you can hear me. Anything."],
   ["YOU", "I'm here. I think. Where's here?"],
   ["RHEA", "{name}. That's what your wristband says. Hi, {name}. I'm Rhea. I've been talking to you for six hours and you never once talked back."],
   ["YOU", "Sorry. I was unconscious."],
-  ["RHEA", "Excuses. Listen. The ambulance tore out of the cargo hold when we hit. I got thrown clear. My leg's fine. It's not fine. I'm moving."],
+  ["RHEA", "Excuses. And stop picking at the wristband. You always pick at it."],
+  ["YOU", "Always?"],
+  ["RHEA", "The whole flight. You picked at it the whole flight. Listen. The ambulance tore out of the cargo hold when we hit. I got thrown clear. My leg's fine. It's not fine. I'm moving."],
   ["RHEA", "That smell is fuel. Find something heavy and get out of that box before it decides to become a fireball."],
 ];
 
@@ -186,7 +195,7 @@ export const FIRST_SHARD: Line[] = [
 /** Played over the flashback of Okafor alone in the burning cockpit. */
 export const BLACK_BOX_LOG: Line[] = [
   ["PILOT", "This is Captain Daniel Okafor. Final log. If you're hearing this, we didn't make it.", { name: "Okafor (recording)", radio: true }],
-  ["PILOT", "Meridian lied to us. Patient one hundred isn't a patient. They're a key. That light opened the second their heart rate spiked.", { name: "Okafor (recording)", radio: true }],
+  ["PILOT", "Meridian lied to us. Our patient isn't a patient. They're a key. That light opened the second their heart rate spiked.", { name: "Okafor (recording)", radio: true }],
   ["PILOT", "Reyes is gone. I looked away for one second and his seat was empty.", { name: "Okafor (recording)", radio: true }],
   ["PILOT", "Vance is in the back with the patient. If anyone finds this, keep them away from the towers. Please.", { name: "Okafor (recording)", radio: true }],
 ];
@@ -195,7 +204,63 @@ export const BLACK_BOX: Line[] = [
   ["YOU", "Rhea. Did you know?"],
   ["RHEA", "Not all of it."],
   ["YOU", "How much of it?"],
-  ["RHEA", "Later. I swear, later. Something's moving in the trees."],
+  ["RHEA", "Later. I swear, later."],
+  ["RHEA", "Go back to the ambulance. There's a medkit in the side locker, and I want you near something with walls."],
+];
+
+// ---------------------------------------------------------------- THE SIGNS
+// Anticipation before the first Hollow: tracks, marks, breath, a shape, a voice.
+export const SIGN_TRACKS: Line[] = [
+  ["YOU", "Footprints. Bare feet."],
+  ["RHEA", "Ours?"],
+  ["YOU", "Nobody on that plane walked out barefoot."],
+  ["YOU", "They go around the ambulance. All the way around. Like someone was checking on me."],
+];
+export const SIGN_MARKS: Line[] = [
+  ["YOU", "Something scratched the side of the ambulance."],
+  ["RHEA", "Scratched, or wrote?"],
+  ["YOU", "Wrote. They're tally marks."],
+  ["RHEA", "How many?"],
+  ["YOU", "I stopped counting."],
+];
+export const SIGN_BREATH: Line[] = [
+  ["RHEA", "{name}, is that you breathing like that?"],
+  ["YOU", "Like what?"],
+  ["RHEA", "Nothing. It's the static. Must be the static."],
+];
+export const SIGN_SHAPE: Line[] = [
+  ["YOU", "Rhea. There's someone standing by the wreck."],
+  ["RHEA", "A survivor? Wave at them."],
+  ["YOU", "They're gone."],
+];
+export const SIGN_VOICE: Line[] = [["HOLLOW", "Nurse?", { name: "By the wreck", pitch: 0.7, rate: 0.75 }]];
+
+export const FIRE_FOUND: Line[] = [
+  ["YOU", "Someone built a fire pit. Stones, kindling, dry wood. Right next to where I woke up."],
+  ["RHEA", "Then light it. Whatever's out there, I'd rather it saw you from far away than up close."],
+];
+export const FIRE_LIT: Line[] = [
+  ["RHEA", "Better. I can see your smoke from here."],
+  ["YOU", "There's a case by the stones. Meridian. Somebody carried it here from the wreck."],
+  ["RHEA", "Don't open that. {name}, those files aren't for"],
+  ["YOU", "It's already open."],
+];
+export const RECORDS_READ: Line[] = [
+  ["YOU", "Rhea. There's a record for me."],
+  ["RHEA", "That's not possible. They don't assign a number until"],
+  ["YOU", "Ten thousand and one. Active. Dated three days before we took off."],
+  ["YOU", "Rhea?"],
+  ["RHEA", "I'm here. I signed off on ten thousand myself. There was no one after."],
+  ["YOU", "Then who wrote me in?"],
+  ["RHEA", "It's handwritten. Isn't it."],
+  ["YOU", "How did you know that?"],
+  ["RHEA", "Stay by the fire. Please. Just stay by the fire."],
+];
+export const FIRST_HOLLOW: Line[] = [["HOLLOW", "Room four. Don't close it. Don't close the door.", { pitch: 0.7, rate: 0.8 }]];
+export const FIRST_HOLLOW_DOWN: Line[] = [
+  ["YOU", "It's wearing a wristband. Twenty two ninety one."],
+  ["RHEA", "That one says terminated."],
+  ["YOU", "Then why was it walking?"],
 ];
 
 export const BLACK_BOX_FIND: Line[] = [["YOU", "Black box. It's still got power. There's a recording."]];
@@ -203,16 +268,18 @@ export const BLACK_BOX_FIND: Line[] = [["YOU", "Black box. It's still got power.
 // ---------------------------------------------------------------- ACT II
 export const AMBUSH_START: Line[] = [
   ["HOLLOW", "Fall. Forget. Belong."],
-  ["HOLLOW", "The hundredth! The hundredth has come home!", { pitch: 0.7 }],
+  ["HOLLOW", "Ten thousand and one! The one has come home!", { pitch: 0.7 }],
 ];
 
 export const AMBUSH_CLEARED: Line[] = [
-  ["YOU", "These are wristbands. Meridian wristbands."],
+  ["YOU", "Wristbands. All of them. Meridian."],
   ["RHEA", "Same as yours."],
-  ["YOU", "Rhea. How many patients went out before me?"],
-  ["RHEA", "The manifest says ninety nine."],
-  ["YOU", "And how many came back?"],
-  ["RHEA", "You know the answer."],
+  ["YOU", "Ten thousand people, Rhea."],
+  ["RHEA", "Not all of them are out here. Some went missing. Some were transferred."],
+  ["YOU", "Transferred where?"],
+  ["RHEA", "That was the word they used. I never asked."],
+  ["YOU", "You never asked."],
+  ["RHEA", "I know how that sounds."],
   ["RHEA", "Okafor said stay away from the towers. But they're the only thing strong enough to carry a signal. So I'm about to say something really stupid."],
   ["YOU", "Light the towers."],
   ["RHEA", "Light the towers."],
@@ -223,7 +290,7 @@ export const PYLON_TOUCH: Line[] = [["HOLLOW", "No! No, the towers wake him!"]];
 export const PYLON_LIT: Line[][] = [
   [
     ["RHEA", "It worked, the signal jumped! And there's something riding underneath it. Voices."],
-    ["CHOIR", "Hundred."],
+    ["CHOIR", "Ten thousand and one."],
     ["YOU", "Tell me you heard that."],
     ["RHEA", "I heard it. I really wish I hadn't. Keep going."],
   ],
@@ -244,19 +311,23 @@ export const PYLON_LIT: Line[][] = [
 
 // ---------------------------------------------------------------- ACT III
 export const WARDEN_INTRO: Line[] = [
-  ["WARDEN", "Ninety nine fell before you, little key. I was the first."],
-  ["WARDEN", "They gave me a number. One. I carved away everything else."],
-  ["WARDEN", "The door only opens for the hundredth. So the door is mine. And so are you."],
+  ["WARDEN", "Ten thousand."],
+  ["WARDEN", "No."],
+  ["WARDEN", "Ten thousand. And one?", { rate: 0.8 }],
+  ["WARDEN", "You're not the one I was expecting."],
+  ["YOU", "Who were you expecting?"],
+  ["WARDEN", "The last one. They promised me the last one. I was the first. I have counted every one of them down."],
+  ["WARDEN", "There is no one after the last. So what are you?"],
   ["RHEA", "{name}, the red ring! When it glows, jump or run!"],
 ];
-export const WARDEN_SUMMON: Line[] = [["WARDEN", "Children! Bring me the key!"]];
+export const WARDEN_SUMMON: Line[] = [["WARDEN", "Children! Hold the one I didn't count!"]];
 export const WARDEN_HALF: Line[] = [["WARDEN", "You think the sky saved you? The sky ate you!"]];
 export const WARDEN_LOW: Line[] = [["WARDEN", "I remember rain. Real rain. Cold, on my face."]];
 export const WARDEN_DEATH: Line[] = [["WARDEN", "Patient One. Discharged."]];
 
 export const EPILOGUE: Line[] = [
   ["RHEA", "{name}, the signal's through! But it's not going home. Something on the other side is pulling it."],
-  ["CHOIR", "Hundred. We counted every fall. We waited for you."],
+  ["CHOIR", "Ten thousand and one. We counted every fall. You are the one we did not count."],
   ["YOU", "Who are you?"],
   ["CHOIR", "The ones who didn't forget."],
   ["RHEA", "Don't you dare go through without me. I'm coming. I'm limping, but I'm coming."],
@@ -278,10 +349,13 @@ export const HOLLOW_BARKS = [
   "Fall. Forget. Belong.",
   "I had a name. I had a name!",
   "Don't look at the moons.",
-  "Count it! One hundred!",
+  "Count it! Ten thousand!",
   "Lights out. Lights out!",
   "Nurse? Nurse!",
-  "The key! Take the key!",
+  "Room four. Room four.",
+  "Mom?",
+  "Don't close it!",
+  "And one. And one.",
 ];
 
 // ---------------------------------------------------------------- THE LONG NIGHT
@@ -304,7 +378,7 @@ export const LOOP_WAKE: Line[][] = [
     ["YOU", "Good. Stay scared. It keeps you alive."],
   ],
   [
-    ["RHEA", "Hundred, tap the radio if you can hear me. Anything."],
+    ["RHEA", "Sleeper? Tap the radio if you can hear me. Anything."],
     ["YOU", "I know. I always know what you're going to say."],
     ["RHEA", "Then tell me how tonight ends."],
     ["YOU", "Differently."],
@@ -321,7 +395,7 @@ export const NIGHT_OPENERS: Line[][] = [
   [["RHEA", "I tried to walk to you today. Six hours. I ended up right where I started."]],
   [["RHEA", "If I stop answering, keep the fire lit anyway. Promise me."], ["YOU", "Promise."]],
   [["RHEA", "The Hollow are learning. They watched you fight last night."]],
-  [["CHOIR", "Hundred. Stop counting the nights. We stopped long ago."]],
+  [["CHOIR", "Ten thousand and one. Stop counting the nights. We stopped long ago."]],
 ];
 
 export interface Omen {
@@ -363,8 +437,9 @@ export const DAWN_LINES: Line[][] = [
 export const FIRE_LOW: Line[] = [["RHEA", "The fire's dying! Get back to it!"]];
 
 // ---------------------------------------------------------------- ECHOES
-// Twelve recordings from the patients who fell before. Collected across both
-// modes; the last one only appears once the other eleven are found.
+// Twelve recordings from subjects who fell before. Collected across both
+// modes; the last one only appears once the other eleven are found. Numbers
+// match the registry the player reads at the fire (records.ts).
 export interface Echo {
   id: number;
   patient: string;
@@ -374,27 +449,28 @@ export interface Echo {
 const E = (patient: string, pitch: number, text: string): Line => ["ECHO", text, { name: `Patient ${patient}`, pitch }];
 
 export const ECHOES: Echo[] = [
-  { id: 0, patient: "7", lines: [E("7", 1.2, "Patient seven. Day one. They said it was a clinical trial. They said I'd be home by spring.")] },
-  { id: 1, patient: "12", lines: [E("12", 0.8, "Patient twelve. The shards sing when you're close to the towers. Don't sing back.")] },
-  { id: 2, patient: "23", lines: [E("23", 1.4, "Patient twenty three. I forgot my daughter's name today. I wrote it on my arm. Now I can't read my own handwriting.")] },
-  { id: 3, patient: "31", lines: [E("31", 0.7, "Patient thirty one. The masks aren't for war. They're so we don't have to see who we used to be.")] },
-  { id: 4, patient: "44", lines: [E("44", 1.0, "Patient forty four. Meridian drops one of us every year. Like feeding something.")] },
-  { id: 5, patient: "58", lines: [E("58", 1.3, "Patient fifty eight. The Warden was kind once. He taught me how to make fire.")] },
-  { id: 6, patient: "63", lines: [E("63", 0.9, "Patient sixty three. There's a voice on the radio every time one of us falls. Warm. Funny. Calls herself Rhea.")] },
-  { id: 7, patient: "71", lines: [E("71", 0.6, "Patient seventy one. Fall. Forget. Belong. It isn't a prayer. It's a set of instructions.")] },
-  { id: 8, patient: "86", lines: [E("86", 1.1, "Patient eighty six. The second moon is closer every night. I measured it with my thumb.")] },
-  { id: 9, patient: "92", lines: [E("92", 1.5, "Patient ninety two. If you're the hundredth, listen. The door doesn't lead home. Home is what it eats.")] },
-  { id: 10, patient: "99", lines: [E("99", 1.0, "Patient ninety nine. I'm the last one before you. I built a fire at the crash site and kept it lit every night. For you. Keep it lit.")] },
+  { id: 0, patient: "0007", lines: [E("0007", 1.2, "Patient seven. Day one. They said it was a clinical trial. They said I'd be home by spring.")] },
+  { id: 1, patient: "0412", lines: [E("0412", 0.8, "Four twelve. The shards sing when you're close to the towers. Don't sing back.")] },
+  { id: 2, patient: "1123", lines: [E("1123", 1.4, "Eleven twenty three. I forgot my daughter's name today. I wrote it on my arm. Now I can't read my own handwriting.")] },
+  { id: 3, patient: "2031", lines: [E("2031", 0.7, "Twenty thirty one. The masks aren't for war. They're so we don't have to see who we used to be.")] },
+  { id: 4, patient: "3344", lines: [E("3344", 1.0, "Thirty three forty four. Meridian sends one of us through every few days. Like feeding something.")] },
+  { id: 5, patient: "4382", lines: [E("4382", 1.3, "Forty three eighty two. They'll list me as missing. I'm not missing. The Warden was kind once. He taught me how to make fire.")] },
+  { id: 6, patient: "5063", lines: [E("5063", 0.9, "Fifty sixty three. There's a voice on the radio every time one of us falls. Warm. Funny. Calls herself Rhea.")] },
+  { id: 7, patient: "6071", lines: [E("6071", 0.6, "Sixty seventy one. Fall. Forget. Belong. It isn't a prayer. It's a set of instructions.")] },
+  { id: 8, patient: "7291", lines: [E("7291", 1.1, "Seventy two ninety one. Transferred, they'll say. The second moon is closer every night. I measured it with my thumb.")] },
+  { id: 9, patient: "9843", lines: [E("9843", 1.5, "Ninety eight forty three. If you're the last one, listen. The door doesn't lead home. Home is what it eats.")] },
+  { id: 10, patient: "10000", lines: [E("10000", 1.0, "Ten thousand. There was a fire pit by the wreck when I landed. Already built. Like somebody knew. I kept it lit. Whoever you are, keep it lit.")] },
   {
     id: 11,
-    patient: "100",
+    patient: "10001",
     lines: [
-      ["YOU", "Patient one hundred. {name}. If you're hearing this, it's already happened. I've done this before. Many times.", { name: "Patient 100" }],
-      ["YOU", "Stop counting the nights. Start counting the people. Find Rhea.", { name: "Patient 100" }],
-      ["RHEA", "Hundred? Who were you talking to?"],
+      ["YOU", "Ten thousand and one. {name}. If you're hearing this, it's already happened. I've done this before. Many times.", { name: "Patient 10001" }],
+      ["YOU", "I built the fire. I carried the case to it. I wrote us into the book, so you'd know you were expected.", { name: "Patient 10001" }],
+      ["YOU", "Stop counting the nights. Start counting the people. Find Rhea.", { name: "Patient 10001" }],
+      ["RHEA", "{name}? Who were you talking to?"],
       ["YOU", "Me."],
     ],
   },
 ];
 
-export const ECHO_FIRST_FIND: Line[] = [["RHEA", "Hundred? Your signal just doubled. Like there are two of you standing there."]];
+export const ECHO_FIRST_FIND: Line[] = [["RHEA", "{name}? Your signal just doubled. Like there are two of you standing there."]];
