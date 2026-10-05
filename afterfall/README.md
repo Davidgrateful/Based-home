@@ -57,6 +57,31 @@ Change any of it later from **Survivor** on the main menu. Everything is saved i
 
 The interface is deliberately plain, like a shipped console game. It uses one accent color (medevac orange), Barlow and Barlow Condensed type, thin rules instead of boxes, plain subtitles with the speaker's name in color, and a text-only main menu over the live campfire scene. The world uses a muted night palette, smooth-shaded characters and restrained bloom.
 
+## Play together (co-op)
+
+**Play together** on the main menu opens a room for up to eight survivors. Create a room and share the invite link (`?room=CODE`, copy it from the pause menu), or type a friend's code.
+
+- **Everyone sees everyone.** Each player keeps the name and outfit they made in the creator, with a name tag and health line over their head. Running, swinging and dodging are streamed about 12 times a second and smoothed.
+- **One shared night.** The room's host runs the Long Night: the timers, waves, omens, Hollow AI and campfire. Everyone else mirrors it at 10 Hz, so all players fight the same Hollow, guard the same fire, and see the same Warden.
+- **Shared combat.** Your swings feel instant locally and the host applies the damage. The Hollow hunt whichever survivor is nearest.
+- **Downed, not dead.** If you fall in co-op, Rhea talks you back up after a few seconds. The loop only resets if the fire dies or everyone is down at once.
+- **Personal progress.** Loot, shards, Memories and Echoes stay per player.
+- **Drop in, drop out.** Late joiners catch up to the current night. If the host leaves, the next player takes over the world without a restart.
+
+The co-op server is `server/server.mjs`. It's one Node process that serves the built game and relays rooms over a WebSocket at `/ws`. It only relays messages; the host's browser runs the simulation.
+
+```bash
+npm run serve        # build + start on http://localhost:8787 (game + co-op)
+# or, while developing:
+npm start            # co-op server on :8787
+npm run dev          # Vite on :5173, proxies /ws to :8787
+```
+
+**Deploying co-op.** WebSockets need a long-running server, so plain static hosts like Vercel can't run rooms by themselves.
+- **Render:** `render.yaml` is included.
+- **Anywhere else:** use the included `Dockerfile` (Railway, Fly, a VPS).
+- **Game on Vercel, rooms elsewhere:** set `VITE_MP_SERVER=wss://your-server/ws`, or add `?mp=wss://…` to the URL.
+
 ## Token integration (Robinhood Chain Testnet, chain ID 46630)
 
 - **Launch the token:** [testnet.vibevibe.fun/create](https://testnet.vibevibe.fun/create). Gas comes from the [faucet](https://faucet.testnet.chain.robinhood.com).
@@ -96,5 +121,8 @@ Deploy `dist/` anywhere static. On Vercel, set the root directory to `afterfall`
 | `src/fx.ts`, `src/post.ts` | Damage numbers, sparks, bloom |
 | `src/voice.ts`, `src/audio.ts` | Voiced dialogue and procedural sound |
 | `src/token.ts` | Wallet, token balance, run signing (viem) |
+| `src/net.ts`, `src/coop.ts` | Co-op client: rooms, state streaming, host/guest roles |
+| `src/avatars.ts` | Other survivors: model, name tag, smoothing, animation |
+| `server/server.mjs` | Static server + WebSocket room relay |
 
 Testnet only. No real funds.

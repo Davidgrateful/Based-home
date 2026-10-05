@@ -6,9 +6,9 @@
     <title>AFTERFALL</title>
     <meta name="description" content="The sky has a door. You fell through it. A voiced survival story for vibe/vibe on Robinhood Chain Testnet." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%230d0e10'/><path d='M14 50 32 12l18 38' fill='none' stroke='%23e9e6df' stroke-width='5'/><path d='M22 38h20' stroke='%23d9643a' stroke-width='5'/></svg>" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="preload" href="./fonts/BarlowCondensed-600.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./fonts/Barlow-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./fonts/fonts.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -42,6 +42,10 @@
       <div class="hud-tr">
         <div id="night-chip" hidden></div>
         <div id="wallet-chip" hidden></div>
+        <div id="room-chip" hidden>
+          <div id="room-code"></div>
+          <ul id="room-list"></ul>
+        </div>
       </div>
       <div class="hud-vitals">
         <div class="who"><span id="hud-name">Hundred</span><span id="perk" hidden>Rift-bound</span></div>
@@ -77,6 +81,7 @@
         <nav class="menu">
           <button class="mi" id="btn-story"><span class="mi-t">Chapter One</span><span class="mi-d">The Drop. Story, about fifteen minutes.</span></button>
           <button class="mi" id="btn-night"><span class="mi-t">The Long Night</span><span class="mi-d" id="night-sub">Survive until dawn. Then do it again.</span></button>
+          <button class="mi" id="btn-coop"><span class="mi-t">Play together</span><span class="mi-d">The Long Night with friends. Up to eight survivors.</span></button>
           <button class="mi" id="btn-character"><span class="mi-t">Survivor</span><span class="mi-d" id="char-sub">Name and dress your character.</span></button>
           <button class="mi" id="btn-wallet"><span class="mi-t">Wallet</span><span class="mi-d" id="wallet-sub">Robinhood Chain Testnet</span></button>
           <button class="mi" id="btn-mute"><span class="mi-t">Sound</span><span class="mi-d" id="mute-sub">On</span></button>
@@ -115,6 +120,26 @@
       </div>
     </section>
 
+    <!-- ============================================================ CO-OP -->
+    <section id="coop" class="screen">
+      <div class="scrim"></div>
+      <div class="col">
+        <p class="kicker">Play together</p>
+        <h2>Hold the fire together</h2>
+        <p class="body">Start a room and send the link, or type a friend's room code. Everyone keeps their own survivor, upgrades and loot. The fire is shared.</p>
+        <label class="field">
+          <span>Room code</span>
+          <input id="coop-code" maxlength="8" autocomplete="off" spellcheck="false" placeholder="e.g. K7Q2M" />
+        </label>
+        <div class="actions">
+          <button id="btn-coop-join" class="btn primary">Join room</button>
+          <button id="btn-coop-create" class="btn">Create a room</button>
+        </div>
+        <p class="body small" id="coop-status"></p>
+        <button class="back" data-back>Back</button>
+      </div>
+    </section>
+
     <!-- ============================================================ CHARACTER -->
     <section id="creator" class="screen">
       <div class="col creator-col">
@@ -149,6 +174,7 @@
           <div><dt>Medkit / Interact</dt><dd>Q / E</dd></div>
         </dl>
         <div class="actions">
+          <button id="btn-invite" class="btn" hidden>Copy invite link</button>
           <button id="btn-nolock" class="btn">Play without mouse lock</button>
           <button id="btn-title" class="btn">Quit to menu</button>
         </div>

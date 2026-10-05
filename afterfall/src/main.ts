@@ -2,6 +2,7 @@
 
 import "./style.css";
 import * as THREE from "three";
+import { coopSwing, coopUpdate, inviteLink, joinRoom } from "./coop";
 import { applySaved, creator, menuCamera, menuLightOff, openCreator } from "./creator";
 import {
   $,
@@ -28,6 +29,7 @@ import { echoProgress } from "./echo";
 import { night, nightDebug, nightOnDeath, nightTarget, nightUpdate, renderShop, startLongNight } from "./night";
 import { playerName, resetSave, save } from "./save";
 import { story, storyOnDeath, storyOnSummon, storySkip, storyTarget, storyUpdate, startStory } from "./story";
+import { net, randomRoom } from "./net";
 import { LINKS } from "./token";
 
 // ------------------------------------------------------------------ hooks
@@ -40,12 +42,13 @@ player.onHurt = () => {
   sfx.hurt();
   hurtFlash();
 };
-player.onSwingHit = (facing, dmg, heavy) => enemies.hit(player.pos, facing, heavy ? 3.2 : 2.7, heavy ? 1.5 : 1.2, dmg, heavy);
+player.onSwingHit = (facing, dmg, heavy) =>
+  net.isClient ? coopSwing(facing, dmg, heavy) : enemies.hit(player.pos, facing, heavy ? 3.2 : 2.7, heavy ? 1.5 : 1.2, dmg, heavy);
 enemies.onHit = (e, _dmg, heavy) => {
   const at = e.pos.clone().add(new THREE.Vector3(0, 1.4 * e.scale, 0));
   fx.sparks(at, heavy ? 18 : 9, heavy ? 7 : 5);
   sfx.hit(heavy);
-  state.hitStop = heavy ? 0.08 : 0.045;
+  if (!state.remoteSwing) state.hitStop = heavy ? 0.08 : 0.045;
 };
 enemies.onSlam = (e) => {
   sfx.slam();
@@ -55,7 +58,6 @@ enemies.onSlam = (e) => {
 enemies.onSummon = () => {
   if (state.mode === "story") storyOnSummon();
 };
-enemies.onCast = () => sfx.charge();
 enemies.onDeath = (e) => {
   sfx.kill();
   fx.sparks(e.pos.clone().add(new THREE.Vector3(0, 1, 0)), 20, 6);
@@ -77,15 +79,17 @@ function renderMenu() {
       : "Survive until dawn. Best played after Chapter One.";
 }
 
-function showScreen(id: "title" | "wallet") {
+function showScreen(id: "title" | "wallet" | "coop") {
   $("title").classList.toggle("hidden", id !== "title");
   $("wallet").classList.toggle("show", id === "wallet");
+  $("coop").classList.toggle("show", id === "coop");
 }
 
 function leaveMenu() {
   sfx.init();
   $("title").classList.add("hidden");
   $("wallet").classList.remove("show");
+  $("coop").classList.remove("show");
   menuLightOff();
   input.lock();
 }
@@ -116,6 +120,54 @@ $("btn-character").addEventListener("click", () => {
   openCreator();
 });
 $("btn-wallet").addEventListener("click", () => showScreen("wallet"));
+
+// ------------------------------------------------------------------ co-op lobby
+const coopCode = $<HTMLInputElement>("coop-code");
+coopCode.addEventListener("keydown", (e) => e.stopPropagation());
+$("btn-coop").addEventListener("click", () => {
+  sfx.init();
+  showScreen("coop");
+});
+async function enterRoom(code: string) {
+  const status = $("coop-status");
+  const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+  if (!clean) {
+    status.textContent = "Type a room code, or create a room.";
+    return;
+  }
+  status.textContent = `Connecting to ${clean}…`;
+  try {
+    await joinRoom(clean);
+  } catch (e) {
+    status.textContent = (e as Error).message;
+    return;
+  }
+  history.replaceState(null, "", `?room=${net.room}`);
+  status.textContent = "";
+  leaveMenu();
+  hud.blackout.style.transition = "none";
+  hud.blackout.style.opacity = "1";
+  startLongNight(false);
+  toast(net.isHost ? `Room ${net.room} is open. Share the invite link from the pause menu.` : `Joined room ${net.room}`, 4500);
+}
+$("btn-coop-join").addEventListener("click", () => withSurvivor(() => enterRoom(coopCode.value)));
+$("btn-coop-create").addEventListener("click", () => withSurvivor(() => enterRoom(randomRoom())));
+$("btn-invite").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(inviteLink());
+    toast("Invite link copied");
+  } catch {
+    toast(inviteLink(), 6000);
+  }
+});
+{
+  const room = new URLSearchParams(location.search).get("room");
+  if (room) {
+    coopCode.value = room.toUpperCase();
+    showScreen("coop");
+    $("coop-status").textContent = "You've been invited. Join when you're ready.";
+  }
+}
 for (const b of document.querySelectorAll<HTMLElement>("[data-back]")) b.addEventListener("click", () => showScreen("title"));
 $("btn-mute").addEventListener("click", () => {
   voice.muted = !voice.muted;
@@ -270,6 +322,8 @@ function tick(now?: number) {
   dt *= state.slowMo;
   const t = timer.getElapsed();
   const running = !state.paused && !state.dead && state.mode !== "title" && !cine.active;
+  // in co-op the world keeps going while you're paused or down
+  const simulate = state.mode !== "title" && !cine.active && (running || (net.active && state.mode === "night"));
   if (running) state.elapsed += dt;
 
   if (state.mode === "title" && !cine.active) {
@@ -278,9 +332,9 @@ function tick(now?: number) {
     cine.update(dt, camera);
     player.invuln = Math.max(player.invuln, 0.3);
     enemies.update(dt, t, player, camera);
-  } else if (!state.paused) {
-    if (!state.dead) player.update(dt, input, bounds, camera);
-    else camera.position.y += (player.pos.y + 0.6 - camera.position.y) * dt;
+  } else if (!state.paused || simulate) {
+    if (!state.dead && !state.paused) player.update(dt, input, bounds, camera);
+    else if (state.dead) camera.position.y += (player.pos.y + 0.6 - camera.position.y) * dt;
     if (running) {
       healCd -= dt;
       if (input.tap("KeyQ") && healCd <= 0) {
@@ -290,11 +344,14 @@ function tick(now?: number) {
         }
         healCd = 0.6;
       }
+    }
+    if (simulate) {
       if (state.mode === "story") storyUpdate(dt);
       else if (state.mode === "night") nightUpdate(dt);
     }
-    enemies.update(running ? dt : 0, t, player, camera);
+    enemies.update(simulate ? dt : 0, t, player, camera);
   }
+  coopUpdate(dt, camera);
   world.update(dt, t, player.pos, camera);
   fx.update(dt, camera);
 
@@ -344,4 +401,6 @@ tick();
   },
   nightDebug,
   say,
+  net,
+  enterRoom,
 };

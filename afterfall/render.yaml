@@ -1,0 +1,9 @@
+# One-click deploy on Render: serves the game and the co-op rooms together.
+services:
+  - type: web
+    name: afterfall
+    runtime: node
+    rootDir: afterfall
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health

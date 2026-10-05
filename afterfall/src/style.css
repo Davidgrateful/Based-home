@@ -172,6 +172,11 @@ body.cine #hud { opacity: 0 !important; }
 .hud-tr { position: absolute; top: 28px; right: 32px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 #night-chip { font: 600 22px var(--display); letter-spacing: 0.14em; text-transform: uppercase; }
 #wallet-chip { font: 12px var(--mono); color: var(--dim); }
+#room-chip { text-align: right; }
+#room-code { font: 500 12px var(--ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+#room-list { list-style: none; margin: 6px 0 0; padding: 0; font: 500 14px/1.6 var(--ui); }
+.body.small { font-size: 13px; min-height: 1.6em; }
+#coop-code { text-transform: uppercase; letter-spacing: 0.2em; }
 .hud-vitals { position: absolute; left: 32px; bottom: 30px; width: 270px; }
 .who { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
 #hud-name { font: 600 18px var(--display); letter-spacing: 0.1em; text-transform: uppercase; }

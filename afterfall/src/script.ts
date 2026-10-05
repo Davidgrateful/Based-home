@@ -58,8 +58,8 @@ export const COLD_OPEN_CABIN: Line[] = [
 ];
 
 export const COLD_OPEN_WATCHERS: Line[] = [
-  ["HOLLOW", "Count it.", { name: "THE HOLLOW · WATCHER", pitch: 0.4 }],
-  ["HOLLOW", "One hundred.", { name: "THE HOLLOW · WATCHER", pitch: 0.65 }],
+  ["HOLLOW", "Count it.", { name: "Watcher", pitch: 0.4 }],
+  ["HOLLOW", "One hundred.", { name: "Watcher", pitch: 0.65 }],
 ];
 
 export const TITLE_TAGLINE = "The sky has a door. You fell through it.";
@@ -93,8 +93,8 @@ export const FIRST_SHARD: Line[] = [
 
 export const BLACK_BOX: Line[] = [
   ["YOU", "Black box. It's still recording."],
-  ["PILOT", "Okafor. Final log. Meridian lied to us. Patient one hundred isn't a patient. They're a key.", { name: "BLACK BOX · CAPT. OKAFOR" }],
-  ["PILOT", "The light opened the second he woke up. If anyone hears this, keep Hundred away from the towers.", { name: "BLACK BOX · CAPT. OKAFOR" }],
+  ["PILOT", "Okafor. Final log. Meridian lied to us. Patient one hundred isn't a patient. They're a key.", { name: "Okafor (recording)" }],
+  ["PILOT", "The light opened the second they woke up. If anyone hears this, keep Hundred away from the towers.", { name: "Okafor (recording)" }],
   ["RHEA", "Hundred, I didn't know. I swear I didn't know that part."],
   ["YOU", "That part?"],
   ["RHEA", "Later. Something's moving in the trees."],
@@ -268,7 +268,7 @@ export interface Echo {
   lines: Line[];
 }
 
-const E = (patient: string, pitch: number, text: string): Line => ["ECHO", text, { name: `ECHO · PATIENT ${patient}`, pitch }];
+const E = (patient: string, pitch: number, text: string): Line => ["ECHO", text, { name: `Patient ${patient}`, pitch }];
 
 export const ECHOES: Echo[] = [
   { id: 0, patient: "7", lines: [E("7", 1.2, "Patient seven. Day one. They said it was a clinical trial. They said I'd be home by spring.")] },
@@ -286,8 +286,8 @@ export const ECHOES: Echo[] = [
     id: 11,
     patient: "100",
     lines: [
-      ["YOU", "Patient one hundred. {name}. If you're hearing this, it's already happened. I've done this before. Many times.", { name: "ECHO · PATIENT 100" }],
-      ["YOU", "Stop counting the nights. Start counting the people. Find Rhea.", { name: "ECHO · PATIENT 100" }],
+      ["YOU", "Patient one hundred. {name}. If you're hearing this, it's already happened. I've done this before. Many times.", { name: "Patient 100" }],
+      ["YOU", "Stop counting the nights. Start counting the people. Find Rhea.", { name: "Patient 100" }],
       ["RHEA", "Hundred? Who were you talking to?"],
       ["YOU", "Me."],
     ],

@@ -59,6 +59,7 @@ export const state = {
   paused: false,
   dead: false,
   hitStop: 0,
+  remoteSwing: false, // a co-op guest's swing being resolved on the host
   slowMo: 1,
 };
 
