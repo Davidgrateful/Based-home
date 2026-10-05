@@ -427,7 +427,7 @@ function tick(now?: number) {
   fx.update(dt, camera);
   if (state.mode !== "title") {
     mapUpdate(dt, running && state.exited !== false);
-    if (running) regionsUpdate(dt, player.pos.x, player.pos.z);
+    if (running && state.exited) regionsUpdate(dt, player.pos.x, player.pos.z);
   }
   // the fire is the one warm sound out here
   if (world.campfire.lit && state.mode !== "title") {
