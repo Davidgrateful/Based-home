@@ -61,7 +61,7 @@ class VoiceBank {
   pack(name: string) {
     let p = this.packs.get(name);
     if (!p) {
-      p = fetch(`./voice/${name}.bin`)
+      p = fetch(`./voice/${name}.mp3`)
         .then((r) => (r.ok ? r.arrayBuffer() : null))
         .catch(() => null);
       this.packs.set(name, p);

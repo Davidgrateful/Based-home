@@ -2,7 +2,7 @@
 treat each by who is speaking and how (radio, black-box tape, the Choir...),
 and pack the results for the game:
 
-    public/voice/<pack>.bin      concatenated MP3 clips
+    public/voice/<pack>.mp3      concatenated MP3 clips (one stream per pack)
     public/voice/manifest.json   key -> [pack, offset, bytes, ms] (+ "#b" keys:
                                  the player's lines in the second voice)
 
@@ -141,7 +141,7 @@ for n, (l, alt) in enumerate(jobs):
         print(f"{n}/{len(jobs)} {time.time() - t0:.0f}s  {l['id']:7s} {l['say'][:60]}", flush=True)
 
 for p, buf in packs.items():
-    open(os.path.join(OUT, f"{p}.bin"), "wb").write(buf)
+    open(os.path.join(OUT, f"{p}.mp3"), "wb").write(buf)
 json.dump(manifest, open(os.path.join(OUT, "manifest.json"), "w"), separators=(",", ":"))
 sizes = {p: f"{len(b) / 1e6:.2f} MB" for p, b in packs.items()}
 print("done", len(manifest), "clips", sizes, f"{time.time() - t0:.0f}s")
