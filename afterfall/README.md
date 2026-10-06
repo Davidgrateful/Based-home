@@ -60,7 +60,23 @@ The game gives the loop a story reason: **the rift is looping Patient 10001.**
 
 **Combat feel:** a 3-hit combo with a heavy overhead finisher, hit-stop, damage numbers, sparks, enemy health bars, a dodge with brief invulnerability, slow-motion on the boss kill, and bloom on everything that glows.
 
-All voices use the browser's Web Speech API, each with its own pitch, rate and voice choice. Subtitles type on as they're spoken. All sound is synthesized with WebAudio.
+**Every line is voiced.** The whole script (about 310 lines) is pre-recorded with a local neural voice model ([Kokoro](https://github.com/thewh1teagle/kokoro-onnx)), cast per character and treated per situation:
+- **Radio and recordings:** radio lines sound like a handset, and the black box and the Echoes sound like old tape.
+- **Monsters and the Choir:** the Hollow are pitched down and degraded, and the Warden is slowed in a stone room. The Choir is three voices layered in a large space.
+- **Your own voice:** your lines are recorded twice, so you can pick a deeper or lighter voice in the creator.
+- **Your name:** recordings can't say the name you typed. Rhea calls you by her nickname, "sleeper", and the subtitles still show your name.
+
+Lines without a recording fall back to the browser's speech. Subtitles type on as they're spoken. All other sound is synthesized with WebAudio.
+
+To re-record after editing the script:
+
+```sh
+node tools/voice/extract.mjs            # collect every spoken line -> tools/voice/lines.json
+pip install kokoro-onnx soundfile       # plus ffmpeg on PATH
+KOKORO=/dir/with/kokoro-v1.0.onnx+voices-v1.0.bin python3 tools/voice/render.py
+```
+
+`render.py` caches by text and treatment, so only changed lines are re-recorded. It writes the packs to `public/voice/`.
 
 ## Your survivor
 
@@ -163,7 +179,8 @@ Deploy `dist/` anywhere static. On Vercel, set the root directory to `afterfall`
 | `src/creator.ts` | Survivor creator and menu camera |
 | `src/echo.ts`, `src/save.ts` | Echo collectibles and persistent progress (Memories) |
 | `src/fx.ts`, `src/post.ts` | Damage numbers, sparks, bloom |
-| `src/voice.ts`, `src/audio.ts` | Voiced dialogue and procedural sound |
+| `src/voice.ts`, `src/audio.ts` | Recorded dialogue (with speech fallback) and procedural sound |
+| `tools/voice/` | The voice pipeline: line extraction, casting, treatments, packing |
 | `src/token.ts` | Wallet, token balance, run signing (viem) |
 | `src/net.ts`, `src/coop.ts` | Co-op client: rooms, state streaming, host/guest roles |
 | `src/avatars.ts` | Other survivors: model, name tag, smoothing, animation |

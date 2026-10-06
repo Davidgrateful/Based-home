@@ -52,6 +52,7 @@ player.cameraBlockers = world.cameraBlockers;
 export const enemies = new EnemyManager(scene, world.colliders);
 export const voice = new Voice();
 export const sfx = new Sfx();
+voice.audioCtx = () => sfx.ctx; // recorded lines play through the game's audio
 export const token = new TokenLink();
 export const fx = new FX(scene);
 export const cine = new Cine(voice);

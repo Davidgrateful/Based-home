@@ -37,6 +37,8 @@ export interface Look {
   topColor: number;
   pants: number;
   extra: number;
+  /** Which recorded voice your lines use (0 deeper, 1 lighter). */
+  voice?: number;
 }
 
 export interface Swatch {
@@ -81,6 +83,7 @@ export const LOOK = {
     { name: "Olive", c: 0x41463a },
   ] as Swatch[],
   extra: ["None", "Beanie", "Scarf", "Backpack", "Glasses", "Bandana", "Headset"],
+  voice: ["Deeper", "Lighter"],
 };
 
 export const DEFAULT_LOOK: Look = { build: 1, skin: 2, hair: 2, hairColor: 1, top: 0, topColor: 0, pants: 0, extra: 0 };
@@ -96,6 +99,7 @@ export function randomLook(): Look {
     topColor: r(LOOK.topColor.length),
     pants: r(LOOK.pants.length),
     extra: r(LOOK.extra.length),
+    voice: r(2),
   };
 }
 

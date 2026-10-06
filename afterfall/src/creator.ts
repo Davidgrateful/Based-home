@@ -27,6 +27,7 @@ const ROWS: Row[] = [
   { key: "topColor", label: "Clothing color", kind: "swatch" },
   { key: "pants", label: "Trousers", kind: "swatch" },
   { key: "extra", label: "Accessory", kind: "choice" },
+  { key: "voice", label: "Voice", kind: "choice" },
 ];
 
 /** Where the survivor stands on the menu and in the creator. */
@@ -57,6 +58,7 @@ const sanitize = (s: string) =>
 export function applySaved() {
   player.setLook(save.look ?? DEFAULT_LOOK);
   voice.playerName = playerName();
+  voice.altVoice = (save.look?.voice ?? 0) === 1;
   $("hud-name").textContent = playerName();
   $("char-sub").textContent = save.look ? `${playerName()}. Change name and clothing.` : "Name and dress your character.";
 }
@@ -92,7 +94,8 @@ function set(k: keyof Look, v: number) {
   look[k] = v;
   player.setLook(look);
   render();
-  sfx.coin();
+  if (k === "voice") voice.preview(v === 1); // hear it
+  else sfx.coin();
 }
 
 function render() {
@@ -113,13 +116,13 @@ function render() {
       const prev = document.createElement("button");
       prev.innerHTML = "&#8249;";
       prev.setAttribute("aria-label", `Previous ${r.label}`);
-      prev.onclick = () => set(r.key, (look[r.key] - 1 + n) % n);
+      prev.onclick = () => set(r.key, ((look[r.key] ?? 0) - 1 + n) % n);
       const val = document.createElement("span");
-      val.textContent = opts[look[r.key]];
+      val.textContent = opts[look[r.key] ?? 0];
       const next = document.createElement("button");
       next.innerHTML = "&#8250;";
       next.setAttribute("aria-label", `Next ${r.label}`);
-      next.onclick = () => set(r.key, (look[r.key] + 1) % n);
+      next.onclick = () => set(r.key, ((look[r.key] ?? 0) + 1) % n);
       ctrl.append(prev, val, next);
       row.appendChild(ctrl);
     } else {
