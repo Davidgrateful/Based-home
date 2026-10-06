@@ -3,6 +3,7 @@
 // with a wardrobe for the player's survivor.
 
 import * as THREE from "three";
+import { boneMask, Person, peopleOk, type Outfit } from "./people";
 
 export interface Humanoid {
   root: THREE.Group;
@@ -39,6 +40,8 @@ export interface Look {
   extra: number;
   /** Which recorded voice your lines use (0 deeper, 1 lighter). */
   voice?: number;
+  /** 0 masculine, 1 feminine */
+  body?: number;
 }
 
 export interface Swatch {
@@ -47,6 +50,7 @@ export interface Swatch {
 }
 
 export const LOOK = {
+  body: ["Masculine", "Feminine"],
   build: ["Lean", "Standard", "Heavy"],
   skin: [
     { name: "Porcelain", c: 0xf0cfb4 },
@@ -99,7 +103,7 @@ export function randomLook(): Look {
     topColor: r(LOOK.topColor.length),
     pants: r(LOOK.pants.length),
     extra: r(LOOK.extra.length),
-    voice: r(2),
+    ...((b) => ({ body: b, voice: b }))(r(2)),
   };
 }
 
@@ -215,6 +219,11 @@ function finish(h: Humanoid) {
 
 // ------------------------------------------------------------------ NPCs
 export function buildHumanoid(o: HumanoidOpts): Humanoid {
+  if (peopleOk()) {
+    if (o.mask !== undefined) return buildHollowPerson(o);
+    // anyone else (the echoes): a plain survivor in the given colours
+    return new Person({ sex: Math.random() < 0.5 ? "m" : "f", skin: 2, tint: o.skin, hair: o.hair !== undefined ? "simpleparted" : "", hairColor: o.hair ?? 0, top: o.cloth, pants: o.pants });
+  }
   const h = core({ skin: o.skin, top: o.cloth, pants: o.pants, w: 1, limb: 0.058, eye: o.eye ?? 0x111111 });
   if (o.hair !== undefined) {
     const hm = mat(o.hair, { roughness: 0.95 });
@@ -250,6 +259,7 @@ export function buildHumanoid(o: HumanoidOpts): Humanoid {
 
 // ------------------------------------------------------------------ the survivor
 export function buildPlayerModel(look: Look): Humanoid {
+  if (peopleOk()) return buildPlayerPerson(look);
   const w = [0.9, 1, 1.18][look.build] ?? 1;
   const limb = [0.052, 0.058, 0.07][look.build] ?? 0.058;
   const skinC = LOOK.skin[look.skin]?.c ?? LOOK.skin[2].c;
@@ -338,7 +348,17 @@ export function buildPlayerModel(look: Look): Humanoid {
     }
   }
 
-  // accessory
+  accessorize(look, S, h.head, B, w, dark);
+
+  // the hospital wristband every patient wears
+  add(h.armL, new THREE.CylinderGeometry(limb + 0.007, limb + 0.007, 0.03, 12), mat(0xeeeeea), 0, -0.53, 0);
+  return finish(h);
+}
+
+
+/** The creator's accessory, on a skull group (hats), the head (glasses,
+ *  headset) and the torso (scarf, pack), in the old figures' units. */
+export function accessorize(look: Look, S: THREE.Object3D, head: THREE.Object3D, B: THREE.Object3D, w: number, dark: THREE.Material) {
   switch (look.extra) {
     case 1: {
       const knit = mat(look.topColor === 2 ? 0x6b2f22 : 0x2e2f33, { roughness: 1 });
@@ -363,35 +383,166 @@ export function buildPlayerModel(look: Look): Humanoid {
     }
     case 4: {
       const frame = mat(0x1a1a1a, { metalness: 0.5, roughness: 0.3 });
-      for (const x of [-1, 1]) add(h.head, new THREE.TorusGeometry(0.022, 0.004, 6, 16), frame, x * 0.04, 0.018, 0.113);
-      add(h.head, new THREE.BoxGeometry(0.03, 0.005, 0.005), frame, 0, 0.02, 0.115);
+      for (const x of [-1, 1]) add(head, new THREE.TorusGeometry(0.022, 0.004, 6, 16), frame, x * 0.04, 0.018, 0.113);
+      add(head, new THREE.BoxGeometry(0.03, 0.005, 0.005), frame, 0, 0.02, 0.115);
       break;
     }
     case 5: {
       const cloth = mat(0x7d2620, { roughness: 1 });
       add(S, new THREE.CylinderGeometry(0.119, 0.119, 0.035, 24, 1, true), cloth, 0, 0.045, 0).rotation.x = -0.12;
-      add(h.head, new THREE.SphereGeometry(0.025, 8, 6), cloth, 0, 0.05, -0.115);
+      add(head, new THREE.SphereGeometry(0.025, 8, 6), cloth, 0, 0.05, -0.115);
       break;
     }
     case 6: {
       // aviation headset: band, ear cups, boom mic
       const shell = mat(0x2a2b2e, { roughness: 0.5 });
-      const band = add(h.head, new THREE.TorusGeometry(0.128, 0.012, 6, 24, Math.PI), shell, 0, 0.02, -0.01);
+      const band = add(head, new THREE.TorusGeometry(0.128, 0.012, 6, 24, Math.PI), shell, 0, 0.02, -0.01);
       band.rotation.y = Math.PI / 2;
       for (const x of [-1, 1]) {
-        const cup = add(h.head, new THREE.CylinderGeometry(0.045, 0.045, 0.04, 16), shell, x * 0.118, 0, -0.005);
+        const cup = add(head, new THREE.CylinderGeometry(0.045, 0.045, 0.04, 16), shell, x * 0.118, 0, -0.005);
         cup.rotation.z = Math.PI / 2;
       }
-      const boom = add(h.head, new THREE.CylinderGeometry(0.006, 0.006, 0.12, 6), shell, 0.1, -0.06, 0.06);
+      const boom = add(head, new THREE.CylinderGeometry(0.006, 0.006, 0.12, 6), shell, 0.1, -0.06, 0.06);
       boom.rotation.set(Math.PI / 2.4, 0, 0.5);
-      add(h.head, new THREE.SphereGeometry(0.014, 8, 6), shell, 0.06, -0.075, 0.105);
+      add(head, new THREE.SphereGeometry(0.014, 8, 6), shell, 0.06, -0.075, 0.105);
       break;
     }
   }
 
+}
+
+// ------------------------------------------------------------------ the survivor, for real
+const HAIR_STYLE = ["", "buzzed", "simpleparted", "simpleparted", "buns", "long"];
+
+/** The creator's look as clothes on a real body. */
+export function lookOutfit(look: Look): Outfit {
+  const sex = (look.body ?? 0) === 1 ? "f" : "m";
+  const topC = LOOK.topColor[look.topColor]?.c ?? LOOK.topColor[0].c;
+  const pantsC = LOOK.pants[look.pants]?.c ?? LOOK.pants[0].c;
+  let hair = HAIR_STYLE[look.hair] ?? "simpleparted";
+  if (hair === "buzzed" && sex === "f") hair = "buzzedfemale";
+  const o: Outfit = {
+    sex,
+    skin: look.skin,
+    hair,
+    hairColor: LOOK.hairColor[look.hairColor]?.c ?? LOOK.hairColor[0].c,
+    beard: sex === "m" && look.hair !== 0 && look.skin % 2 === 0 && look.build !== 0,
+    top: topC,
+    pants: pantsC,
+    width: [0.93, 1, 1.09][look.build] ?? 1,
+    belt: 0x24201c,
+  };
+  switch (look.top) {
+    case 1: // field jacket over a dark tee
+      o.top = 0x2b2b2a;
+      o.jacket = topC;
+      o.boots = true;
+      o.shoes = 0x3a2a1e;
+      break;
+    case 2: // scrubs
+      o.sleeves = false;
+      o.belt = undefined;
+      o.shoes = 0xd8d8d4;
+      break;
+    case 3: // bomber
+      o.top = 0x1d1d1f;
+      o.jacket = topC;
+      break;
+    case 4: // patient gown
+      o.top = 0x9aa7ae;
+      o.sleeves = false;
+      o.belt = undefined;
+      o.shoes = 0xb8bcbc;
+      break;
+  }
+  return o;
+}
+
+function buildPlayerPerson(look: Look): Humanoid {
+  const p = new Person(lookOutfit(look));
+  const w = [0.9, 1, 1.18][look.build] ?? 1;
+  const dark = mat(0x1c1c1e, { roughness: 0.7 });
+  // hats sit on the hair; the old skull group is the head here
+  accessorize(look, p.head, p.head, p.torso, w, dark);
   // the hospital wristband every patient wears
-  add(h.armL, new THREE.CylinderGeometry(limb + 0.007, limb + 0.007, 0.03, 12), mat(0xeeeeea), 0, -0.53, 0);
-  return finish(h);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.03, 14), mat(0xeeeeea));
+  band.position.y = 0.035;
+  p.wristL.add(band);
+  return p;
+}
+
+// ------------------------------------------------------------------ the Hollow, for real
+/** Patients who stayed out too long: real bodies in what's left of their
+ *  clothes, grey under the dirt, a carved bone mask over the face. */
+function buildHollowPerson(o: HumanoidOpts): Humanoid {
+  const r = Math.random();
+  const sex = o.bones || r < 0.62 ? "m" : "f";
+  const grey = new THREE.Color(o.skin).lerp(new THREE.Color(0x9a9a96), 0.45).getHex();
+  const p = new Person({
+    sex,
+    skin: 2,
+    tint: grey,
+    hair: ["", "long", sex === "m" ? "buzzed" : "buzzedfemale", "simpleparted"][Math.floor(Math.random() * 4)],
+    hairColor: 0x1a1612,
+    top: o.cloth,
+    sleeves: Math.random() < 0.6,
+    pants: o.pants,
+    shoes: 0x1c1915,
+    boots: Math.random() < 0.5,
+    belt: Math.random() < 0.4 ? 0x2a2018 : undefined,
+    jacket: o.bones ? darker(o.cloth, 0.75) : undefined,
+    width: o.bones ? 1.12 : 0.94 + Math.random() * 0.08,
+  });
+  const m = boneMask(o.mask!, o.eye ?? 0xff3a1a);
+  p.head.add(m.mask);
+  p.eyes = m.eyes;
+  p.customEyes = true;
+  p.mats.push(m.bone);
+  if (o.bones) {
+    const bm = mat(0xd8d0bc, { roughness: 0.7 });
+    for (let i = 0; i < 5; i++) {
+      const a = (i - 2) * 0.35;
+      const spike = add(p.head, new THREE.ConeGeometry(0.03, 0.26, 8), bm, Math.sin(a) * 0.12, 0.17, Math.cos(a) * 0.04 - 0.05);
+      spike.rotation.z = -a * 0.6;
+    }
+    for (const x of [-1, 1]) {
+      const pad = add(p.torso, new THREE.SphereGeometry(0.13, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), bm, x * 0.22, 0.52, -0.01);
+      pad.scale.set(1, 0.6, 0.9);
+    }
+  }
+  return p;
+}
+
+// ------------------------------------------------------------------ the Changed, for real
+/** Patients who stayed long enough to be rewritten: pale, wrapped, and the
+ *  crystal coming up the left arm. */
+function buildChangedPerson(o: { cloth: number; skin: number; pants: number; hair?: number; wrap?: number; sex?: "m" | "f" }): Humanoid {
+  const sex = o.sex ?? (o.hair !== undefined && o.hair < 0x300000 ? "f" : "m");
+  const p = new Person({
+    sex,
+    skin: 2,
+    tint: new THREE.Color(o.skin).lerp(new THREE.Color(0xc8d4d8), 0.3).getHex(),
+    hair: o.hair === undefined ? "" : sex === "f" ? "long" : "simpleparted",
+    hairColor: o.hair ?? 0,
+    beard: sex === "m" && o.hair !== undefined && o.hair > 0x800000,
+    top: o.cloth,
+    pants: o.pants,
+    shoes: 0x2a2520,
+    boots: true,
+    jacket: darker(o.cloth, 0.8),
+    belt: 0x2a2018,
+  });
+  const wrap = mat(o.wrap ?? 0x4a4038, { roughness: 1 });
+  const w = add(p.head, new THREE.CylinderGeometry(0.115, 0.122, 0.075, 18, 1, true), wrap, 0, -0.065, 0.02);
+  w.scale.set(1.05, 1, 1.18);
+  const crystal = new THREE.MeshStandardMaterial({ color: 0x9eeaf5, emissive: 0x2ab8d8, emissiveIntensity: 0.9, roughness: 0.15, metalness: 0.1, flatShading: true });
+  for (let i = 0; i < 7; i++) {
+    const c = add(p.wristL, new THREE.OctahedronGeometry(0.02 + (i % 3) * 0.008, 0), crystal, Math.sin(i * 2.3) * 0.035, 0.04 + i * 0.06, Math.cos(i * 1.7) * 0.035);
+    c.scale.y = 1.8;
+    c.rotation.z = i * 0.7;
+  }
+  for (let i = 0; i < 3; i++) add(p.torso, new THREE.OctahedronGeometry(0.035, 0), crystal, 0.17 + i * 0.03, 0.55 + i * 0.04, -0.02 + i * 0.03).scale.y = 2;
+  return p;
 }
 
 // ------------------------------------------------------------------ weapons
@@ -543,7 +694,8 @@ export function buildThing(): Humanoid {
 
 /** One of the Changed: a survivor who stayed long enough for the rift to
  *  start rewriting them. Human, mostly. One arm has gone to cyan crystal. */
-export function buildChanged(o: { cloth: number; skin: number; pants: number; hair?: number; wrap?: number }): Humanoid {
+export function buildChanged(o: { cloth: number; skin: number; pants: number; hair?: number; wrap?: number; sex?: "m" | "f" }): Humanoid {
+  if (peopleOk()) return buildChangedPerson(o);
   const h = core({ skin: o.skin, top: o.cloth, pants: o.pants, w: 0.96, limb: 0.054, eye: 0x7ae2ff });
   if (o.hair !== undefined) {
     const hm = mat(o.hair, { roughness: 0.95 });

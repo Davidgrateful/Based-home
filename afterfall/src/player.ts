@@ -3,6 +3,7 @@
 
 import * as THREE from "three";
 import { buildAxe, buildPlayerModel, DEFAULT_LOOK, type Humanoid, type Look } from "./models";
+import { Person } from "./people";
 
 export class Input {
   keys = new Set<string>();
@@ -162,6 +163,7 @@ export class Player {
     const k = new THREE.Vector3(this.pos.x - from.x, 0, this.pos.z - from.z).normalize();
     this.dashDir.copy(k).multiplyScalar(9);
     this.dashT = -0.18; // negative dashT = knockback, no i-frames from it
+    if (this.model instanceof Person && this.attackT <= 0) void this.model.play(Math.random() < 0.5 ? "hitChest" : "hitHead", 1.1);
     this.onHurt?.();
   }
 
@@ -216,6 +218,10 @@ export class Player {
       this.dashT = 0.28;
       this.invuln = Math.max(this.invuln, 0.32);
       this.dashDir.copy(moving ? wish : fwd).multiplyScalar(19);
+      if (this.model instanceof Person) {
+        this.facing = Math.atan2(this.dashDir.x, this.dashDir.z);
+        void this.model.play("roll", 3.2);
+      }
       this.onDash?.();
     }
     const vel = wish.multiplyScalar(speed);
@@ -263,6 +269,7 @@ export class Player {
       const assisted = input.touch ? this.aimAssist?.(this.pos) : null;
       this.swingYaw = assisted ?? this.yaw;
       this.facing = this.swingYaw;
+      if (this.model instanceof Person) void this.model.play("attack", heavy ? 1.9 : 2.8);
       this.onSwing?.(heavy);
     }
     if (this.attackT > 0) {
@@ -286,6 +293,12 @@ export class Player {
     const stride = moving ? speed : 0;
     this.walk += dt * stride * 1.6;
     const sw = Math.sin(this.walk) * Math.min(1, stride / 4) * 0.8;
+    if (m instanceof Person) {
+      // real clips: a looping base from the ground speed, one-shots on top
+      m.body.rotation.set(0, 0, 0);
+      if (this.airborne) m.setBase("jump", 1, 0.15);
+      else m.move(this.frozen ? 0 : Math.hypot(vel.x, vel.z) * (this.dashT !== 0 ? 0 : 1), this.hasAxe);
+    } else {
     m.legL.rotation.x = this.airborne ? -0.5 : sw;
     m.legR.rotation.x = this.airborne ? 0.3 : -sw;
     m.armL.rotation.x = -sw * 0.7;
@@ -308,6 +321,7 @@ export class Player {
       m.armR.rotation.x += ((this.hasAxe ? -0.5 : 0) + sw * 0.5 - m.armR.rotation.x) * Math.min(1, dt * 10);
       m.armR.rotation.z = 0;
       m.body.rotation.x = this.dashT > 0 ? 0.35 : 0;
+    }
     }
     m.root.visible = !this.firstPerson || this.camDist > 0.8;
 

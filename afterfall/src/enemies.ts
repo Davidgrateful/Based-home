@@ -8,6 +8,7 @@
 //   thing   — not a patient: a native. Territorial, fears firelight, lunges
 
 import * as THREE from "three";
+import { Person } from "./people";
 import { buildClub, buildGreatAxe, buildHumanoid, buildSpear, buildStaff, buildThing, type Humanoid } from "./models";
 import { type Circle, glowTexture, heightAt } from "./world";
 
@@ -86,6 +87,8 @@ export class Enemy {
   noticed = false;
   wanderT = 0;
   wanderYaw = 0;
+  /** The state the body last animated (real people play clips on changes). */
+  animState: State | "" = "";
 
   constructor(kind: EnemyKind, at: THREE.Vector3, o: SpawnOpts) {
     this.kind = kind;
@@ -254,6 +257,7 @@ export class EnemyManager {
         e.timer = heavy ? 0.8 : 0.45;
       }
       this.onHit?.(e, dmg, heavy);
+      if (e.hp > 0 && e.model instanceof Person && (e.state === "chase" || e.state === "recover")) void e.model.play(heavy ? "hitHead" : "hitChest", 1.1);
       if (e.hp <= 0) this.kill(e);
       n++;
     }
@@ -261,6 +265,7 @@ export class EnemyManager {
   }
 
   private kill(e: Enemy) {
+    if (e.model instanceof Person) void e.model.play("die", 1.25, true);
     e.state = "dead";
     e.deadFor = 0;
     e.bar.visible = false;
@@ -309,8 +314,9 @@ export class EnemyManager {
       if (e.state === "dead") {
         e.deadFor += dt;
         if (e.kind === "thing") m.root.rotation.z = Math.min(Math.PI / 2, m.root.rotation.z + dt * 4);
+        else if (m instanceof Person) m.root.position.y = ground - Math.max(0, e.deadFor - 2.4) * 0.5;
         else m.root.rotation.x = Math.min(Math.PI / 2, m.root.rotation.x + dt * 4);
-        m.root.position.y = ground + 0.2 * e.scale - Math.max(0, e.deadFor - 2) * 0.6;
+        if (!(m instanceof Person)) m.root.position.y = ground + 0.2 * e.scale - Math.max(0, e.deadFor - 2) * 0.6;
         if (e.deadFor > 4) {
           this.scene.remove(m.root, e.bar);
           if (e.ring) this.scene.remove(e.ring);
@@ -527,6 +533,19 @@ export class EnemyManager {
       const am = Math.abs(move);
       e.walk += dt * am * 2.2;
       const sw = Math.sin(e.walk) * Math.min(1, am / 3) * 0.7;
+      if (m instanceof Person) {
+        animatePerson(e, m, am);
+        m.root.rotation.y = e.yaw;
+        e.bar.visible = e.hp < e.maxHp && e.kind !== "warden";
+        if (e.bar.visible) {
+          e.bar.position.set(e.pos.x, e.pos.y + 2.25 * e.scale, e.pos.z);
+          e.bar.quaternion.copy(camera.quaternion);
+          const f = Math.max(0, e.hp / e.maxHp);
+          e.barFill.scale.x = f;
+          e.barFill.position.x = -0.43 * (1 - f);
+        }
+        continue;
+      }
       m.legL.rotation.x = sw;
       m.legR.rotation.x = -sw;
       m.armL.rotation.x = -sw * 0.8;
@@ -668,5 +687,46 @@ export class EnemyManager {
       if (b.life <= 0) this.scene.remove(b.mesh);
     }
     this.bolts = this.bolts.filter((b) => b.life > 0);
+  }
+}
+
+/** Real people: a base loop from the ground speed and a clip on each change
+ *  of state, timed to the AI's windups. */
+function animatePerson(e: Enemy, m: Person, am: number) {
+  const fresh = e.state !== e.animState;
+  e.animState = e.state;
+  if (e.orb) e.orb.emissiveIntensity = 1.5;
+  m.eyes.emissiveIntensity = 2;
+  switch (e.state) {
+    case "spawn":
+      m.setBase("crouch", 1, 0.1);
+      break;
+    case "windup": {
+      const k = 1 - e.timer / e.windup;
+      m.eyes.emissiveIntensity = 2 + k * 8;
+      if (e.kind === "shaman") {
+        if (e.orb) e.orb.emissiveIntensity = 1.5 + k * 10;
+        if (fresh) void m.play("cast", 0.5 / Math.max(0.2, e.windup));
+      } else if (fresh) {
+        // the swing lands ~0.62s into the clip: line that up with the strike
+        void m.play(e.kind === "runner" ? "jab" : "attack", Math.max(0.6, 0.62 / Math.max(0.15, e.windup)));
+      }
+      break;
+    }
+    case "slamUp": {
+      const k = 1 - e.timer / 1.3;
+      m.eyes.emissiveIntensity = 2 + k * 10;
+      m.root.position.y = e.pos.y + Math.sin(k * Math.PI) * 0.6;
+      if (fresh) void m.play("jumpStart", 1.05);
+      break;
+    }
+    case "strike":
+    case "recover":
+      m.move(am * 0.6, true);
+      break;
+    default: {
+      const run = e.kind === "runner" || e.kind === "brute" ? 1.35 : 1;
+      m.move(am * run, true);
+    }
   }
 }

@@ -3,6 +3,7 @@
 
 import * as THREE from "three";
 import type { PlayerLike } from "./enemies";
+import { Person } from "./people";
 import { buildAxe, buildPlayerModel, DEFAULT_LOOK, type Humanoid, type Look } from "./models";
 import { net } from "./net";
 import { heightAt } from "./world";
@@ -130,6 +131,9 @@ export class RemoteAvatar {
     if (s.rb !== this.rb) this.setAxe(s.rb);
   }
 
+  private lastA = -1;
+  private wasDown = false;
+
   update(dt: number, camera: THREE.Camera) {
     if (!this.seen || !this.state) return;
     const s = this.state;
@@ -148,6 +152,18 @@ export class RemoteAvatar {
     m.root.rotation.set(0, this.facing, 0);
     this.walk += dt * speed * 1.6;
     const sw = Math.sin(this.walk) * Math.min(1, speed / 4) * 0.8;
+    if (m instanceof Person) {
+      // the same clips the local player plays, read off the snapshot
+      if (s.a >= 0 && (this.lastA < 0 || s.a < this.lastA)) void m.play("attack", s.c === 2 ? 1.9 : 2.8);
+      this.lastA = s.a;
+      if (s.dn !== this.wasDown) {
+        if (s.dn) void m.play("die", 1, true);
+        else m.clear();
+        this.wasDown = s.dn;
+      }
+      if (s.air) m.setBase("jump", 1, 0.15);
+      else m.move(speed > 12 ? 0 : speed, true);
+    } else {
     m.legL.rotation.x = s.air ? -0.5 : sw;
     m.legR.rotation.x = s.air ? 0.3 : -sw;
     m.armL.rotation.x = -sw * 0.7;
@@ -172,6 +188,7 @@ export class RemoteAvatar {
       // down in the dirt until Rhea talks them back up
       m.root.rotation.x = -Math.PI / 2 + 0.15;
       m.root.position.y = heightAt(this.pos.x, this.pos.z) + 0.2;
+    }
     }
 
     const headY = this.pos.y + (s.dn ? 0.8 : 2.2);

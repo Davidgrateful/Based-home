@@ -19,6 +19,7 @@ interface Row {
 }
 
 const ROWS: Row[] = [
+  { key: "body", label: "Body", kind: "choice" },
   { key: "build", label: "Frame", kind: "choice" },
   { key: "skin", label: "Skin tone", kind: "swatch" },
   { key: "hair", label: "Hair", kind: "choice" },

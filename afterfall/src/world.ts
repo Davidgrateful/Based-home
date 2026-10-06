@@ -3,6 +3,7 @@
 // resonance pylons and the Warden's arena.
 
 import * as THREE from "three";
+import { buildAircraft, wreckPieces, type Aircraft } from "./aircraft";
 
 export const smoothstep = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -166,6 +167,8 @@ export class World {
   private stationLamp!: THREE.PointLight;
   ghosts: Ghost[] = [];
   fallingPlane!: THREE.Group;
+  /** The medevac jet itself (inside fallingPlane): lights, fans, window glow. */
+  aircraft!: Aircraft;
   skyTear!: THREE.Mesh;
   skyTearMat!: THREE.ShaderMaterial;
   private tears: { mesh: THREE.Mesh; life: number }[] = [];
@@ -470,66 +473,42 @@ export class World {
   }
 
   private buildPlane() {
-    const hull = std(0xa4abb3, { metalness: 0.55, roughness: 0.5 });
-    const dark = std(0x1a1c20, { roughness: 1 });
-    const stripe = std(0x1f6bd1);
-    const seg = (len: number, x: number, z: number, ry: number, broken: boolean) => {
-      const g = new THREE.Group();
-      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, len, 18, 1, true), hull);
-      cyl.material.side = THREE.DoubleSide;
-      cyl.rotation.z = Math.PI / 2;
-      cyl.castShadow = cyl.receiveShadow = true;
-      g.add(cyl);
-      const s = new THREE.Mesh(new THREE.CylinderGeometry(2.33, 2.33, len, 18, 1, true, 0.9, 0.35), stripe);
-      s.rotation.z = Math.PI / 2;
-      g.add(s);
-      if (broken) {
-        const scorch = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.35, 18), dark);
-        scorch.rotation.y = Math.PI / 2;
-        scorch.position.x = len / 2;
-        g.add(scorch);
-      }
-      g.position.set(x, heightAt(x, z) + 1.6, z);
-      g.rotation.y = ry;
-      this.scene.add(g);
-      this.cameraBlockers.push(g);
-      for (let i = -len / 2 + 2; i <= len / 2 - 1; i += 3) {
-        this.colliders.push({ x: x + Math.cos(ry) * i, z: z - Math.sin(ry) * i, r: 2.4 });
-      }
-      return g;
+    // the same jet that fell, in pieces (scaled up a little: it reads as big up close)
+    const K = 1.4;
+    const W = wreckPieces();
+    const place = (o: THREE.Object3D, x: number, z: number, ry: number, lift: number, tilt = 0) => {
+      const holder = new THREE.Group();
+      holder.add(o);
+      holder.scale.setScalar(K);
+      holder.position.set(x, heightAt(x, z) + lift, z);
+      holder.rotation.set(0, ry, tilt);
+      holder.traverse((m) => {
+        if ((m as THREE.Mesh).isMesh) m.castShadow = m.receiveShadow = true;
+      });
+      this.scene.add(holder);
+      return holder;
     };
-    seg(12, -21, 30, 0, true);
-    const nose = seg(9, -4.5, 37, -0.12, true);
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.3, 3.2, 18), hull);
-    cone.rotation.z = -Math.PI / 2;
-    cone.position.x = 6.1;
-    nose.add(cone);
-    const cockpit = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.5, 2.6), std(0x16202b, { metalness: 0.8, roughness: 0.1 }));
-    cockpit.position.set(5.4, 1.4, 0);
-    nose.add(cockpit);
-    this.colliders.push({ x: 2, z: 36.2, r: 2.2 });
-    // tail
-    const tail = new THREE.Mesh(new THREE.BoxGeometry(3.2, 4.5, 0.25), hull);
-    tail.position.set(-28, heightAt(-28, 30) + 3.8, 30);
-    tail.rotation.z = -0.35;
-    tail.castShadow = true;
-    this.scene.add(tail);
-    const logo = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.27), std(0xc4161c));
-    logo.position.set(0.2, 0.4, 0);
-    tail.add(logo);
-    // detached wing
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(14, 0.35, 3.4), hull);
-    wing.position.set(-22, 0.6, 20.5);
-    wing.rotation.set(0.05, 0.35, 0.12);
-    wing.castShadow = wing.receiveShadow = true;
-    this.scene.add(wing);
+    // aft cabin: nose toward +x, lying a little on its side
+    const aft = W.piece(-4.6, 3.6);
+    aft.position.z = -(-4.6 + 3.6) / 2;
+    const aftH = place(aft, -21, 30, Math.PI / 2, 1.55, 0.12);
+    this.cameraBlockers.push(aftH);
+    for (let i = -4; i <= 4; i += 3) this.colliders.push({ x: -21 + i, z: 30, r: 2.4 });
+    // the nose and cockpit, broken off and slewed round
+    const nose = W.piece(3.6, 12);
+    nose.position.z = -(3.6 + 12) / 2;
+    const noseH = place(nose, -0.5, 37, Math.PI / 2 - 0.12, 1.5, -0.08);
+    this.cameraBlockers.push(noseH);
+    for (let i = -5; i <= 5; i += 3) this.colliders.push({ x: -0.5 + Math.cos(0.12) * i, z: 37 + Math.sin(0.12) * i, r: 2.3 });
+    // the tail with its fin, nose-down in the dirt
+    place(W.tail, -30.5, 30.5, Math.PI / 2 + 0.3, 0.6, -0.3);
+    this.colliders.push({ x: -31, z: 30.5, r: 2.4 });
+    // a wing, torn off at the root
+    const wingH = place(W.wing, -27.5, 18.5, 0.35 + Math.PI, 0.25, 0.08);
+    wingH.scale.setScalar(1.2);
     for (let i = -6; i <= 6; i += 2.5) this.colliders.push({ x: -22 + Math.cos(0.35) * i, z: 20.5 - Math.sin(0.35) * i, r: 1.4 });
-    // engine
-    const eng = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 2.8, 12), dark);
-    eng.rotation.z = Math.PI / 2;
-    eng.position.set(-16, 0.9, 17.5);
-    eng.castShadow = true;
-    this.scene.add(eng);
+    // an engine, thrown clear
+    place(W.engine, -16, 17.5, 1.1, 0.45, 0.4).scale.setScalar(1.2);
     this.colliders.push({ x: -16, z: 17.5, r: 1.5 });
 
     // fires
@@ -1215,32 +1194,8 @@ export class World {
 
   private buildFallingPlane() {
     const g = new THREE.Group();
-    const hull = std(0xc9ced6, { metalness: 0.5, roughness: 0.45 });
-    const fus = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 15, 14), hull);
-    fus.rotation.x = Math.PI / 2;
-    g.add(fus);
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3, 14), hull);
-    nose.rotation.x = Math.PI / 2;
-    nose.position.z = 9;
-    g.add(nose);
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(22, 0.3, 3.2), hull);
-    wing.position.z = 1;
-    g.add(wing);
-    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4, 2.6), hull);
-    tail.position.set(0, 2.4, -6.5);
-    g.add(tail);
-    const stripe = new THREE.Mesh(new THREE.CylinderGeometry(1.53, 1.53, 15, 14, 1, true, 1.2, 0.4), std(0x1f6bd1));
-    stripe.rotation.x = Math.PI / 2;
-    g.add(stripe);
-    const cross = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 0.32), std(0xc4161c));
-    cross.position.set(0, 2.6, -6.5);
-    g.add(cross);
-    for (const x of [-5, 5]) {
-      const eng = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 2.6, 10), std(0x2a2c30));
-      eng.rotation.x = Math.PI / 2;
-      eng.position.set(x, -0.7, 1.8);
-      g.add(eng);
-    }
+    this.aircraft = buildAircraft();
+    g.add(this.aircraft.group);
     g.visible = false;
     this.scene.add(g);
     this.fallingPlane = g;
@@ -1307,6 +1262,7 @@ export class World {
     }
     this.tears = this.tears.filter((x) => x.life > 0);
 
+    if (this.fallingPlane.visible) this.aircraft.update(dt, t);
     // falling plane fire/smoke trail
     if (this.fallingPlane.visible && this.planeTrail) {
       this.trailT -= dt;
@@ -1324,7 +1280,7 @@ export class World {
             fog: false,
           }),
         );
-        const tail = new THREE.Vector3(fire ? 5 : 0, 0, -5).applyMatrix4(this.fallingPlane.matrixWorld);
+        const tail = new THREE.Vector3(2.6, 0.55, fire ? -7.6 : -8.4).applyMatrix4(this.fallingPlane.matrixWorld); // the burning port engine
         sp.position.copy(tail);
         sp.scale.setScalar(fire ? 3 : 5);
         this.scene.add(sp);

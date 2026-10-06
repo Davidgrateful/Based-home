@@ -4,6 +4,7 @@
 // Basin's floating debris is visible from the circle before then, on purpose).
 
 import * as THREE from "three";
+import { Person } from "./people";
 import { buildChanged, buildPlayerModel, DEFAULT_LOOK, type Humanoid, type Look } from "./models";
 import { BASIN_C, BASIN_R, CHOIR_C, glowTexture, heightAt, SETTLEMENT, type World } from "./world";
 import type { SpeakerId } from "./voice";
@@ -196,7 +197,8 @@ export class Farlands {
       const yaw = faceFire ? Math.atan2(S.x - x, S.z - z) : 0;
       h.root.position.copy(pos);
       h.root.rotation.y = yaw;
-      if (sit) {
+      if (sit && h instanceof Person) h.setBase("sit", 1, 0);
+      else if (sit) {
         h.legL.rotation.x = h.legR.rotation.x = -1.45;
         h.body.position.y = 0.5;
       }
@@ -416,6 +418,10 @@ export class Farlands {
       h.root.position.copy(at(x, z));
       h.root.rotation.y = Math.atan2(CHOIR_C.x - x, CHOIR_C.z - z);
       h.head.rotation.x = 0.35;
+      if (h instanceof Person) {
+        h.lookPitch = 0.35;
+        h.setBase("idle", 0.3, 0);
+      }
       this.scene.add(h.root);
       this.figures.push(h);
     }
@@ -492,6 +498,12 @@ export class Farlands {
       const d = Math.hypot(p.x - n.pos.x, p.z - n.pos.z);
       if (d > 60) continue;
       n.talk = Math.max(0, n.talk - dt);
+      if (n.h instanceof Person) {
+        const look = d < 9 ? Math.atan2(p.x - n.pos.x, p.z - n.pos.z) - n.yaw : 0;
+        n.h.lookYaw = THREE.MathUtils.clamp(Math.atan2(Math.sin(look), Math.cos(look)), -1, 1) * 0.8;
+        n.h.setBase(n.talk > 0 ? (n.sit ? "sitTalk" : "talk") : n.sit ? "sit" : "idle", 1, 0.4);
+        continue;
+      }
       n.h.body.position.y = (n.sit ? 0.5 : 0.95) + Math.sin(t * 1.6 + n.pos.x) * 0.006;
       const look = d < 9 ? Math.atan2(p.x - n.pos.x, p.z - n.pos.z) - n.yaw : 0;
       const la = Math.atan2(Math.sin(look), Math.cos(look));
@@ -526,7 +538,8 @@ export class Farlands {
     this.choirSpeaking = Math.max(0, this.choirSpeaking - dt);
     for (const [i, f] of this.figures.entries()) {
       const k = this.choirSpeaking > 0 ? 1 : 0;
-      f.head.rotation.x += ((k ? -0.15 : 0.35) - f.head.rotation.x) * Math.min(1, dt * 2);
+      if (f instanceof Person) f.lookPitch = k ? -0.15 : 0.35;
+      else f.head.rotation.x += ((k ? -0.15 : 0.35) - f.head.rotation.x) * Math.min(1, dt * 2);
       f.body.position.y = 0.95 + Math.sin(t * 0.8 + i) * 0.01;
     }
     for (const f of this.pitFlames) if (f.visible) f.scale.y = 0.75 + Math.sin(t * 9 + f.position.x * 9) * 0.25;
@@ -552,6 +565,7 @@ export class Farlands {
       g.position.copy(this.trail[0]);
       g.rotation.y = this.trailYaw[0];
       const s = Math.sin(t * 6) * 0.5;
+      if (this.ghost instanceof Person) this.ghost.setBase("walk", 1, 0.2);
       this.ghost.legL.rotation.x = s;
       this.ghost.legR.rotation.x = -s;
     }

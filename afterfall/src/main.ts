@@ -40,6 +40,8 @@ import { initMap, mapUpdate } from "./map";
 import { regionsUpdate } from "./regions";
 import { faunaUpdate } from "./fauna";
 import { setMemoryCamera } from "./memory";
+import { Person, peopleReady, track, updatePeople } from "./people";
+import { PlaneSet } from "./cinesets";
 
 // ------------------------------------------------------------------ hooks
 voice.onLine = (id, radio) => {
@@ -379,6 +381,7 @@ function updateMarker() {
 // ------------------------------------------------------------------ main loop
 const timer = new THREE.Timer();
 let healCd = 0;
+let wasDead = false;
 
 function tick(now?: number) {
   requestAnimationFrame(tick);
@@ -402,6 +405,11 @@ function tick(now?: number) {
     player.invuln = Math.max(player.invuln, 0.3);
     enemies.update(dt, t, player, camera);
   } else if (!state.paused || simulate) {
+    if (state.dead !== wasDead && player.model instanceof Person) {
+      if (state.dead) void player.model.play("die", 1, true);
+      else player.model.clear();
+    }
+    wasDead = state.dead;
     if (!state.dead && !state.paused) player.update(dt, input, bounds, camera);
     else if (state.dead) camera.position.y += (player.pos.y + 0.6 - camera.position.y) * dt;
     if (running) {
@@ -423,6 +431,7 @@ function tick(now?: number) {
   }
   coopUpdate(dt, camera);
   world.update(dt, t, player.pos, camera);
+  updatePeople(dt);
   farlands.update(dt, t, player);
   fx.update(dt, camera);
   if (state.mode !== "title") {
@@ -481,6 +490,10 @@ tick();
   },
   nightDebug,
   farlands,
+  people: { Person, track, ready: peopleReady },
+  PlaneSet,
+  scene: world.scene,
+  camera,
   spawn: (kind: Parameters<typeof enemies.spawn>[0], x: number, z: number) => enemies.spawn(kind, new THREE.Vector3(x, 0, z), { rise: false }),
   say,
   net,
