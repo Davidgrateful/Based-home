@@ -32,7 +32,7 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = !LOW;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.25;
 
 export const scene = new THREE.Scene();
 export const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.05, 1400);
