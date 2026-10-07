@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { buildAircraft, wreckPieces, type Aircraft } from "./aircraft";
 import { Forest, SHADOW_LAYER, type TreeSpot } from "./flora";
 import { NearField, placeProps, type Placed } from "./props";
+import { buildAmbulance } from "./ambulance";
 
 /** What the ground is at a point: trodden earth (around the camp, the crash,
  *  the settlement, and in patches), burnt ground by the wreck, Choir ash. */
@@ -438,109 +439,11 @@ export class World {
   // ---------------------------------------------------------------- builders
 
   private buildAmbulance() {
-    const g = new THREE.Group();
-    const white = std(0xe9ecef, { roughness: 0.6 });
-    const red = std(0xc4161c);
-    const inner = std(0x8a979c, { roughness: 0.9 });
-    const floorM = std(0x3e4a4f);
-    const W = 2.7;
-    const H = 2.6;
-    const L = 6.5;
-    const box = (w: number, h: number, d: number, m: THREE.Material, x: number, y: number, z: number, parent: THREE.Object3D = g) => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
-      mesh.position.set(x, y, z);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      parent.add(mesh);
-      return mesh;
-    };
-    // shell (thin walls; inside faces are a separate lighter material)
-    box(W, 0.12, L, floorM, 0, 0.3, 0);
-    box(W, 0.12, L, white, 0, H + 0.3, 0);
-    box(0.1, H, L, white, -W / 2, H / 2 + 0.3, 0);
-    box(0.1, H, L, white, W / 2, H / 2 + 0.3, 0);
-    box(W, H, 0.1, white, 0, H / 2 + 0.3, -L / 2);
-    // interior lining
-    box(0.02, H - 0.2, L - 0.2, inner, -W / 2 + 0.06, H / 2 + 0.3, 0);
-    box(0.02, H - 0.2, L - 0.2, inner, W / 2 - 0.06, H / 2 + 0.3, 0);
-    // red stripes outside
-    for (const s of [-1, 1]) box(0.02, 0.28, L, red, (W / 2 + 0.06) * s, 1.3, 0);
-    box(W, 0.28, 0.02, red, 0, 1.3, -L / 2 - 0.06);
-    // red cross on roof
-    box(1.2, 0.02, 0.35, red, 0, H + 0.37, 0);
-    box(0.35, 0.02, 1.2, red, 0, H + 0.37, 0);
-    // cab
-    box(W, 1.9, 2.0, white, 0, 1.25, -L / 2 - 1.0);
-    const glass = std(0x223344, { roughness: 0.1, metalness: 0.6 });
-    box(W - 0.2, 0.7, 0.05, glass, 0, 1.75, -L / 2 - 2.02);
-    // wheels
-    const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.3, 12);
-    wheelGeo.rotateZ(Math.PI / 2);
-    const tire = std(0x111111);
-    for (const [x, z] of [[-1.3, -4.5], [1.3, -4.5], [-1.3, 2.0], [1.3, 2.0]]) {
-      const w = new THREE.Mesh(wheelGeo, tire);
-      w.position.set(x, 0.3, z);
-      g.add(w);
-    }
-    // roof light bar
-    for (const [x, col] of [[-0.6, 0xff1a2a], [0.6, 0x1a6bff]] as const) {
-      const m = std(col, { emissive: col, emissiveIntensity: 2 });
-      this.roofLights.push(m);
-      box(0.6, 0.15, 0.25, m, x, H + 0.45, -L / 2 + 0.2);
-    }
-
-    // stretcher
-    box(0.7, 0.08, 2.0, std(0x2a2f33), -0.55, 0.9, -0.6);
-    box(0.68, 0.06, 1.95, std(0xd8dde0), -0.55, 0.97, -0.6);
-    for (const z of [-1.4, 0.2]) box(0.05, 0.55, 0.05, std(0x777777, { metalness: 0.8 }), -0.55, 0.6, z);
-    // cabinets
-    box(0.4, 1.4, 2.2, std(0xd2d9dc), 1.05, 1.6, -1.0);
-    // heart monitor
-    box(0.08, 0.5, 0.6, std(0x222222), 1.08, 1.7, 1.0);
-    const monitor = std(0x001a08, { emissive: 0x19ff6a, emissiveIntensity: 1.2 });
-    box(0.02, 0.38, 0.48, monitor, 1.03, 1.7, 1.0);
-    // oxygen tank, debris
-    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.8, 8), std(0x2f8f4f, { metalness: 0.4 }));
-    tank.position.set(0.6, 0.55, 2.2);
-    tank.rotation.z = 1.3;
-    g.add(tank);
-
-    // fire axe on the wall bracket
-    const axe = new THREE.Group();
-    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.95, 6), std(0xb52b20));
-    axe.add(handle);
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.22, 0.3), std(0xc9ccd2, { metalness: 0.8, roughness: 0.3 }));
-    blade.position.set(0, 0.38, 0.14);
-    axe.add(blade);
-    axe.position.set(-1.2, 1.7, 1.6);
-    axe.rotation.y = Math.PI / 2;
-    g.add(axe);
-    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xffcc66, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }));
-    glow.scale.setScalar(1.1);
-    axe.add(glow);
-
-    // rear doors (hinged)
-    const mkDoor = (side: -1 | 1) => {
-      const pivot = new THREE.Group();
-      pivot.position.set((W / 2) * side, 0.3, L / 2);
-      const d = box(W / 2, H, 0.08, white, (-W / 4) * side, H / 2, 0, pivot);
-      d.castShadow = true;
-      box(W / 2 - 0.1, 0.28, 0.02, red, (-W / 4) * side, 1.0, 0.05, pivot);
-      const win = box(0.6, 0.45, 0.02, glass, (-W / 4) * side, 1.75, 0.05, pivot);
-      win.castShadow = false;
-      g.add(pivot);
-      return pivot;
-    };
-    const doorL = mkDoor(-1);
-    const doorR = mkDoor(1);
-
-    const light = new THREE.PointLight(0xff3030, 3.2, 7, 1.6);
-    light.position.set(0, 2.5, 0.5);
-    g.add(light);
-
-    this.scene.add(g);
-    this.cameraBlockers.push(g);
-    return { group: g, doorL, doorR, light, monitor, axe };
+    const a = buildAmbulance(glowTexture);
+    this.roofLights.push(...a.roofLights);
+    this.scene.add(a.group);
+    this.cameraBlockers.push(a.group);
+    return a;
   }
 
   private buildPlane() {
