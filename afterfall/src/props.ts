@@ -271,3 +271,22 @@ export class NearField {
     });
   }
 }
+
+/** A ring of small photo-scanned stones around a fire pit (added when loaded). */
+export function stoneRing(parent: THREE.Object3D, n: number, radius: number, size: number) {
+  void pieces("rock-moss-set-01.glb")
+    .then((ps) => {
+      for (let i = 0; i < n; i++) {
+        const p = ps[i % ps.length];
+        const m = new THREE.Mesh(p.geo, p.mat);
+        const a = (i / n) * Math.PI * 2 + (i % 2) * 0.12;
+        const s = size * (0.8 + ((i * 37) % 10) / 25);
+        m.position.set(Math.cos(a) * radius, -0.06 * s, Math.sin(a) * radius);
+        m.rotation.set(0, a * 3.1 + i, 0);
+        m.scale.set(s, s * 0.75, s);
+        m.castShadow = m.receiveShadow = true;
+        parent.add(m);
+      }
+    })
+    .catch((e) => console.error("stones failed to load", e));
+}

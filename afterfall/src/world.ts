@@ -7,6 +7,7 @@ import { buildAircraft, wreckPieces, type Aircraft } from "./aircraft";
 import { Forest, SHADOW_LAYER, type TreeSpot } from "./flora";
 import { NearField, placeProps, type Placed } from "./props";
 import { buildAmbulance } from "./ambulance";
+import { Fire, updateFires } from "./fire";
 
 /** What the ground is at a point: trodden earth (around the camp, the crash,
  *  the settlement, and in patches), burnt ground by the wreck, Choir ash. */
@@ -211,7 +212,7 @@ export class World {
   monitorMat: THREE.MeshStandardMaterial;
   axeProp: THREE.Group;
   roofLights: THREE.MeshStandardMaterial[] = [];
-  fires: { light: THREE.PointLight; flames: THREE.Mesh[]; base: number }[] = [];
+  fires: { light: THREE.PointLight; fire: Fire; base: number }[] = [];
   beaconLight: THREE.PointLight;
   beaconMat: THREE.MeshStandardMaterial;
   rift: THREE.Mesh;
@@ -222,7 +223,7 @@ export class World {
   planeTrail = true;
   hemi!: THREE.HemisphereLight;
   bigMoon!: THREE.MeshBasicMaterial;
-  campfire!: { group: THREE.Group; light: THREE.PointLight; flames: THREE.Mesh[]; logs: THREE.Group; lit: boolean; hp: number; maxHp: number };
+  campfire!: { group: THREE.Group; light: THREE.PointLight; fire: Fire; lit: boolean; hp: number; maxHp: number };
   caches: Cache[] = [];
   /** Trunk positions, for the map. */
   treeSpots: { x: number; z: number; kind: 0 | 1 | 2 }[] = [];
@@ -489,23 +490,12 @@ export class World {
     place(W.engine, -16, 17.5, 1.1, 0.45, 0.4).scale.setScalar(1.2);
     this.colliders.push({ x: -16, z: 17.5, r: 1.5 });
 
-    // fires
+    // fires: burning fuel, black smoke
     for (const [x, z, s] of [[-15, 30, 1.4], [-16, 17.5, 1], [-1.8, 36, 1.1], [-3.5, 6, 0.5]] as const) {
-      const y = heightAt(x, z);
-      const light = new THREE.PointLight(0xff7a2a, 18 * s, 22, 1.7);
-      light.position.set(x, y + 2.2, z);
-      this.scene.add(light);
-      const flames: THREE.Mesh[] = [];
-      for (let i = 0; i < 4; i++) {
-        const f = new THREE.Mesh(
-          new THREE.ConeGeometry(0.5 * s, 1.8 * s, 6),
-          new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffb347 : 0xff5a1f, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false }),
-        );
-        f.position.set(x + (Math.random() - 0.5) * s, y + 0.9 * s, z + (Math.random() - 0.5) * s);
-        this.scene.add(f);
-        flames.push(f);
-      }
-      this.fires.push({ light, flames, base: 18 * s });
+      const fire = new Fire({ size: 1.8 * s, smoke: 2, light: 18 * s, lightRange: 22 });
+      fire.group.position.set(x, heightAt(x, z) + 0.05, z);
+      this.scene.add(fire.group);
+      this.fires.push({ light: fire.light!, fire, base: 18 * s });
     }
   }
 
@@ -538,9 +528,9 @@ export class World {
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
     const BASIN_V = new THREE.Vector3(BASIN_C.x, 0, BASIN_C.z);
     const SETTLE_V = new THREE.Vector3(SETTLEMENT.x, 0, SETTLEMENT.z);
-    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V];
+    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP];
     const clearR = (v: THREE.Vector3) =>
-      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : 14;
+      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : 14;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
@@ -1025,49 +1015,13 @@ export class World {
   // ---------------------------------------------------------------- loop props
 
   private buildCampfire() {
-    const g = new THREE.Group();
+    const fire = new Fire({ size: 1, smoke: 1, logs: true, stones: true, light: 36, lightRange: 26 });
+    fire.lit = false;
+    const g = fire.group;
     g.position.copy(CAMP);
-    const stone = std(0x3c3a38, { flatShading: true, roughness: 1 });
-    for (let i = 0; i < 11; i++) {
-      const a = (i / 11) * Math.PI * 2;
-      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.17 + (i % 3) * 0.03, 0), stone);
-      st.position.set(Math.cos(a) * 0.82, 0.08, Math.sin(a) * 0.82);
-      st.rotation.set(i, i * 2, 0);
-      st.scale.y = 0.7;
-      st.castShadow = true;
-      g.add(st);
-    }
-    const logs = new THREE.Group();
-    const wood = std(0x3a2416);
-    for (let i = 0; i < 4; i++) {
-      const l = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 1.3, 6), wood);
-      l.rotation.z = Math.PI / 2 - 0.35;
-      l.rotation.y = (i / 4) * Math.PI;
-      l.position.y = 0.3;
-      logs.add(l);
-    }
-    g.add(logs);
-    const ash = new THREE.Mesh(new THREE.CircleGeometry(0.75, 16), std(0x111014));
-    ash.rotation.x = -Math.PI / 2;
-    ash.position.y = 0.03;
-    g.add(ash);
-    const flames: THREE.Mesh[] = [];
-    for (let i = 0; i < 5; i++) {
-      const f = new THREE.Mesh(
-        new THREE.ConeGeometry(0.3 - i * 0.04, 1.15 - i * 0.12, 10),
-        new THREE.MeshBasicMaterial({ color: i % 2 ? 0xe8a24a : 0xd9561c, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
-      );
-      f.position.set(Math.cos(i * 1.3) * 0.18, 0.75, Math.sin(i * 1.3) * 0.18);
-      f.visible = false;
-      g.add(f);
-      flames.push(f);
-    }
-    const light = new THREE.PointLight(0xff8a3a, 0, 26, 1.5);
-    light.position.y = 1.4;
-    g.add(light);
     this.scene.add(g);
     this.colliders.push({ x: CAMP.x, z: CAMP.z, r: 1.0 });
-    this.campfire = { group: g, light, flames, logs, lit: false, hp: 100, maxHp: 100 };
+    this.campfire = { group: g, light: fire.light!, fire, lit: false, hp: 100, maxHp: 100 };
   }
 
   setCampfire(lit: boolean, maxHp = 100) {
@@ -1075,7 +1029,7 @@ export class World {
     c.lit = lit;
     c.maxHp = maxHp;
     c.hp = maxHp;
-    for (const f of c.flames) f.visible = lit;
+    c.fire.lit = lit;
   }
 
   spawnCache(x: number, z: number): Cache {
@@ -1216,16 +1170,11 @@ export class World {
     tint.lerp(new THREE.Vector3(...mood.tint), k);
     this.bigMoon.color.lerp(new THREE.Color(mood.blood ? 0xc8473c : 0xe4e0d6), k);
 
-    // campfire
+    // campfire: a dying fire burns lower
     const cf = this.campfire;
-    if (cf.lit) {
-      const f = Math.max(0.15, cf.hp / cf.maxHp);
-      cf.light.intensity = (10 + 26 * f) * (0.8 + Math.random() * 0.4);
-      cf.flames.forEach((m, i) => {
-        m.scale.set(f, f * (0.75 + Math.sin(t * 10 + i * 1.9) * 0.25 + Math.random() * 0.15), f);
-        m.rotation.y += dt * (i % 2 ? 2.5 : -2.5);
-      });
-    } else cf.light.intensity = 0;
+    cf.fire.lit = cf.lit;
+    cf.fire.power = cf.lit ? Math.max(0.15, cf.hp / cf.maxHp) : 0;
+    if (camera) updateFires(dt, t, camera);
 
     for (const c of this.caches) {
       const glow = c.group.getObjectByName("glow");
@@ -1310,14 +1259,6 @@ export class World {
     this.stationFlicker.emissiveIntensity = Math.random() < 0.08 ? 0.1 : Math.sin(t * 31) > -0.6 ? 1.6 : 0.3;
     this.beaconMat.emissiveIntensity = Math.sin(t * 5) > 0 ? 3 : 0.2;
     this.beaconLight.intensity = Math.sin(t * 5) > 0 ? 5 : 0.3;
-
-    for (const f of this.fires) {
-      f.light.intensity = f.base * (0.75 + Math.random() * 0.5);
-      f.flames.forEach((m, i) => {
-        m.scale.y = 0.7 + Math.sin(t * 9 + i * 1.7) * 0.25 + Math.random() * 0.15;
-        m.rotation.y += dt * (i % 2 ? 2 : -2);
-      });
-    }
 
     if (this.shards.some((s) => s.dynamic && s.taken)) {
       for (const s of this.shards) if (s.dynamic && s.taken) this.scene.remove(s.mesh);

@@ -5,6 +5,7 @@
 
 import * as THREE from "three";
 import { Person } from "./people";
+import { Fire } from "./fire";
 import { buildChanged, buildPlayerModel, DEFAULT_LOOK, type Humanoid, type Look } from "./models";
 import { BASIN_C, BASIN_R, CHOIR_C, glowTexture, heightAt, SETTLEMENT, type World } from "./world";
 import type { SpeakerId } from "./voice";
@@ -43,14 +44,14 @@ export class Farlands {
   myBand: THREE.Mesh;
   private scene: THREE.Scene;
   private world: World;
-  private settleFlames: THREE.Mesh[] = [];
+  private settleFire!: Fire;
   private settleLight: THREE.PointLight;
   private debris: THREE.InstancedMesh;
   private debrisData: { p: THREE.Vector3; s: number; r: THREE.Euler; spin: number; bob: number }[] = [];
   private relics: { g: THREE.Object3D; base: THREE.Vector3; spin: number }[] = [];
   private figures: Humanoid[] = [];
   private pitStones: THREE.Group;
-  private pitFlames: THREE.Mesh[] = [];
+  private pitFire!: Fire;
   private ghost!: Humanoid;
   private barricade: THREE.Group;
   private gateCollider: { x: number; z: number; r: number }[];
@@ -134,29 +135,10 @@ export class Farlands {
     bed.rotation.y = 0.7;
     scene.add(bed);
     // the fire
-    const ring = new THREE.Group();
-    const stone = std(0x3c3a38, { flatShading: true, roughness: 1 });
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2;
-      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), stone);
-      st.position.set(Math.cos(a) * 0.95, 0.1, Math.sin(a) * 0.95);
-      st.scale.y = 0.7;
-      ring.add(st);
-    }
-    for (let i = 0; i < 5; i++) {
-      const f = new THREE.Mesh(
-        new THREE.ConeGeometry(0.32 - i * 0.04, 1.3 - i * 0.12, 10),
-        new THREE.MeshBasicMaterial({ color: i % 2 ? 0xe8a24a : 0xd9561c, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false }),
-      );
-      f.position.set(Math.cos(i * 1.3) * 0.18, 0.75, Math.sin(i * 1.3) * 0.18);
-      ring.add(f);
-      this.settleFlames.push(f);
-    }
-    ring.position.copy(SETTLE_FIRE);
-    scene.add(ring);
-    this.settleLight = new THREE.PointLight(0xff8a3a, 22, 30, 1.5);
-    this.settleLight.position.copy(SETTLE_FIRE).add(new THREE.Vector3(0, 1.5, 0));
-    scene.add(this.settleLight);
+    this.settleFire = new Fire({ size: 1.1, smoke: 1, logs: true, stones: true, light: 22, lightRange: 30 });
+    this.settleFire.group.position.copy(SETTLE_FIRE);
+    scene.add(this.settleFire.group);
+    this.settleLight = this.settleFire.light!;
     world.colliders.push({ x: SETTLE_FIRE.x, z: SETTLE_FIRE.z, r: 1.1 });
     // the wall of wristbands: how they stop being numbers
     const board = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.1, 0.12), wood);
@@ -363,16 +345,9 @@ export class Farlands {
       l.position.y = 0.3;
       this.pitStones.add(l);
     }
-    for (let i = 0; i < 5; i++) {
-      const f = new THREE.Mesh(
-        new THREE.ConeGeometry(0.3 - i * 0.04, 1.15 - i * 0.12, 10),
-        new THREE.MeshBasicMaterial({ color: i % 2 ? 0xe8a24a : 0xd9561c, transparent: true, opacity: 0.75, depthWrite: false }),
-      );
-      f.position.set(Math.cos(i * 1.3) * 0.18, 0.75, Math.sin(i * 1.3) * 0.18);
-      f.visible = false;
-      this.pitStones.add(f);
-      this.pitFlames.push(f);
-    }
+    this.pitFire = new Fire({ size: 1, smoke: 1, light: 6, lightRange: 12, onWhite: true });
+    this.pitFire.lit = false;
+    this.pitStones.add(this.pitFire.group);
     this.pitStones.position.copy(CHOIR_PIT);
     this.pitStones.visible = false;
     scene.add(this.pitStones);
@@ -443,7 +418,7 @@ export class Farlands {
   setLive(on: boolean) {
     this.live = on;
     for (const n of this.npcs) n.h.root.visible = on;
-    for (const f of this.settleFlames) f.visible = on;
+    this.settleFire.lit = on;
     for (const l of this.lamps) l.visible = on;
     this.barricade.visible = !on;
     const cols = this.world.colliders;
@@ -481,7 +456,7 @@ export class Farlands {
     this.pitStones.visible = true;
   }
   lightPit() {
-    for (const f of this.pitFlames) f.visible = true;
+    this.pitFire.lit = true;
     this.world.otherFires.push(CHOIR_PIT);
   }
 
@@ -511,14 +486,8 @@ export class Farlands {
       n.h.armR.rotation.x = n.talk > 0 ? -0.4 + Math.sin(t * 6) * 0.25 : n.sit ? -0.6 : 0;
       n.h.armL.rotation.x = n.sit ? -0.6 : 0;
     }
-    // settlement fire
-    if (this.live && Math.hypot(p.x - SETTLE_FIRE.x, p.z - SETTLE_FIRE.z) < 90) {
-      this.settleLight.intensity = 18 + Math.random() * 8;
-      this.settleFlames.forEach((f, i) => {
-        f.scale.y = 0.75 + Math.sin(t * 10 + i * 1.9) * 0.25 + Math.random() * 0.15;
-        f.rotation.y += dt * (i % 2 ? 2.5 : -2.5);
-      });
-    } else this.settleLight.intensity = 0;
+    // settlement fire: only burns while there's someone to tend it
+    this.settleFire.lit = this.live;
     // basin: drifting debris and relics (cheap enough to always run)
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
@@ -542,7 +511,6 @@ export class Farlands {
       else f.head.rotation.x += ((k ? -0.15 : 0.35) - f.head.rotation.x) * Math.min(1, dt * 2);
       f.body.position.y = 0.95 + Math.sin(t * 0.8 + i) * 0.01;
     }
-    for (const f of this.pitFlames) if (f.visible) f.scale.y = 0.75 + Math.sin(t * 9 + f.position.x * 9) * 0.25;
 
     // zones: weather, gravity, your echo
     const basin = inBasin(p.x, p.z);
