@@ -206,15 +206,15 @@ export class Farlands {
 
     // ---------------------------------------------------------------- the Rift Basin
     const rr = rng(1717);
-    const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-    const N = 54;
-    this.debris = new THREE.InstancedMesh(rockGeo, std(0x2a3236, { flatShading: true, roughness: 0.9 }), N);
+    const rockGeo = new THREE.DodecahedronGeometry(1, 1);
+    const N = 34; // fewer, so each one is strange rather than a field of them
+    this.debris = new THREE.InstancedMesh(rockGeo, std(0x50565c, { flatShading: true, roughness: 0.9 }), N);
     for (let i = 0; i < N; i++) {
       const a = rr() * Math.PI * 2;
       const d = 8 + rr() * (BASIN_R - 14);
       const x = BASIN_C.x + Math.cos(a) * d;
       const z = BASIN_C.z + Math.sin(a) * d;
-      this.debrisData.push({ p: at(x, z, 3 + rr() * 22), s: 0.4 + rr() * rr() * 3.6, r: new THREE.Euler(rr() * 6, rr() * 6, rr() * 6), spin: (rr() - 0.5) * 0.4, bob: rr() * 6 });
+      this.debrisData.push({ p: at(x, z, 3 + rr() * 22), s: 0.3 + rr() * rr() * 2.2, r: new THREE.Euler(rr() * 6, rr() * 6, rr() * 6), spin: (rr() - 0.5) * 0.4, bob: rr() * 6 });
     }
     this.debris.castShadow = true;
     scene.add(this.debris);
