@@ -10,6 +10,7 @@
     "serve": "vite build && node server/server.mjs"
   },
   "dependencies": {
+    "@dgreenheck/ez-tree": "^1.1.0",
     "three": "^0.186.1",
     "viem": "^2.57.3",
     "ws": "^8.22.0"

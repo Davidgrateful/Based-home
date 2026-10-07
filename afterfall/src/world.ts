@@ -4,6 +4,7 @@
 
 import * as THREE from "three";
 import { buildAircraft, wreckPieces, type Aircraft } from "./aircraft";
+import { Forest, SHADOW_LAYER, type TreeSpot } from "./flora";
 
 export const smoothstep = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -167,6 +168,8 @@ export class World {
   private stationLamp!: THREE.PointLight;
   ghosts: Ghost[] = [];
   fallingPlane!: THREE.Group;
+  /** The trees (instanced, near/far detail). */
+  forest!: Forest;
   /** The medevac jet itself (inside fallingPlane): lights, fans, window glow. */
   aircraft!: Aircraft;
   skyTear!: THREE.Mesh;
@@ -262,6 +265,7 @@ export class World {
     sc.near = 1;
     sc.far = 220;
     this.sun.shadow.bias = -0.0005;
+    this.sun.shadow.camera.layers.enable(SHADOW_LAYER);
     scene.add(this.sun, this.sun.target);
 
     // ---------- Terrain ----------
@@ -556,15 +560,8 @@ export class World {
     const rand = rng(1001);
     const N = 230;
     const NB = 120; // extra trunks packed into the Blackwood
-    const trunkGeo = new THREE.CylinderGeometry(0.22, 0.5, 1, 10);
-    trunkGeo.translate(0, 0.5, 0);
-    const canopyGeo = new THREE.IcosahedronGeometry(1, 2);
-    const bulbGeo = new THREE.SphereGeometry(0.22, 6, 4);
-    const trunks = new THREE.InstancedMesh(trunkGeo, std(0xffffff), N + NB);
-    const canopy = new THREE.InstancedMesh(canopyGeo, std(0xffffff), (N + NB) * 2);
+    const bulbGeo = new THREE.SphereGeometry(0.16, 8, 6);
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
-    trunks.castShadow = canopy.castShadow = true;
-    canopy.receiveShadow = true;
     const BASIN_V = new THREE.Vector3(BASIN_C.x, 0, BASIN_C.z);
     const SETTLE_V = new THREE.Vector3(SETTLEMENT.x, 0, SETTLEMENT.z);
     const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V];
@@ -574,13 +571,9 @@ export class World {
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
     const p = new THREE.Vector3();
-    const palette = [0x3a3448, 0x2b453f, 0x45303a, 0x2c3848];
-    // Blackwood: near-black, no glow. Station: red, the colour of what's wrong there.
-    const darkPalette = [0x15181a, 0x1a1f1c, 0x1d1a1e];
-    const redPalette = [0x5a1712, 0x6e2018, 0x461310];
     const bulbCols = [0x6fa89c, 0xa87f98, 0x95a874];
+    const spots: TreeSpot[] = [];
     let ti = 0;
-    let ci = 0;
     let bi = 0;
     let tries = 0;
     const plant = (x: number, z: number) => {
@@ -588,26 +581,21 @@ export class World {
       const dark = x < BLACKWOOD_X;
       const red = Math.hypot(x - STATION.x, z - STATION.z) < 46;
       const kind: 0 | 1 | 2 = dark ? 1 : red ? 2 : 0;
-      const h = dark ? 7 + rand() * 7 : 4 + rand() * 6;
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand() * 6.28);
-      m.compose(p.set(x, y - 0.2, z), q, s.set(dark ? 1.25 : 1, h, dark ? 1.25 : 1));
-      trunks.setMatrixAt(ti, m);
-      trunks.setColorAt(ti, new THREE.Color(dark ? 0x0c0b0d : red ? 0x2a1412 : 0x1c1426));
-      for (let k = 0; k < 2; k++) {
-        const cs = (dark ? 2.2 : 1.6) + rand() * 1.6;
-        m.compose(p.set(x + (rand() - 0.5) * 1.5, y + h + k * 1.2, z + (rand() - 0.5) * 1.5), q, s.set(cs, cs * 0.8, cs));
-        canopy.setMatrixAt(ci, m);
-        const pal = dark ? darkPalette : red ? redPalette : palette;
-        canopy.setColorAt(ci++, new THREE.Color(pal[Math.floor(rand() * pal.length)]));
-      }
+      // real trees: taller than the old figures; the Blackwood towers
+      const h = dark ? 15 + rand() * 9 : 9 + rand() * 8;
+      const rot = rand() * 6.28;
+      spots.push({ x, y, z, rot, h, kind, pick: rand() });
+      // the forest's glowing seed-pods still hang low in the ordinary woods
       if (!dark && !red && bi < N * 3 - 3) {
         for (let k = 0; k < 3; k++) {
-          m.compose(p.set(x + (rand() - 0.5) * 3, y + h - 0.6 - rand() * 1.5, z + (rand() - 0.5) * 3), q, s.setScalar(1));
+          const a = rand() * 6.28;
+          const r = 1.2 + rand() * 2.2;
+          m.compose(p.set(x + Math.cos(a) * r, y + h * (0.45 + rand() * 0.2), z + Math.sin(a) * r), q.identity(), s.setScalar(1));
           bulbs.setMatrixAt(bi, m);
           bulbs.setColorAt(bi++, new THREE.Color(bulbCols[Math.floor(rand() * 3)]));
         }
       }
-      this.colliders.push({ x, z, r: dark ? 0.85 : 0.7 });
+      this.colliders.push({ x, z, r: dark ? 0.75 : 0.6 });
       this.treeSpots.push({ x, z, kind });
       ti++;
     };
@@ -630,10 +618,10 @@ export class World {
       if (this.treeSpots.some((t) => Math.hypot(t.x - x, t.z - z) < 3.2)) continue;
       plant(x, z);
     }
-    trunks.count = ti;
-    canopy.count = ci;
     bulbs.count = bi;
-    this.scene.add(trunks, canopy, bulbs);
+    this.scene.add(bulbs);
+    this.forest = new Forest(spots);
+    this.scene.add(this.forest.group);
 
     // rocks
     const R = 70;
@@ -1263,6 +1251,7 @@ export class World {
     this.tears = this.tears.filter((x) => x.life > 0);
 
     if (this.fallingPlane.visible) this.aircraft.update(dt, t);
+    if (camera) this.forest.update(dt, t, camera.position);
     // falling plane fire/smoke trail
     if (this.fallingPlane.visible && this.planeTrail) {
       this.trailT -= dt;
