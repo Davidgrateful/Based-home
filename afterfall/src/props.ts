@@ -179,7 +179,8 @@ function swaying<T extends THREE.Material>(m: T, amount: number) {
 
 /** A hash of a ground cell: the same cell always grows the same plants. */
 function hash(ix: number, iz: number, k: number) {
-  let h = (ix * 374761393 + iz * 668265263 + k * 2147483647) | 0;
+  // (k must be mixed properly: k * 2^31-1 wraps to -k and lined the grass up in rows)
+  let h = (Math.imul(ix, 374761393) + Math.imul(iz, 668265263) + Math.imul(k + 1, 0x9e3779b1)) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
