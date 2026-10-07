@@ -1323,8 +1323,8 @@ export class World {
           float ripple = (sin(r * 70.0 - t * 1.6) * 0.5 + 0.5) * exp(-r * 9.0) * (0.15 + open) * 0.12;
           float haze = exp(-d * (22.0 - open * 12.0)) * taper * (0.05 + open * 0.2);
           vec3 cold = vec3(0.62, 0.9, 0.95);
-          vec3 col = mix(cold * (fringe * 1.6 + ripple + haze), voidC, inside);
-          float alpha = clamp(inside * 0.96 + fringe * 0.9 + ripple + haze, 0.0, 1.0);
+          vec3 col = mix(cold * (fringe * 0.85 + ripple + haze), voidC, inside);
+          float alpha = clamp(inside * 0.96 + fringe * 0.6 + ripple + haze, 0.0, 1.0);
           gl_FragColor = vec4(col, alpha);
         }`,
     });
