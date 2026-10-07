@@ -16,6 +16,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkinned } from "three/addons/utils/SkeletonUtils.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { fetchModel } from "./assets";
 import type { Humanoid } from "./models";
 
 // ---------------------------------------------------------------- library
@@ -32,41 +33,10 @@ const waiting: (() => void)[] = [];
 const HAIRS = ["buzzed", "buzzedfemale", "simpleparted", "long", "buns", "beard"];
 const BASE = "./people/";
 
-/** Hosts that won't serve .glb get people/pack.js instead: the same files,
- *  base64 in a script (tools/people/pack.mjs). */
-let pack: Promise<Record<string, string>> | null = null;
-function loadPack() {
-  pack ??= new Promise((ok, fail) => {
-    const s = document.createElement("script");
-    s.src = BASE + "pack.js";
-    s.onload = () => ok((window as unknown as { __peoplePack: Record<string, string> }).__peoplePack);
-    s.onerror = fail;
-    document.head.appendChild(s);
-  });
-  return pack;
-}
-let packOnly = false;
-async function fetchModel(f: string): Promise<ArrayBuffer> {
-  if (!packOnly) try {
-    const r = await fetch(BASE + f);
-    const buf = r.ok ? await r.arrayBuffer() : null;
-    // a real glb starts with "glTF"
-    if (buf && buf.byteLength > 12 && new DataView(buf).getUint32(0, true) === 0x46546c67) return buf;
-  } catch {
-    /* fall through to the pack */
-  }
-  packOnly = true;
-  const b64 = (await loadPack())[f];
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out.buffer;
-}
-
 async function load(): Promise<void> {
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   const tex = new THREE.TextureLoader();
-  const get = async (f: string) => loader.parseAsync(await fetchModel(f), BASE);
+  const get = async (f: string) => loader.parseAsync(await fetchModel(BASE, f), BASE);
   const [m, f, anims, ...hair] = await Promise.all([get("male.glb"), get("female.glb"), get("anims.glb"), ...HAIRS.map((h) => get(`hair-${h}.glb`))]);
   const dark = (s: string) =>
     tex.loadAsync(BASE + `skin-dark-${s}.webp`).then((t) => {

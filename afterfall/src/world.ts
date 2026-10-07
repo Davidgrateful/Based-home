@@ -5,6 +5,70 @@
 import * as THREE from "three";
 import { buildAircraft, wreckPieces, type Aircraft } from "./aircraft";
 import { Forest, SHADOW_LAYER, type TreeSpot } from "./flora";
+import { NearField, placeProps, type Placed } from "./props";
+
+/** What the ground is at a point: trodden earth (around the camp, the crash,
+ *  the settlement, and in patches), burnt ground by the wreck, Choir ash. */
+export function floorFx(x: number, z: number) {
+  const n2 = Math.sin(x * 0.23 + z * 0.11) * Math.cos(z * 0.19 - x * 0.07) * 0.5 + 0.5;
+  const arena = 1 - smoothstep(16, 26, Math.hypot(x - ARENA.x, z - ARENA.z));
+  const basin = 1 - smoothstep(50, 74, Math.hypot(x - BASIN_C.x, z - BASIN_C.z));
+  const dirt = Math.max(
+    smoothstep(0.62, 0.9, n2) * 0.8,
+    1 - smoothstep(4, 9, Math.hypot(x - CAMP.x, z - CAMP.z)),
+    1 - smoothstep(10, 18, Math.hypot(x - SETTLEMENT.x, z - SETTLEMENT.z)),
+    arena * 0.9,
+    basin * 0.6,
+  );
+  const scorch = (1 - smoothstep(6, 26, Math.hypot(x + 6, z - 18))) * 0.95;
+  const choir = 1 - smoothstep(14, 30, Math.hypot(x - CHOIR_C.x, z - CHOIR_C.z));
+  return { dirt, scorch, choir, basin };
+}
+
+/** The forest floor: Poly Haven scans (moss and needles, bare dirt, burnt
+ *  ground) blended per vertex, tinted by region, with a second, larger-scale
+ *  sample to break up the tiling. */
+function groundMaterial() {
+  const tl = new THREE.TextureLoader();
+  const tex = (f: string, srgb = true) => {
+    const t = tl.load(`./world/${f}`);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const moss = tex("ground-moss.webp");
+  const mossN = tex("ground-moss-n.webp", false);
+  const dirt = tex("ground-dirt.webp");
+  const burnt = tex("ground-burnt.webp");
+  // the plane's uv spans 420 x 580 m: tile every ~4 m
+  moss.repeat.set(420 / 4, 580 / 4);
+  mossN.repeat.copy(moss.repeat);
+  const m = new THREE.MeshStandardMaterial({ map: moss, normalMap: mossN, normalScale: new THREE.Vector2(0.9, 0.9), vertexColors: true, roughness: 0.95 });
+  m.onBeforeCompile = (s) => {
+    s.uniforms.tDirt = { value: dirt };
+    s.uniforms.tBurnt = { value: burnt };
+    s.vertexShader = s.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute vec3 fx;\nvarying vec3 vFx;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvFx = fx;");
+    s.fragmentShader = s.fragmentShader
+      .replace("#include <common>", "#include <common>\nuniform sampler2D tDirt;\nuniform sampler2D tBurnt;\nvarying vec3 vFx;")
+      .replace(
+        "#include <map_fragment>",
+        `vec2 tuv = vMapUv;
+        vec3 a = texture2D(map, tuv).rgb;
+        // a second, slower sample breaks up the repeat
+        a *= 0.75 + 0.5 * texture2D(map, tuv * 0.137 + 0.31).g;
+        vec3 d = texture2D(tDirt, tuv * 0.83).rgb;
+        vec3 b = texture2D(tBurnt, tuv * 0.9).rgb;
+        vec3 g = mix(a, d, vFx.x);
+        g = mix(g, b * 0.8, vFx.y);
+        g = mix(g, vec3(0.78, 0.82, 0.83) * (0.85 + 0.3 * d.r), vFx.z);
+        diffuseColor.rgb *= g;`,
+      );
+  };
+  return m;
+}
 
 export const smoothstep = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -170,6 +234,8 @@ export class World {
   fallingPlane!: THREE.Group;
   /** The trees (instanced, near/far detail). */
   forest!: Forest;
+  /** Grass and ferns around the player. */
+  near!: NearField;
   /** The medevac jet itself (inside fallingPlane): lights, fans, window glow. */
   aircraft!: Aircraft;
   skyTear!: THREE.Mesh;
@@ -274,35 +340,36 @@ export class World {
     geo.rotateX(-Math.PI / 2);
     geo.translate(0, 0, 80);
     const pos = geo.attributes.position as THREE.BufferAttribute;
+    // per vertex: a tint (the region's colour language) and how much bare
+    // dirt / burnt ground / pale Choir ash shows through the forest floor
     const colors = new Float32Array(pos.count * 3);
-    const cA = new THREE.Color(0x2b2a2c);
-    const cB = new THREE.Color(0x26302a);
-    const cScorch = new THREE.Color(0x141014);
+    const fx = new Float32Array(pos.count * 3);
+    const base = new THREE.Color(0x9aa6a0);
     const c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
       pos.setY(i, heightAt(x, z));
       const n = Math.sin(x * 0.08) * Math.cos(z * 0.06) * 0.5 + 0.5;
-      c.copy(cA).lerp(cB, n);
-      const scorch = 1 - smoothstep(6, 26, Math.hypot(x + 6, z - 18));
-      c.lerp(cScorch, scorch * 0.8);
+      c.copy(base).multiplyScalar(0.85 + n * 0.2);
       const arena = 1 - smoothstep(16, 26, Math.hypot(x - ARENA.x, z - ARENA.z));
-      c.lerp(new THREE.Color(0x2e1d1c), arena * 0.7);
+      c.lerp(new THREE.Color(0xc07a70), arena * 0.7);
       const basin = 1 - smoothstep(50, 74, Math.hypot(x - BASIN_C.x, z - BASIN_C.z));
-      c.lerp(new THREE.Color(0x1a2a30), basin * 0.85);
-      const choir = 1 - smoothstep(14, 30, Math.hypot(x - CHOIR_C.x, z - CHOIR_C.z));
-      c.lerp(new THREE.Color(0xc9d2d4), choir);
+      c.lerp(new THREE.Color(0x6f98a8), basin * 0.85);
+      if (x < BLACKWOOD_X) c.multiplyScalar(0.7); // the Blackwood floor is darker
       colors.set([c.r, c.g, c.b], i * 3);
+      const f = floorFx(x, z);
+      fx.set([f.dirt, f.scorch, f.choir], i * 3);
     }
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geo.setAttribute("fx", new THREE.BufferAttribute(fx, 3));
     geo.computeVertexNormals();
-    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
+    const ground = new THREE.Mesh(geo, groundMaterial());
     ground.receiveShadow = true;
     scene.add(ground);
 
     // Skid trench from the crash.
-    const trench = new THREE.Mesh(new THREE.PlaneGeometry(6, 40), new THREE.MeshStandardMaterial({ color: 0x0c0a0c, roughness: 1 }));
+    const trench = new THREE.Mesh(new THREE.PlaneGeometry(6, 40), new THREE.MeshStandardMaterial({ color: 0x0c0a0c, roughness: 1, transparent: true, opacity: 0.55, depthWrite: false }));
     trench.rotation.x = -Math.PI / 2;
     trench.rotation.z = 0.25;
     trench.position.set(-6, 0.03, 12);
@@ -622,11 +689,16 @@ export class World {
     this.scene.add(bulbs);
     this.forest = new Forest(spots);
     this.scene.add(this.forest.group);
+    this.near = new NearField(heightAt, (x, z) => {
+      const f = floorFx(x, z);
+      const grow = (1 - f.dirt) * (1 - f.scorch) * (1 - f.choir) * (1 - f.basin * 0.9) * (Math.hypot(x, z - 20) < WORLD_RADIUS + 10 ? 1 : 0);
+      return { grow, dark: x < BLACKWOOD_X };
+    });
+    this.scene.add(this.near.group);
 
-    // rocks
+    // rocks: photo-scanned, on the same spots as ever
     const R = 70;
-    const rocks = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), std(0x3a3a3c, { flatShading: true }), R);
-    rocks.castShadow = rocks.receiveShadow = true;
+    const rockList: Placed[] = [];
     let ri = 0;
     tries = 0;
     while (ri < R && tries++ < 3000) {
@@ -636,17 +708,35 @@ export class World {
       if (Math.hypot(x + 6, z - 16) < 24) continue;
       if (avoid.some((v) => Math.hypot(v.x - x, v.z - z) < (v === ARENA ? 30 : 10))) continue;
       const sc = 0.6 + rand() * 1.8;
-      q.setFromEuler(new THREE.Euler(rand(), rand() * 6, rand()));
-      m.compose(p.set(x, heightAt(x, z) + sc * 0.3, z), q, s.set(sc, sc * 0.7, sc));
-      rocks.setMatrixAt(ri++, m);
+      rockList.push({ x, y: heightAt(x, z) - sc * 0.25, z, s: sc * 2.2, rx: (rand() - 0.5) * 0.4, ry: rand() * 6.28, rz: (rand() - 0.5) * 0.4, sy: 0.9 });
+      ri++;
       if (sc > 1) this.colliders.push({ x, z, r: sc * 0.9 });
     }
-    rocks.count = ri;
-    this.scene.add(rocks);
+    // stumps and fallen trunks (their own seed: the rest of the world is unchanged)
+    const r2 = rng(2002);
+    const stumps: Placed[] = [];
+    const logs: Placed[] = [];
+    for (let i = 0, t = 0; (stumps.length < 46 || logs.length < 30) && t < 4000; t++) {
+      const x = (r2() - 0.5) * 2 * WORLD_RADIUS;
+      const z = (r2() - 0.5) * 2 * WORLD_RADIUS + 30;
+      if (Math.hypot(x, z - 30) > WORLD_RADIUS || !free(x, z) || Math.hypot(x + 6, z - 16) < 20) continue;
+      if (this.colliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 1.2)) continue;
+      const y = heightAt(x, z);
+      if (i++ % 2 === 0 && stumps.length < 46) {
+        stumps.push({ x, y: y - 0.05, z, s: 0.9 + r2() * 0.8, rx: 0, ry: r2() * 6.28, rz: 0 });
+        this.colliders.push({ x, z, r: 0.45 });
+      } else if (logs.length < 30) {
+        const yaw = r2() * 6.28;
+        const len = 3 + r2() * 3;
+        logs.push({ x, y: y - 0.08, z, s: len, rx: 0, ry: yaw, rz: (r2() - 0.5) * 0.08 });
+        for (const k of [-0.3, 0, 0.3]) this.colliders.push({ x: x + Math.cos(yaw) * len * k, z: z - Math.sin(yaw) * len * k, r: 0.35 });
+      }
+    }
+    placeProps(this.scene, rockList, stumps, logs);
 
     // glowing ground flora
-    const F = 1400;
-    const flora = new THREE.InstancedMesh(new THREE.ConeGeometry(0.06, 0.5, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }), F);
+    const F = 420;
+    const flora = new THREE.InstancedMesh(new THREE.ConeGeometry(0.035, 0.32, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }), F);
     for (let i = 0; i < F; i++) {
       const x = (rand() - 0.5) * 2 * WORLD_RADIUS;
       const z = (rand() - 0.5) * 2 * WORLD_RADIUS + 30;
@@ -1252,6 +1342,7 @@ export class World {
 
     if (this.fallingPlane.visible) this.aircraft.update(dt, t);
     if (camera) this.forest.update(dt, t, camera.position);
+    this.near.update(t, focus);
     // falling plane fire/smoke trail
     if (this.fallingPlane.visible && this.planeTrail) {
       this.trailT -= dt;
