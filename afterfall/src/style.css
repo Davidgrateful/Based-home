@@ -207,6 +207,9 @@ body.cine #hud { opacity: 0 !important; }
 #marker { position: absolute; transform: translate(-50%, -50%); text-align: center; display: none; }
 #marker .pin { width: 10px; height: 10px; margin: 0 auto 4px; border: 2px solid var(--ink); transform: rotate(45deg); }
 #marker-dist { font: 500 12px var(--ui); letter-spacing: 0.06em; }
+/* while someone is speaking, the marker steps back: one thing at a time */
+#marker { transition: opacity 0.4s; }
+body:has(#subtitle.show) #marker { opacity: 0.3; }
 #prompt { position: absolute; left: 50%; bottom: 25%; transform: translateX(-50%); font: 500 15px var(--ui); opacity: 0; transition: opacity 0.2s; white-space: nowrap; }
 #prompt.show { opacity: 1; }
 .crosshair { position: absolute; left: 50%; top: 50%; width: 3px; height: 3px; margin: -1.5px; border-radius: 50%; background: rgba(233, 230, 223, 0.7); }

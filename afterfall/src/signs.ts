@@ -51,9 +51,8 @@ export class Signs {
     geo.rotateX(-Math.PI / 2);
     const prints = new THREE.InstancedMesh(
       geo,
-      // pale: whoever walked here came out of the burning wreck through the ash
-      // and it was still warm: a faint ember glow in each print
-      new THREE.MeshStandardMaterial({ color: 0x5e5852, emissive: 0x3a1606, emissiveIntensity: 0.7, roughness: 1, transparent: true, opacity: 0.7, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
+      // pressed dark into the ash and dirt: you notice them, they don't shine
+      new THREE.MeshStandardMaterial({ color: 0x24201c, roughness: 1, transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
       this.track.length * 2,
     );
     const m = new THREE.Matrix4();
@@ -110,7 +109,8 @@ export class Signs {
     const caseG = new THREE.Group();
     caseG.position.copy(CASE_POS);
     caseG.rotation.y = -0.5;
-    const shell = new THREE.MeshStandardMaterial({ color: 0x2e3338, roughness: 0.5, metalness: 0.6 });
+    // a scuffed field case (olive polymer, not metal: metal reads black at night)
+    const shell = new THREE.MeshStandardMaterial({ color: 0x4d5247, roughness: 0.62, metalness: 0.05 });
     const body = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.2, 0.44), shell);
     body.position.y = 0.1;
     body.castShadow = true;
@@ -123,6 +123,15 @@ export class Signs {
     const label = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.005), new THREE.MeshStandardMaterial({ color: 0xc4161c }));
     label.position.set(0, 0.12, 0.222);
     caseG.add(label);
+    const steel = new THREE.MeshStandardMaterial({ color: 0x8a8d90, roughness: 0.35, metalness: 0.8 });
+    for (const x of [-0.2, 0.2]) {
+      const latch = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.07, 0.02), steel);
+      latch.position.set(x, 0.15, 0.225);
+      caseG.add(latch);
+    }
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.025, 0.46), new THREE.MeshStandardMaterial({ color: 0x33362f, roughness: 0.8 }));
+    rim.position.y = 0.2;
+    caseG.add(rim);
     const paper = new THREE.MeshStandardMaterial({ color: 0xd8d2c4, roughness: 1, side: THREE.DoubleSide });
     for (let i = 0; i < 5; i++) {
       const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.29), paper);

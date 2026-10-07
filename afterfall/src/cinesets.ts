@@ -26,6 +26,8 @@ interface Actor {
   talk: number;
   pose: "fly" | "stand";
   toward: number; // head turn toward the person they talk to
+  /** seconds until the next small task (checking the line, the monitor) */
+  busy?: number;
 }
 
 const std = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...extra });
@@ -454,7 +456,7 @@ export class PlaneSet {
       add(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.08, 10), metal), -1.12, FLOOR + 0.88, b.position.z);
     }
     add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.75), metal), -1.12, FLOOR + 0.55, -2.5);
-    const aed = add(soft(0.32, 0.26, 0.12, 0.02, std(0xd8a21a, { roughness: 0.5 })), -1.36, 0.0, 1.9);
+    const aed = add(soft(0.32, 0.26, 0.12, 0.02, std(0xa88a3c, { roughness: 0.7 })), -1.36, 0.0, 1.9);
     aed.rotation.y = Math.PI / 2;
     const aedLabel = add(new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.06), new THREE.MeshBasicMaterial({ map: canvasTex(128, 40, (q) => {
       q.fillStyle = "#1f8f3a";
@@ -471,7 +473,7 @@ export class PlaneSet {
     const jumpBack = add(soft(0.5, 0.6, 0.08, 0.03, leather), -1.36, FLOOR + 0.88, 3.4);
     jumpBack.rotation.y = Math.PI / 2;
     // a medical bag on the floor, Rhea's
-    add(soft(0.5, 0.26, 0.3, 0.06, std(0xb3241f, { roughness: 0.6 })), -0.9, FLOOR + 0.13, 1.0).rotation.y = 0.3;
+    add(soft(0.5, 0.26, 0.3, 0.06, std(0x7a2622, { roughness: 0.85 })), -0.9, FLOOR + 0.13, 1.0).rotation.y = 0.3; // worn, sun-faded
 
     // ---------- cockpit: tapering walls, side glass, roof
     const narrow = (z: number) => {
@@ -683,13 +685,14 @@ export class PlaneSet {
     dez.root.position.set(-0.5, FLOOR, 6.95);
     headset(dez);
     epaulettes(dez, 3);
-    const rhea = make("RHEA", new Person({ sex: "f", skin: 1, hair: "buns", hairColor: 0x74331f, top: 0x2b3f57, pants: 0x2b3f57, shoes: 0x1a1a1a, boots: true, belt: 0x1a1a1a, jacket: 0x22324a }), "stand", 0.3);
+    const rhea = make("RHEA", new Person({ sex: "f", skin: 1, hair: "buns", hairColor: 0x74331f, top: 0x2b3f57, pants: 0x2b3f57, shoes: 0x1a1a1a, boots: true, belt: 0x1a1a1a, jacket: 0x22324a, width: 0.88 }), "stand", 0.3);
     rhea.root.position.set(-0.32, FLOOR, 0.05);
     rhea.root.rotation.y = Math.PI / 2;
     for (const a of Object.values(this.actors)) a?.m.setBase(a.pose === "fly" ? "drive" : "idle", 1, 0);
 
     // ---------- light
-    const cabin = [new THREE.PointLight(0xe6edff, 2.6, 8, 1.5), new THREE.PointLight(0xe6edff, 2, 8, 1.5), new THREE.PointLight(0xfff0dc, 1.6, 3, 1.5)];
+    // a night flight: cabin lights dimmed, the reading light over the patient carries the scene
+    const cabin = [new THREE.PointLight(0xdfe6f5, 1.5, 7, 1.6), new THREE.PointLight(0xdfe6f5, 0.8, 7, 1.6), new THREE.PointLight(0xffe6c4, 2.1, 3.6, 1.4)];
     cabin[0].position.set(0, 1.1, 0.6);
     cabin[1].position.set(0, 1.1, -3.6);
     cabin[2].position.set(0.42, 1.2, -0.2); // reading light over the patient
@@ -1015,7 +1018,7 @@ export class PlaneSet {
     const on = this.alarm && Math.sin(t * 7) > 0;
     for (const a of this.lights.alarm) a.intensity = on ? 9 : 0.6 * (this.alarm ? 1 : 0);
     for (const c of this.lights.cabin) {
-      const base = c === this.lights.cabin[2] ? 1.6 : c === this.lights.cabin[0] ? 2.6 : 2;
+      const base = c === this.lights.cabin[2] ? 2.1 : c === this.lights.cabin[0] ? 1.5 : 0.8;
       c.intensity = this.alarm ? (Math.random() < 0.05 ? 0 : base * 0.4) : base;
     }
     this.strips.emissiveIntensity = this.alarm ? (Math.random() < 0.05 ? 0.1 : 0.4) : 0.9;
@@ -1054,11 +1057,19 @@ export class PlaneSet {
         m.lookYaw = talking ? a.toward : other ? a.toward * 0.7 : this.riftK > 0.3 ? 0 : Math.sin(t * 0.3 + a.toward) * 0.12;
         m.lookPitch = talking || other ? 0 : -0.05;
       } else {
-        // Rhea over the stretcher: eyes on the patient, then up to the monitor
-        m.setBase(talking ? "talk" : "idle", 1, 0.4);
-        m.body.rotation.x = 0.12;
-        m.lookPitch = talking ? 0.15 : 0.35;
-        m.lookYaw = Math.sin(t * 0.25) > 0.6 ? -0.4 : 0.05;
+        // Rhea over the stretcher, hours into the shift: eyes on the patient,
+        // up to the monitor; every so often she reaches to check the line or
+        // the screen, then settles back, a little slower than she'd like.
+        m.setBase(talking ? "talk" : "idle", talking ? 1 : 0.75, 0.4);
+        m.body.rotation.x = 0.05;
+        a.busy = (a.busy ?? 4) - dt;
+        const checking = a.busy < 1.6 && !talking;
+        if (a.busy <= 0) {
+          a.busy = 6 + ((t * 7.3) % 4);
+          if (!talking && !this.alarm) void m.play("interact", 0.8);
+        }
+        m.lookPitch = talking ? 0.15 : checking ? -0.1 : 0.35;
+        m.lookYaw = checking ? -0.45 : Math.sin(t * 0.25) > 0.6 ? -0.4 : 0.05;
       }
     }
   }

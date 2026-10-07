@@ -37,7 +37,15 @@ interface Piece {
 
 /** Every mesh in a glb, baked to world-less geometry, centred on the base
  *  and scaled so the longest side is 1. */
-async function pieces(file: string): Promise<Piece[]> {
+const loaded = new Map<string, Promise<Piece[]>>();
+function pieces(file: string): Promise<Piece[]> {
+  // the same rock serves the scatter and every fire ring: load and bake it once
+  let p = loaded.get(file);
+  if (!p) loaded.set(file, (p = loadPieces(file)));
+  return p;
+}
+
+async function loadPieces(file: string): Promise<Piece[]> {
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(await fetchModel(DIR, file), DIR);
   gltf.scene.updateMatrixWorld(true);
   const out: Piece[] = [];
@@ -162,6 +170,9 @@ function swaying<T extends THREE.Material>(m: T, amount: number) {
       transformed.x += w;
       transformed.z += w * 0.5;`,
     );
+    // thin double-sided blades and fronds are lit the same from either side:
+    // don't let the back face flip the normal (that's what turned half the grass black)
+    s.fragmentShader = s.fragmentShader.replace("#include <normal_fragment_begin>", "#include <normal_fragment_begin>\n#ifndef FLAT_SHADED\n normal = normalize(vNormal);\n#endif");
   };
   return m;
 }
@@ -195,7 +206,7 @@ export class NearField {
     this.floor = floor;
     const cells = Math.ceil(((Math.PI * this.R * this.R) / (this.C * this.C)) * 1.3);
     const perCell = LOW ? 6 : 12;
-    const mat = swaying(new THREE.MeshLambertMaterial({ color: 0x5c6e48, vertexColors: true, side: THREE.DoubleSide }), 0.12);
+    const mat = swaying(new THREE.MeshLambertMaterial({ color: 0x46543a, vertexColors: true, side: THREE.DoubleSide }), 0.12);
     this.grass = new THREE.InstancedMesh(grassClump(), mat, cells * perCell);
     this.grass.count = 0;
     this.grass.frustumCulled = false;
@@ -272,6 +283,19 @@ export class NearField {
   }
 }
 
+/** The scans are warm sandstone; around a fire that reads as raw meat. Grey them. */
+const ringMats = new Map<THREE.Material, THREE.Material>();
+function ringMat(m: THREE.Material) {
+  let r = ringMats.get(m);
+  if (!r) {
+    const c = (m as THREE.MeshStandardMaterial).clone();
+    c.color.setHex(0x7d7d84);
+    c.roughness = 0.95;
+    ringMats.set(m, (r = c));
+  }
+  return r;
+}
+
 /** A ring of small photo-scanned stones around a fire pit (added when loaded). */
 export function stoneRing(parent: THREE.Object3D, n: number, radius: number, size: number) {
   // rounded field stones (the scanned boulders, small): the mossy set reads as slabs this close
@@ -280,12 +304,13 @@ export function stoneRing(parent: THREE.Object3D, n: number, radius: number, siz
       const ps = [...a, ...b];
       for (let i = 0; i < n; i++) {
         const p = ps[i % ps.length];
-        const m = new THREE.Mesh(p.geo, p.mat);
+        const m = new THREE.Mesh(p.geo, ringMat(p.mat));
         const a = (i / n) * Math.PI * 2 + (i % 2) * 0.12;
         const s = size * (0.8 + ((i * 37) % 10) / 25);
-        m.position.set(Math.cos(a) * radius, -0.12 * s, Math.sin(a) * radius);
-        m.rotation.set((i % 3) * 0.4, a * 3.1 + i, (i % 2) * 0.3);
-        m.scale.set(s, s * 0.8, s);
+        // field stones: rounded lumps sunk a little into the ash, not flat chips
+        m.position.set(Math.cos(a) * radius, -0.08 * s, Math.sin(a) * radius);
+        m.rotation.set(0, a * 3.1 + i, (i % 2) * 0.15);
+        m.scale.set(s * 0.85, s * 1.15, s * 0.85);
         m.castShadow = m.receiveShadow = true;
         parent.add(m);
       }

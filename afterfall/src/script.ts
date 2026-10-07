@@ -168,7 +168,7 @@ export const WAKE: Line[] = [
   ["YOU", "Sorry. I was unconscious."],
   ["RHEA", "Excuses. And stop picking at the wristband. You always pick at it."],
   ["YOU", "Always?"],
-  ["RHEA", "The whole flight. You picked at it the whole flight. Listen. The ambulance tore out of the cargo hold when we hit. I got thrown clear. My leg's fine. It's not fine. I'm moving."],
+  ["RHEA", "You picked at it the whole flight. Listen. I got thrown clear. My leg's fine. ...It's not fine. I'm moving."],
   ["RHEA", "That smell is fuel. Find something heavy and get out of that box before it decides to become a fireball."],
 ];
 
@@ -184,7 +184,7 @@ export const REVEAL: Line[] = [
   ["RHEA", "Okay. That's two moons."],
   ["YOU", "Two moons."],
   ["RHEA", "I counted. Three times. Still two."],
-  ["RHEA", "Right. Panic later, priorities now. The black box has its own battery. If we boost the beacon, somebody might hear us. Head for the wreck."],
+  ["RHEA", "Panic later. The black box has its own battery. If it's still sending, someone might hear. Get to the wreck."],
 ];
 
 export const FIRST_SHARD: Line[] = [
@@ -195,7 +195,7 @@ export const FIRST_SHARD: Line[] = [
 /** Played over the flashback of Okafor alone in the burning cockpit. */
 export const BLACK_BOX_LOG: Line[] = [
   ["PILOT", "This is Captain Daniel Okafor. Final log. If you're hearing this, we didn't make it.", { name: "Okafor (recording)", radio: true }],
-  ["PILOT", "Meridian lied to us. Our patient isn't a patient. They're a key. That light opened the second their heart rate spiked.", { name: "Okafor (recording)", radio: true }],
+  ["PILOT", "Meridian lied to us. That light opened the second our patient's heart rate spiked.", { name: "Okafor (recording)", radio: true }],
   ["PILOT", "Reyes is gone. I looked away for one second and his seat was empty.", { name: "Okafor (recording)", radio: true }],
   ["PILOT", "Vance is in the back with the patient. If anyone finds this, keep them away from the towers. Please.", { name: "Okafor (recording)", radio: true }],
 ];
@@ -289,7 +289,7 @@ export const AMBUSH_CLEARED: Line[] = [
   ["RHEA", "That was the word they used. I never asked."],
   ["YOU", "You never asked."],
   ["RHEA", "I know how that sounds."],
-  ["RHEA", "Okafor said stay away from the towers. But they're the only thing strong enough to carry a signal. So I'm about to say something really stupid."],
+  ["RHEA", "Okafor said stay away from the towers. They're also the only thing that can carry a signal. So. Something stupid."],
   ["YOU", "Light the towers."],
   ["RHEA", "Light the towers."],
 ];
@@ -304,6 +304,11 @@ export const PYLON_LIT: Line[][] = [
     ["RHEA", "I heard it. I really wish I hadn't. Keep going."],
   ],
   [
+    // the radio drops out; when she comes back she won't say where she is
+    ["YOU", "Rhea?"],
+    ["YOU", "Rhea, are you there?"],
+    ["RHEA", "...I'm here."],
+    ["YOU", "Where?"],
     ["RHEA", "{name}, I need to tell you something before I lose my nerve."],
     ["YOU", "That's never a good start."],
     ["RHEA", "My orders weren't to keep you alive. They were to keep you asleep. Until we landed."],
@@ -378,7 +383,7 @@ export const WRISTBAND_WALL: Line[] = [
 ];
 export const FIRE_TALK: Line[] = [
   ["TEO", "Sit. The fire doesn't ask questions."],
-  ["TEO", "Meridian thinks the rift is a door. It isn't. It's a mouth. They feed it one of us every few days, and it stays shut on their side."],
+  ["TEO", "Meridian thinks it's a door. It isn't. It's a mouth. And it's always hungry."],
   ["INES", "And sometimes it spits us back out. Changed. Alive. It's a door, Teo. Doors go both ways."],
   ["TEO", "Everyone who wants to go home walks north into the Basin. Nobody walks back."],
   ["INES", "Because nobody's tried it with a key."],
@@ -483,7 +488,7 @@ export const HOLLOW_BARKS = [
 // ---------------------------------------------------------------- THE LONG NIGHT
 export const NIGHT_INTRO_FIRST: Line[] = [
   ["RHEA", "{name}, the rift went wild when the Warden fell. It's spitting Hollow out of the sky, and I can't reach you before dark."],
-  ["RHEA", "That fire pit by the ambulance. Somebody built it for you. Light it. Hold it. Whatever comes out of the dark hates the light."],
+  ["RHEA", "The fire pit by the ambulance. Somebody built it for you. Light it. Stay in the light."],
 ];
 
 /** Played when the loop resets. Index = loop count (last one repeats). */

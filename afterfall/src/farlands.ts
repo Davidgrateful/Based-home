@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { Person } from "./people";
 import { Fire } from "./fire";
 import { buildChanged, buildPlayerModel, DEFAULT_LOOK, type Humanoid, type Look } from "./models";
-import { BASIN_C, BASIN_R, CHOIR_C, glowTexture, heightAt, SETTLEMENT, type World } from "./world";
+import { BASIN_C, BASIN_R, CHOIR_C, beamFade, glowTexture, heightAt, SETTLEMENT, type World } from "./world";
 import type { SpeakerId } from "./voice";
 
 const std = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...extra });
@@ -285,12 +285,13 @@ export class Farlands {
     // the white column over the Choir: visible from the stone circle
     const column = new THREE.Mesh(
       new THREE.CylinderGeometry(5, 7, 260, 24, 1, true),
-      new THREE.MeshBasicMaterial({ color: 0xf2fbff, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide }),
+      // faint, and thinning as it climbs: from the crash it is a pale thread you squint at
+      new THREE.MeshBasicMaterial({ color: 0xdfeef2, transparent: true, opacity: 0.045, alphaMap: beamFade(), blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide }),
     );
     column.position.copy(at(CHOIR_C.x, CHOIR_C.z, 128));
     scene.add(column);
     const core = new THREE.Mesh(column.geometry, (column.material as THREE.MeshBasicMaterial).clone());
-    (core.material as THREE.MeshBasicMaterial).opacity = 0.22;
+    (core.material as THREE.MeshBasicMaterial).opacity = 0.1;
     core.scale.set(0.25, 1, 0.25);
     core.position.copy(column.position);
     scene.add(core);

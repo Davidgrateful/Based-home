@@ -410,6 +410,7 @@ function tick(now?: number) {
       else player.model.clear();
     }
     wasDead = state.dead;
+    player.danger = enemies.list.some((e) => e.alive && e.kind !== "thing" && e.pos.distanceTo(player.pos) < 14);
     if (!state.dead && !state.paused) player.update(dt, input, bounds, camera);
     else if (state.dead) camera.position.y += (player.pos.y + 0.6 - camera.position.y) * dt;
     if (running) {

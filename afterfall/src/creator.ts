@@ -211,7 +211,10 @@ export function menuCamera(dt: number, t: number) {
     tear.lookAt(camera.position);
     world.skyTearMat.uniforms.uOpen.value = 0.32 + Math.sin(t * 0.35) * 0.08;
   }
-  const k = Math.min(1, dt * 2.2);
+  // ease between framings, but start in place: gliding in from the origin
+  // means watching the title from under the ground on a slow device
+  const far = camera.position.distanceTo(camTarget) > 25;
+  const k = far ? 1 : Math.min(1, dt * 2.2);
   camera.position.lerp(camTarget, k);
   lookNow.lerp(lookTarget, k);
   camera.lookAt(lookNow);

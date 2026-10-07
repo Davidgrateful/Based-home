@@ -92,6 +92,9 @@ export class Player {
   riftBound = false; // token-holder perk
   firstPerson = true;
   camDist = 0;
+  /** Something hostile is close (set by the game each frame): the camera comes in. */
+  danger = false;
+  private tension = 0;
   frozen = false;
   attackT = 0; // >0 while swinging
   attackCd = 0;
@@ -326,7 +329,11 @@ export class Player {
     m.root.visible = !this.firstPerson || this.camDist > 0.8;
 
     // ---- camera
-    this.camDist += ((this.firstPerson ? 0 : 5.6) - this.camDist) * Math.min(1, dt * 2.2);
+    // wide and easy while exploring (you are small out here); in close when
+    // something hostile is near. Eased slowly so it never feels like a cut.
+    this.tension += ((this.danger ? 1 : 0) - this.tension) * Math.min(1, dt * (this.danger ? 1.6 : 0.5));
+    const want = 6.3 - this.tension * 1.6;
+    this.camDist += ((this.firstPerson ? 0 : want) - this.camDist) * Math.min(1, dt * 2.2);
     const head = new THREE.Vector3(this.pos.x, this.pos.y + 1.7 + Math.min(1, this.camDist / 5.2) * 0.55, this.pos.z);
     const dir = new THREE.Vector3(
       Math.sin(this.yaw) * Math.cos(this.pitch),

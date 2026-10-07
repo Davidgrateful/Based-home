@@ -42,12 +42,29 @@ const FLAME_FRAG = /* glsl */ `
     c = mix(c, vec3(1.0, 0.92, 0.7), smoothstep(0.85, 1.0, k));
     // the Choir's fire burns pale
     c = mix(c, vec3(0.75, 0.92, 1.0) * (0.6 + k * 0.6), uGhost);
-    gl_FragColor = vec4(c * (0.55 + 0.5 * k), a);
+    gl_FragColor = vec4(c * (0.46 + 0.42 * k), a);
     #include <colorspace_fragment>
   }
 `;
 
 let barkTex: THREE.Texture | null = null;
+let bedTex: THREE.Texture | null = null;
+
+/** Solid in the middle, gone at the rim. */
+function bedFade() {
+  if (bedTex) return bedTex;
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d")!;
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, "#fff");
+  r.addColorStop(0.55, "#ddd");
+  r.addColorStop(1, "#000");
+  g.fillStyle = r;
+  g.fillRect(0, 0, 64, 64);
+  bedTex = new THREE.CanvasTexture(c);
+  return bedTex;
+}
 let smokeTex: THREE.Texture | null = null;
 let emberTex: THREE.Texture | null = null;
 let sparkTex: THREE.Texture | null = null;
@@ -200,7 +217,8 @@ export class Fire {
     });
 
     // the bed: ash and charcoal glowing through
-    this.bedMat = new THREE.MeshStandardMaterial({ color: 0x1a1512, roughness: 1, emissive: 0xffffff, emissiveMap: emberTexture(), emissiveIntensity: 1.4 });
+    // feathered at the edge so it sinks into the ground instead of sitting on it like a plate
+    this.bedMat = new THREE.MeshStandardMaterial({ color: 0x1a1512, roughness: 1, emissive: 0xffffff, emissiveMap: emberTexture(), emissiveIntensity: 1.4, alphaMap: bedFade(), transparent: true, depthWrite: false });
     this.bed = new THREE.Mesh(new THREE.CircleGeometry(0.62 * S, 24), this.bedMat);
     this.bed.rotation.x = -Math.PI / 2;
     this.bed.position.y = 0.025;
@@ -218,7 +236,7 @@ export class Fire {
     sg.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     this.sparks = new THREE.Points(
       sg,
-      new THREE.PointsMaterial({ map: sparkTexture(), size: 0.07 * Math.max(1, S * 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: o.ghost ? 0xcfefff : 0xffffff }),
+      new THREE.PointsMaterial({ map: sparkTexture(), size: 0.04 * Math.max(1, S * 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: o.ghost ? 0xcfefff : 0xffffff }),
     );
     this.sparks.frustumCulled = false;
     this.group.add(this.sparks);
@@ -300,7 +318,7 @@ export class Fire {
       const f = this.flames[i];
       f.scale.set(0.6 + pw * 0.4, (0.45 + pw * 0.55) * (0.94 + Math.sin(t * (5 + i) + i) * 0.06), 1);
     }
-    this.bedMat.emissiveIntensity = on ? (0.6 + pw * 0.5) * flick : 0.0; // a cold pit is just ash
+    this.bedMat.emissiveIntensity = on ? (0.35 + pw * 0.35) * flick : 0.0; // a cold pit is just ash
     if (this.light) {
       this.light.intensity = on ? this.baseLight * (0.3 + 0.7 * pw) * flick : 0;
       this.light.position.x = Math.sin(t * 9.1 + this.seed) * 0.06 * S;
@@ -323,7 +341,7 @@ export class Fire {
         d[j + 3] = (Math.random() - 0.5) * 0.6;
         d[j + 4] = (1.6 + Math.random() * 2.2) * Math.sqrt(S);
         d[j + 5] = (Math.random() - 0.5) * 0.6;
-        d[j + 6] = 0.8 + Math.random() * 1.4;
+        d[j + 6] = 0.6 + Math.random() * 1.0;
       }
       d[j + 3] += Math.sin(t * 3 + i) * dt * 0.8;
       d[j + 4] *= 1 - dt * 0.6;

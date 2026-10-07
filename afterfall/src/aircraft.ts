@@ -680,7 +680,7 @@ export function wreckPieces() {
   const scorch = new THREE.MeshStandardMaterial({ color: 0x14110f, roughness: 1 });
   const dirty = m.paint.clone();
   dirty.emissiveIntensity = 0;
-  dirty.color.setHex(0x9c9a96); // soot and mud over the paint
+  dirty.color.setHex(0x74726e); // soot and mud over the paint (white paint glares in firelight)
   dirty.roughness = 0.6;
   dirty.envMapIntensity = 0.5;
   const inside = new THREE.MeshStandardMaterial({ color: 0x2a2724, roughness: 0.95, side: THREE.BackSide });

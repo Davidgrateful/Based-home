@@ -270,10 +270,10 @@ export async function startStory() {
   $("blur").classList.add("waking");
   sfx.siren(true);
   setTimeout(() => sfx.siren(false), 6000);
-  setObjective("PROLOGUE · WAKE", "Look around. Get out of the ambulance.");
+  setObjective("PROLOGUE · WAKE", "Get out.");
   sfx.startAmbience();
   await say(S.WAKE);
-  if (story.stage === "wake" && !player.hasAxe) setObjective("PROLOGUE · WAKE", "Take the fire axe from the wall.");
+  if (story.stage === "wake" && !player.hasAxe) setObjective("PROLOGUE · WAKE", "Take the axe.");
 }
 
 async function goOutside() {
@@ -294,8 +294,8 @@ async function goOutside() {
   cine.end();
   player.pitch = -0.1;
   markRegion("fallsite");
-  card("CHAPTER ONE", "THE FALLSITE", "Find the black box", 3000);
-  setObjective("CHAPTER 1 · THE FALLSITE", "Reach the plane wreck and find the black-box beacon.");
+  card("CHAPTER I", "THE FALL", "Something out there is still transmitting", 3000);
+  setObjective("I · THE FALL", "Find the signal.");
   await say(S.REVEAL.slice(4));
 }
 
@@ -303,7 +303,7 @@ async function beaconFound() {
   story.stage = "signs";
   signStep = -1; // nothing triggers until the recording is done
   checkpoint = BEACON.clone().add(new THREE.Vector3(3, 0, -4));
-  setObjective("CHAPTER 1 · THE FALLSITE", "Listen.");
+  setObjective("I · THE FALL", "Listen.");
   await say(S.BLACK_BOX_FIND);
   if (story.stage !== "signs") return;
   await blackBoxFlashback();
@@ -321,7 +321,7 @@ function startSigns() {
   seenFor = 0;
   checkpoint = new THREE.Vector3(3.5, 0, -3);
   sfx.ambienceTo(0.07, 6); // the wind drops away
-  setObjective("CHAPTER 1 · THE FALLSITE", "Go back to the ambulance.");
+  setObjective("I · THE FALL", "Go back to the ambulance.");
 }
 
 async function signsSequence(step: number) {
@@ -338,7 +338,7 @@ async function signsSequence(step: number) {
     if (story.stage !== "signs") return;
     signs.showShape(true);
     signStep = 3;
-    setObjective("CHAPTER 1 · THE FALLSITE", "Look around.");
+    setObjective("I · THE FALL", "Look around.");
   } else if (step === 4) {
     await say(S.SIGN_SHAPE.slice(0, 2));
     signs.showShape(false); // gone between one look and the next
@@ -350,7 +350,7 @@ async function signsSequence(step: number) {
     sfx.ambienceTo(0.1, 4);
     story.stage = "fire";
     checkpoint = CAMP.clone().add(new THREE.Vector3(-2, 0, -2));
-    setObjective("CHAPTER 1 · THE FALLSITE", "Light the fire pit beside the ambulance.");
+    setObjective("I · THE FALL", "Light the fire.");
   }
 }
 
@@ -360,7 +360,7 @@ async function readRecords() {
   hud.prompt.classList.remove("show");
   await showRecords();
   player.frozen = false;
-  setObjective("CHAPTER 1 · THE FALLSITE", "Patient 10001. Active.");
+  setObjective("I · THE FALL", "Patient 10001. Active.");
   await say(S.RECORDS_READ);
   if (story.stage !== "first") return;
   spawnFirstHollow(true);
@@ -372,8 +372,22 @@ async function spawnFirstHollow(cinematic: boolean) {
   const at = CAMP.clone().addScaledVector(dir, 15);
   firstHollow = enemies.spawn("hollow", at, { rise: false, speedMul: 0.55, hpMul: 1.4 });
   barkCd = 14; // let it speak its own line first
-  setObjective("CHAPTER 1 · THE FALLSITE", "It's coming into the light.");
+  setObjective("I · THE FALL", "It's coming into the light.");
   sfx.ambienceTo(0.03, 1);
+  // It stops where the firelight ends and stares in. It holds its head, the
+  // way somebody does with a migraine. Looks back toward the plane. Then it
+  // remembers what it is, and comes fast.
+  const h = firstHollow;
+  enemies.holdT = cinematic ? 9 : 5;
+  window.setTimeout(() => {
+    if (h.alive && "play" in h.model) void (h.model as { play: (c: string, s: number) => Promise<void> }).play("hitHead", 0.4);
+  }, cinematic ? 4200 : 1500);
+  window.setTimeout(() => {
+    if (h.alive && enemies.holdT > 0) h.yaw = Math.atan2(BEACON.x - h.pos.x, BEACON.z - h.pos.z);
+  }, cinematic ? 6600 : 3000);
+  window.setTimeout(() => {
+    if (h.alive) h.speed *= 2.6; // the walk breaks into a run
+  }, (cinematic ? 9 : 5) * 1000);
   if (!cinematic) return;
   cine.begin(false);
   const eye = player.pos.clone().addScaledVector(dir, -2.2).add(new THREE.Vector3(0.6, 1.7, 0));
@@ -425,8 +439,8 @@ function startAmbush() {
   waveTimers.length = 0;
   waveTimers.push({ at: 0.2, n: 3, kind: "hollow" }, { at: 7, n: 2, kind: "runner" }, { at: 14, n: 2, kind: "hollow" });
   sfx.roar();
-  card("CHAPTER TWO", "THE HOLLOW", "They used to be patients", 2600);
-  setObjective("CHAPTER 2 · THE HOLLOW", "Survive the Hollow ambush.");
+  card("CHAPTER II", "THE THING IN THE DARK", "It came toward the light", 2600);
+  setObjective("II · THE THING IN THE DARK", "Survive.");
   say(S.AMBUSH_START);
 }
 
@@ -434,9 +448,9 @@ async function ambushCleared() {
   story.stage = "pylons";
   chapter("pylons");
   activePylon = -1;
-  setObjective("CHAPTER 3 · RESONANCE", "Activate the resonance pylons (0/3).");
+  setObjective("III · WHAT THEY BUILT", "Wake the towers (0/3).");
   await say(S.AMBUSH_CLEARED);
-  if (story.stage === "pylons") card("CHAPTER THREE", "RESONANCE", "Light the three towers", 2800);
+  if (story.stage === "pylons") card("CHAPTER III", "WHAT THEY BUILT", "The towers are still humming", 2800);
 }
 
 async function pylonLit(i: number) {
@@ -446,13 +460,13 @@ async function pylonLit(i: number) {
   toast(`Tower ${lit}/3 resonating`);
   checkpoint = PYLONS[i].clone().add(new THREE.Vector3(0, 0, -8));
   activePylon = -1;
-  setObjective("CHAPTER 3 · RESONANCE", `Activate the resonance pylons (${lit}/3).`);
+  setObjective("III · WHAT THEY BUILT", `Wake the towers (${lit}/3).`);
   if (lit === 3) {
     story.stage = "boss";
     chapter("boss");
     checkpoint = ARENA.clone().add(new THREE.Vector3(0, 0, -34));
     sfx.rumble();
-    setObjective("CHAPTER 4 · THE WARDEN", "Follow the beams north to the stone circle.");
+    setObjective("IV · PATIENT ONE", "Follow the beams.");
   }
   await say(S.PYLON_LIT[lit - 1]);
 }
@@ -465,7 +479,7 @@ async function spawnBoss() {
   sfx.roar();
   cine.begin(false);
   const look = ARENA.clone().add(new THREE.Vector3(0, 3.5, 0));
-  card("CHAPTER FOUR", "THE WARDEN", "Patient One", 3200);
+  card("CHAPTER IV", "PATIENT ONE", "He was here first", 3200);
   await cine.shot(
     key(ARENA.clone().add(new THREE.Vector3(5, 1.2, -11)), look),
     key(ARENA.clone().add(new THREE.Vector3(2.5, 0.8, -8)), look.clone().add(new THREE.Vector3(0, 1.5, 0))),
@@ -474,7 +488,7 @@ async function spawnBoss() {
   cine.end();
   hud.bossName.textContent = "THE WARDEN · PATIENT ONE";
   hud.bossBar.classList.add("show");
-  setObjective("CHAPTER 4 · THE WARDEN", "Defeat the Warden. Jump or dodge out of the red ring.");
+  setObjective("IV · PATIENT ONE", "Survive him. Dodge the red ring.");
   await say(S.WARDEN_INTRO);
 }
 
@@ -527,8 +541,8 @@ function startChanged() {
   farlands.setLive(true); // her fire's going: you'll see it through the trees
   farlands.placeInes(null);
   checkpoint = ARENA.clone().add(new THREE.Vector3(0, 0, -30));
-  card("CHAPTER FIVE", "THE CHANGED", "Find the fire in the Blackwood", 3200);
-  setObjective("CHAPTER 5 · THE CHANGED", "Walk west into the Blackwood. Find their fire.");
+  card("CHAPTER V", "THE PEOPLE WHO CAME BEFORE", "Someone keeps a fire in the Blackwood", 3200);
+  setObjective("V · THE PEOPLE WHO CAME BEFORE", "Find their fire.");
 }
 
 async function arriveSettlement() {
@@ -536,7 +550,7 @@ async function arriveSettlement() {
   save.flags.settlementFound = true;
   persist();
   checkpoint = GATE.clone().add(new THREE.Vector3(-6, 0, 0));
-  setObjective("CHAPTER 5 · THE CHANGED", "Sit with Teo by the fire.");
+  setObjective("V · THE PEOPLE WHO CAME BEFORE", "Sit with Teo.");
   await say(S.SETTLEMENT_ARRIVE);
 }
 
@@ -572,8 +586,8 @@ function startBasin() {
   late.basinSaid = late.echoSaid = late.fightDone = late.lightSaid = false;
   late.basinT = 0;
   checkpoint = ARENA.clone().add(new THREE.Vector3(0, 0, 14));
-  card("CHAPTER SIX", "THE RIFT BASIN", "North, through the stone circle", 3200);
-  setObjective("CHAPTER 6 · THE RIFT BASIN", "Go north through the Warden's circle. Follow the white light.");
+  card("CHAPTER VI", "THE DOOR", "It has been waiting", 3200);
+  setObjective("VI · THE DOOR", "Follow the white light.");
 }
 
 function basinUpdate(dt: number) {
@@ -615,7 +629,7 @@ async function enterChoir() {
   farlands.ghostOn = false;
   checkpoint = CHOIR_V.clone().add(new THREE.Vector3(0, 0, -14));
   voice.interrupt();
-  card("CHAPTER SEVEN", "THE CHOIR", "", 3600);
+  card("CHAPTER VII", "PATIENT 10001", "", 3600);
   cine.begin(false);
   const c = CHOIR_V.clone().setY(CHOIR_V.y + 1.4);
   const ring = (a: number, d: number, h: number) => new THREE.Vector3(c.x + Math.cos(a) * d, c.y + h, c.z + Math.sin(a) * d);
@@ -623,7 +637,7 @@ async function enterChoir() {
   await cine.say(save.flags.band === "left" ? S.CHOIR_GREET_LEFT : S.CHOIR_GREET_KEPT);
   await cine.say(S.CHOIR_TRUTH);
   cine.end();
-  setObjective("CHAPTER 7 · THE CHOIR", "Build the fire.");
+  setObjective("VII · PATIENT 10001", "Build the fire.");
 }
 
 async function writeItDown() {
@@ -702,7 +716,7 @@ const interacts: Interact[] = [
       world.axeProp.visible = false;
       sfx.pickup();
       toast("Fire axe. Left mouse or F to swing. The third hit in a row is heavy.", 3500);
-      setObjective("PROLOGUE · WAKE", "Kick open the rear doors.");
+      setObjective("PROLOGUE · WAKE", "Open the doors.");
       voice.interrupt();
       say(S.TAKE_AXE);
     },
@@ -739,7 +753,7 @@ const interacts: Interact[] = [
       world.setCampfire(true);
       sfx.ignite();
       sfx.ambienceTo(0.16, 3);
-      setObjective("CHAPTER 1 · THE FALLSITE", "Read the Meridian case by the stones.");
+      setObjective("I · THE FALL", "Read the case.");
       voice.interrupt();
       await say(S.FIRE_LIT);
     },
@@ -786,7 +800,7 @@ const interacts: Interact[] = [
       await wait(700);
       farlands.lightPit();
       sfx.ignite();
-      setObjective("CHAPTER 7 · THE CHOIR", "Write it down.");
+      setObjective("VII · PATIENT 10001", "Write it down.");
       await say(S.CHOIR_BUILD);
     },
   },
@@ -811,7 +825,7 @@ const interacts: Interact[] = [
       sfx.charge();
       enemies.spawnAround(p, 3, 14, 20, i === 2 ? "runner" : "hollow");
       if (i === 0) say(S.PYLON_TOUCH);
-      setObjective("CHAPTER 3 · RESONANCE", "Stay inside the ring while the tower charges.");
+      setObjective("III · WHAT THEY BUILT", "Hold the ring.");
     },
   })),
 ];
@@ -857,12 +871,12 @@ export async function storyPlayerDown() {
   if (story.stage === "pylons" && activePylon >= 0) {
     world.pylons[activePylon].charge = 0;
     activePylon = -1;
-    setObjective("CHAPTER 3 · RESONANCE", `Activate the resonance pylons (${world.pylons.filter((p) => p.lit).length}/3).`);
+    setObjective("III · WHAT THEY BUILT", `Wake the towers (${world.pylons.filter((p) => p.lit).length}/3).`);
   }
   if (story.stage === "boss" && story.boss) {
     story.boss = null;
     hud.bossBar.classList.remove("show");
-    setObjective("CHAPTER 4 · THE WARDEN", "Return to the stone circle.");
+    setObjective("IV · PATIENT ONE", "Return to the stone circle.");
   }
   $("dead").classList.remove("show");
   state.dead = false;
@@ -1088,8 +1102,8 @@ export function resumeStory(ch: Stage) {
 }
 
 export const CHAPTER_NAMES: Record<string, string> = {
-  pylons: "Chapter Three · Resonance",
-  boss: "Chapter Four · The Warden",
-  changed: "Chapter Five · The Changed",
-  basin: "Chapter Six · The Rift Basin",
+  pylons: "Chapter III · What They Built",
+  boss: "Chapter IV · Patient One",
+  changed: "Chapter V · The People Who Came Before",
+  basin: "Chapter VI · The Door",
 };

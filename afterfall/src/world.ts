@@ -260,10 +260,11 @@ export class World {
   riftMat: THREE.ShaderMaterial;
   riftLight: THREE.PointLight;
   riftOpen = 0;
+  private riftDebris: THREE.Mesh[] = [];
   /** Fire and smoke behind the falling plane (off while it cruises). */
   planeTrail = true;
   hemi!: THREE.HemisphereLight;
-  bigMoon!: THREE.MeshBasicMaterial;
+  bigMoon!: { color: THREE.Color };
   campfire!: { group: THREE.Group; light: THREE.PointLight; fire: Fire; lit: boolean; hp: number; maxHp: number };
   caches: Cache[] = [];
   /** Trunk positions, for the map. */
@@ -302,7 +303,7 @@ export class World {
   private moodDensity = 0.0115;
   private ghostMat!: THREE.MeshBasicMaterial;
   private shardGeo = new THREE.OctahedronGeometry(0.32);
-  private shardMat = new THREE.MeshStandardMaterial({ color: 0xa8dbe4, emissive: 0x3aa8c8, emissiveIntensity: 1.3, flatShading: true, metalness: 0.3, roughness: 0.2 });
+  private shardMat = new THREE.MeshStandardMaterial({ color: 0x9fb8bd, emissive: 0x3aa8c8, emissiveIntensity: 0.55, flatShading: true, metalness: 0.4, roughness: 0.25 });
   private spores: THREE.Points;
   private embers: THREE.Points;
   private emberData: Float32Array;
@@ -319,27 +320,73 @@ export class World {
       side: THREE.BackSide,
       depthWrite: false,
       fog: false,
-      uniforms: { uTime: { value: 0 }, uTint: { value: new THREE.Vector3(1, 1, 1) } },
+      uniforms: {
+        uTime: { value: 0 },
+        uTint: { value: new THREE.Vector3(1, 1, 1) },
+        uHaze: { value: new THREE.Color(0x1a2130) },
+        uWrong: { value: 0.35 },
+      },
       vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);} `,
+      // An enormous night: a gradient that melts into the fog at the horizon,
+      // stars of every brightness, the galaxy's band with its dust lanes, thin
+      // cloud drifting across it all. And in the north, where the rift is,
+      // the stars bend, as if the light were being pulled through something.
       fragmentShader: `
-        varying vec3 vDir; uniform float uTime; uniform vec3 uTint;
+        varying vec3 vDir; uniform float uTime; uniform vec3 uTint; uniform vec3 uHaze; uniform float uWrong;
         float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }
+        float h21(vec2 p){ p = fract(p*vec2(233.34,851.73)); p += dot(p, p+23.45); return fract(p.x*p.y); }
+        float vn(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+          return mix(mix(h21(i),h21(i+vec2(1,0)),u.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x), u.y); }
+        float fbm(vec2 p){ float v=0.0, a=0.5; for(int i=0;i<5;i++){ v+=a*vn(p); p=p*2.03+7.7; a*=0.5; } return v; }
+        // one layer of round stars: n cells around the sky, a fraction lit
+        vec3 stars(vec3 d, float n, float keep, float size){
+          vec3 p = d * n; vec3 cell = floor(p); vec3 f = fract(p) - 0.5;
+          float r = hash(cell);
+          if (r < keep) return vec3(0.0);
+          vec3 off = vec3(hash(cell+1.3), hash(cell+2.7), hash(cell+4.1)) - 0.5;
+          float dist = length(f - off * 0.6);
+          float mag = pow((r - keep) / (1.0 - keep), 3.0);
+          float s = smoothstep(size, 0.0, dist) * (0.25 + 2.2 * mag);
+          float tw = 0.75 + 0.25 * sin(uTime * (1.5 + r * 4.0) + r * 60.0);
+          vec3 col = mix(vec3(1.0, 0.82, 0.62), vec3(0.72, 0.84, 1.0), hash(cell + 9.1));
+          return col * s * mix(1.0, tw, mag);
+        }
         void main(){
-          float h = clamp(vDir.y, -0.2, 1.0);
-          vec3 horizon = vec3(0.086,0.102,0.133);
-          vec3 mid = vec3(0.06,0.07,0.115);
-          vec3 top = vec3(0.012,0.016,0.03);
-          vec3 c = mix(horizon, mid, smoothstep(0.0,0.25,h));
-          c = mix(c, top, smoothstep(0.25,0.9,h));
-          // aurora band
-          float band = sin(vDir.x*6.0 + uTime*0.05) * 0.08 + 0.35;
-          float a = exp(-pow((h-band)*9.0, 2.0)) * (0.5+0.5*sin(vDir.z*10.0+uTime*0.2));
-          c += vec3(0.08,0.3,0.28) * a * 0.16;
-          // stars
-          vec3 p = floor(vDir*300.0);
-          float s = step(0.997, hash(p)) * smoothstep(0.05,0.3,h);
-          c += vec3(s) * (0.6+0.4*sin(uTime*3.0+hash(p)*20.0));
-          gl_FragColor = vec4(c * uTint,1.0);
+          vec3 d = normalize(vDir);
+          float h = clamp(d.y, -0.2, 1.0);
+          // light bending around the rift (low in the north)
+          vec3 R = normalize(vec3(0.0, 0.32, 1.0));
+          float ang = acos(clamp(dot(d, R), -1.0, 1.0));
+          float lens = uWrong * 0.06 / (ang * ang * 40.0 + 0.6);
+          vec3 sd = normalize(d + normalize(d - R * dot(d, R) + 1e-4) * lens * sin(uTime * 0.15 + ang * 6.0));
+
+          vec3 top = vec3(0.008, 0.011, 0.024);
+          vec3 mid = vec3(0.035, 0.045, 0.08);
+          vec3 c = mix(uHaze, mid, smoothstep(-0.02, 0.22, h));
+          c = mix(c, top, smoothstep(0.22, 0.95, h));
+
+          // the galaxy: a tilted band of faint light with dark dust lanes
+          vec3 gp = normalize(vec3(0.42, 0.75, -0.5));
+          float gd = dot(sd, gp);
+          vec2 guv = vec2(atan(sd.x, sd.z) * 2.2, gd * 9.0);
+          float band = exp(-gd * gd * 26.0);
+          float dust = fbm(guv * 2.0 + 3.1);
+          float glow = band * (0.35 + 0.65 * fbm(guv * 0.9)) * smoothstep(0.38, 0.62, 1.0 - dust * band * 0.9);
+          c += vec3(0.07, 0.075, 0.1) * glow * smoothstep(0.02, 0.3, h);
+
+          // stars: a dust of faint ones, fewer bright ones, more along the band
+          vec3 st = stars(sd, 260.0, 0.955 - band * 0.05, 0.38) + stars(sd, 520.0, 0.95 - band * 0.08, 0.3) * 0.5 + stars(sd, 90.0, 0.987, 0.32) * 1.4;
+          st *= smoothstep(0.0, 0.22, h);
+
+          // thin cloud drifting across, lit faintly by the moons; it hides the stars
+          vec2 cuv = d.xz / max(d.y, 0.06) * 0.55 + vec2(uTime * 0.004, uTime * 0.0025);
+          float cl = smoothstep(0.5, 0.85, fbm(cuv * 1.3)) * smoothstep(0.02, 0.25, h) * 0.85;
+          c = mix(c + st, mix(uHaze, vec3(0.1, 0.11, 0.14), 0.5) * 0.9, cl);
+
+          // near the rift the sky itself is wrong: a cold seam of light that comes and goes
+          float seam = exp(-ang * ang * 900.0 / (0.6 + 0.4 * sin(uTime * 0.21))) * uWrong;
+          c += vec3(0.25, 0.55, 0.62) * seam * 0.35;
+          gl_FragColor = vec4(c * uTint, 1.0);
         }`,
     });
     const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), this.skyMat);
@@ -347,23 +394,92 @@ export class World {
     sky.frustumCulled = false;
     scene.add(sky);
 
-    const moon = (r: number, color: number, pos: THREE.Vector3) => {
+    // Far ridges: two rings of mountain silhouette well beyond where you can
+    // walk, made of the same haze as the horizon (darker toward their crests),
+    // so the far distance has a shape and still dissolves into the air.
+    const ridge = (radius: number, lo: number, hi: number, dark: number, seed: number) => {
+      const N = 320;
+      const pos: number[] = [];
+      const hf: number[] = [];
+      const idx: number[] = [];
+      for (let i = 0; i <= N; i++) {
+        const a = (i / N) * Math.PI * 2;
+        const s = a * 3 + seed;
+        // overlapping peaks: broad shoulders, a few sharp summits
+        let h = 0.5 + 0.25 * Math.sin(s) + 0.15 * Math.sin(s * 2.7 + 1.1) + 0.1 * Math.sin(s * 6.3 + 2.3);
+        h += 0.22 * Math.pow(Math.abs(Math.sin(s * 4.1 + 0.7)), 6) + 0.05 * Math.sin(s * 17.0);
+        const top = lo + (hi - lo) * Math.max(0, Math.min(1.2, h));
+        const x = Math.sin(a) * radius;
+        const z = 80 + Math.cos(a) * radius;
+        pos.push(x, -40, z, x, top, z);
+        hf.push(0, 1);
+        if (i < N) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute("hf", new THREE.Float32BufferAttribute(hf, 1));
+      g.setIndex(idx);
       const m = new THREE.Mesh(
-        new THREE.SphereGeometry(r, 32, 16),
-        new THREE.MeshBasicMaterial({ color, fog: false }),
+        g,
+        new THREE.ShaderMaterial({
+          side: THREE.DoubleSide,
+          fog: false,
+          uniforms: { uHaze: this.skyMat.uniforms.uHaze, uTint: this.skyMat.uniforms.uTint, uDark: { value: dark } },
+          vertexShader: `attribute float hf; varying float vH; void main(){ vH = hf; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+          fragmentShader: `uniform vec3 uHaze; uniform vec3 uTint; uniform float uDark; varying float vH;
+            void main(){ float k = mix(1.0, uDark, smoothstep(0.35, 1.0, vH)); gl_FragColor = vec4(uHaze * k * uTint, 1.0); }`,
+        }),
+      );
+      m.frustumCulled = false;
+      m.renderOrder = -1;
+      scene.add(m);
+    };
+    ridge(520, 20, 95, 0.72, 1.7); // the farthest range: barely there
+    ridge(400, 5, 55, 0.5, 4.2); // nearer hills: a firmer silhouette
+
+    // moons: real spheres, lit from one side (a gibbous phase), with darker
+    // seas and a dimmed limb, so they read as worlds rather than paper discs
+    const moon = (r: number, color: number, pos: THREE.Vector3, lightDir: THREE.Vector3, seed: number) => {
+      const uColor = new THREE.Color(color);
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 48, 24),
+        new THREE.ShaderMaterial({
+          fog: false,
+          uniforms: { uColor: { value: uColor }, uL: { value: lightDir.normalize() }, uSeed: { value: seed } },
+          vertexShader: `varying vec3 vN; varying vec3 vP; varying vec3 vV;
+            void main(){ vN = normalize(mat3(modelMatrix) * normal); vP = position; vec4 w = modelMatrix * vec4(position,1.0);
+              vV = normalize(cameraPosition - w.xyz); gl_Position = projectionMatrix * viewMatrix * w; }`,
+          fragmentShader: `uniform vec3 uColor; uniform vec3 uL; uniform float uSeed; varying vec3 vN; varying vec3 vP; varying vec3 vV;
+            float h(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7)))*43758.5453); }
+            float vn(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+              return mix(mix(mix(h(i),h(i+vec3(1,0,0)),f.x),mix(h(i+vec3(0,1,0)),h(i+vec3(1,1,0)),f.x),f.y),
+                         mix(mix(h(i+vec3(0,0,1)),h(i+vec3(1,0,1)),f.x),mix(h(i+vec3(0,1,1)),h(i+vec3(1,1,1)),f.x),f.y),f.z); }
+            void main(){
+              vec3 p = normalize(vP) * 3.0 + uSeed;
+              float seas = smoothstep(0.45, 0.7, vn(p) * 0.65 + vn(p * 2.3) * 0.35);
+              float grit = vn(p * 9.0) * 0.5 + vn(p * 21.0) * 0.5;
+              float alb = (1.0 - seas * 0.38) * (0.82 + grit * 0.22);
+              float lam = smoothstep(-0.08, 0.35, dot(normalize(vN), uL));
+              float limb = 0.55 + 0.45 * pow(max(dot(normalize(vN), vV), 0.0), 0.5);
+              vec3 c = uColor * alb * limb * (0.04 + 0.96 * lam);
+              gl_FragColor = vec4(c, 1.0);
+            }`,
+        }),
       );
       m.position.copy(pos);
       scene.add(m);
       const halo = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, opacity: 0.22, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }),
+        new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, opacity: 0.12, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }),
       );
-      halo.scale.setScalar(r * 3.2);
+      halo.scale.setScalar(r * 3.6);
       halo.position.copy(pos);
       scene.add(halo);
-      return m.material;
+      return { color: uColor };
     };
-    this.bigMoon = moon(38, 0xe4e0d6, new THREE.Vector3(-180, 220, 420));
-    moon(16, 0xbfd6d0, new THREE.Vector3(120, 150, 450));
+    // both lit by the same far sun, below the horizon to the east
+    const farSun = new THREE.Vector3(0.9, -0.15, -0.35);
+    this.bigMoon = moon(38, 0xe4e0d6, new THREE.Vector3(-180, 220, 420), farSun.clone(), 1.7);
+    moon(16, 0xbfd6d0, new THREE.Vector3(120, 150, 450), farSun.clone(), 5.3);
 
     // ---------- Lights ----------
     this.hemi = new THREE.HemisphereLight(0x8d98b5, 0x2a2622, 1.2);
@@ -421,7 +537,7 @@ export class World {
       map: glowTexture(),
       color: 0x6ac0d6,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.16,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
@@ -435,11 +551,19 @@ export class World {
     this.axeProp = amb.axe;
 
     this.buildPlane();
+    this.buildCrashDebris();
     const bea = this.buildBeacon();
     this.beaconLight = bea.light;
     this.beaconMat = bea.mat;
     this.buildForest();
     this.buildStation();
+    // The station's own fire, by the collapsed tent: no flame left, the bed
+    // still faintly alive. Whoever kept it left not long ago.
+    const cold = new Fire({ size: 0.8, smoke: 1, logs: true, stones: true });
+    cold.power = 0.015;
+    cold.group.position.set(STATION.x - 6, heightAt(STATION.x - 6, STATION.z + 7), STATION.z + 7);
+    scene.add(cold.group);
+    this.colliders.push({ x: STATION.x - 6, z: STATION.z + 7, r: 0.9 });
     this.buildMast();
     this.buildMist();
     for (const p of PYLONS) this.pylons.push(this.buildPylon(p));
@@ -454,12 +578,12 @@ export class World {
 
     // ---------- Particles ----------
     const sporeGeo = new THREE.BufferGeometry();
-    const sp = new Float32Array(700 * 3);
-    for (let i = 0; i < 700; i++) sp.set([(Math.random() - 0.5) * 80, Math.random() * 20, (Math.random() - 0.5) * 80], i * 3);
+    const sp = new Float32Array(260 * 3);
+    for (let i = 0; i < 260; i++) sp.set([(Math.random() - 0.5) * 80, Math.random() * 20, (Math.random() - 0.5) * 80], i * 3);
     sporeGeo.setAttribute("position", new THREE.BufferAttribute(sp, 3));
     this.spores = new THREE.Points(
       sporeGeo,
-      new THREE.PointsMaterial({ color: 0xb8d8cc, size: 0.12, map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
+      new THREE.PointsMaterial({ color: 0x8a9c96, size: 0.09, map: glowTexture(), transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }),
     );
     this.spores.frustumCulled = false;
     scene.add(this.spores);
@@ -473,7 +597,7 @@ export class World {
       new THREE.PointsMaterial({ color: 0xff8a3a, size: 0.22, map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
     );
     this.embers.frustumCulled = false;
-    scene.add(this.embers);
+    // (each Fire spits its own sparks now; these stay out of the scene)
   }
 
   // ---------------------------------------------------------------- builders
@@ -532,6 +656,104 @@ export class World {
       this.scene.add(fire.group);
       this.fires.push({ light: fire.light!, fire, base: 18 * s });
     }
+  }
+
+  /** What came out of the aircraft as it broke up, strewn along the line it
+   *  slid (tail first, west; the nose last, east): torn skin, seats, luggage,
+   *  the medical kit. Few things, each where it would have landed. */
+  private buildCrashDebris() {
+    const rand = rng(4242);
+    const at = (o: THREE.Object3D, x: number, z: number, lift = 0) => {
+      o.position.set(x, heightAt(x, z) + lift, z);
+      o.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = true), (m.receiveShadow = true))));
+      this.scene.add(o);
+      return o;
+    };
+    // torn skin: bent aluminium sheets, painted side up or burnt side up, half dug in
+    const paint = std(0x8c8a86, { roughness: 0.55, metalness: 0.35 });
+    const burnt = std(0x1c1a18, { roughness: 1 });
+    for (let i = 0; i < 16; i++) {
+      const k = i / 15;
+      const x = -29 + k * 26 + (rand() - 0.5) * 6;
+      const z = 31 - k * 2 + (rand() - 0.5) * 9;
+      if (Math.hypot(x + 21, z - 30) < 4.5) continue; // not inside the fuselage
+      const w = 0.4 + rand() * 1.4;
+      const g = new THREE.PlaneGeometry(w, 0.3 + rand() * 0.9, 4, 2);
+      const pos = g.attributes.position as THREE.BufferAttribute;
+      for (let v = 0; v < pos.count; v++) pos.setZ(v, Math.sin(pos.getX(v) * 3 + i) * 0.08 * w); // buckled
+      g.computeVertexNormals();
+      const m = new THREE.Mesh(g, rand() < 0.6 ? paint : burnt);
+      (m.material as THREE.Material).side = THREE.DoubleSide;
+      at(m, x, z, 0.12);
+      m.rotation.set(-Math.PI / 2 + (rand() - 0.5) * 1.4, rand() * Math.PI, (rand() - 0.5) * 0.6);
+    }
+    // seats, thrown clear of the cabin
+    const fabric = std(0x2a2e36, { roughness: 0.95 });
+    const frame = std(0x55585c, { roughness: 0.5, metalness: 0.6 });
+    const seat = () => {
+      const g = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.5), fabric);
+      base.position.y = 0.42;
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.65, 0.1), fabric);
+      back.position.set(0, 0.78, -0.22);
+      back.rotation.x = -0.15;
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.04), frame);
+      leg.position.set(0, 0.2, 0);
+      g.add(base, back, leg);
+      return g;
+    };
+    for (const [x, z, ry, rx, rz] of [
+      [-24.5, 25.5, 0.6, 0, 0],
+      [-13.5, 27.5, 2.4, -1.5, 0.2], // on its back
+      [-9.8, 33.2, -0.9, 0, 1.45], // on its side
+      [-18.2, 34.5, 1.9, 0, 0],
+    ] as const) {
+      const s = at(seat(), x, z);
+      s.rotation.set(rx, ry, rz);
+      if (rx || rz) s.position.y += 0.25;
+    }
+    // luggage: two cases shut, one burst open with clothes spilling
+    const lug = (c: number, x: number, z: number, ry: number, open = false) => {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.22, 0.42), std(c, { roughness: 0.75 }));
+      body.position.y = 0.11;
+      g.add(body);
+      if (open) {
+        const lid = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.06, 0.42), std(c, { roughness: 0.75 }));
+        lid.position.set(0, 0.12, -0.38);
+        lid.rotation.x = -2.2;
+        g.add(lid);
+        for (const [cx, cz, cc] of [[0.3, 0.45, 0x8a8478], [-0.2, 0.6, 0x3e4a5c], [0.5, 0.9, 0xa29a8c]] as const) {
+          const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.35), std(cc, { roughness: 1, side: THREE.DoubleSide }));
+          cloth.rotation.set(-Math.PI / 2, 0, cx * 3);
+          cloth.position.set(cx, 0.02, cz);
+          g.add(cloth);
+        }
+      }
+      at(g, x, z).rotation.y = ry;
+    };
+    lug(0x2b3445, -15.2, 23.8, 0.4);
+    lug(0x5a2a2a, -6.8, 30.5, 2.1, true);
+    lug(0x4b4f52, -26.8, 34.2, -0.7);
+    // the medical kit, cracked open; an oxygen bottle rolled into the grass; a blanket
+    const kit = new THREE.Group();
+    const kbody = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.28, 0.38), std(0xd8d6d0, { roughness: 0.6 }));
+    kbody.position.y = 0.14;
+    const crossMat = std(0x8c1c1c, { roughness: 0.7 });
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.005), crossMat);
+    const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, 0.005), crossMat);
+    c1.position.set(0, 0.16, 0.192);
+    c2.position.copy(c1.position);
+    kit.add(kbody, c1, c2);
+    at(kit, -3.2, 29.6).rotation.set(0, 0.8, 0.12);
+    const o2 = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.75, 14), std(0x2c6a3c, { roughness: 0.4, metalness: 0.3 }));
+    at(o2, -11.5, 21.2, 0.09).rotation.set(0, 0.5, Math.PI / 2);
+    const blanket = new THREE.PlaneGeometry(1.5, 1.1, 6, 4);
+    const bp = blanket.attributes.position as THREE.BufferAttribute;
+    for (let v = 0; v < bp.count; v++) bp.setZ(v, Math.sin(bp.getX(v) * 4) * Math.cos(bp.getY(v) * 5) * 0.05);
+    blanket.computeVertexNormals();
+    const bl = new THREE.Mesh(blanket, std(0x4b5f7a, { roughness: 1, side: THREE.DoubleSide }));
+    at(bl, -8.6, 24.3, 0.04).rotation.set(-Math.PI / 2, 0, 1.1);
   }
 
   private buildBeacon() {
@@ -681,7 +903,7 @@ export class World {
       }
       flora.setMatrixAt(i, m);
       // nothing grows light in the Blackwood
-      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x6fe0c4 : 0x9a8cff).multiplyScalar(x < BLACKWOOD_X ? 0.08 : 0.8));
+      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x6fe0c4 : 0x9a8cff).multiplyScalar(x < BLACKWOOD_X ? 0.06 : 0.32));
     }
     this.scene.add(flora);
   }
@@ -914,7 +1136,7 @@ export class World {
   private buildPylon(pos: THREE.Vector3): Pylon {
     const g = new THREE.Group();
     g.position.copy(pos);
-    const stone = std(0x2c2838);
+    const stone = std(0x55525a, { roughness: 0.95 });
     const geo = new THREE.CylinderGeometry(0.5, 1.1, 7, 4);
     const ob = new THREE.Mesh(geo, stone);
     ob.position.y = 3.5;
@@ -945,9 +1167,10 @@ export class World {
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 0.15;
     g.add(ring);
+    // a thin column of light that thins out as it climbs and is swallowed by the fog
     const beam = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.4, 0.4, 120, 12, 1, true),
-      new THREE.MeshBasicMaterial({ color: 0x5cf0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+      new THREE.CylinderGeometry(0.16, 0.3, 120, 12, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0x7fe4f2, transparent: true, opacity: 0, alphaMap: beamFade(), blending: THREE.AdditiveBlending, depthWrite: false }),
     );
     beam.position.y = 60;
     g.add(beam);
@@ -960,7 +1183,7 @@ export class World {
   }
 
   private buildArena() {
-    const stone = std(0x2a2232);
+    const stone = std(0x4f4b52, { roughness: 0.95 });
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * Math.PI * 2;
       if (Math.abs(a - Math.PI * 1.5) < 0.3) continue; // entrance gap to the south
@@ -976,33 +1199,60 @@ export class World {
       this.scene.add(st);
       this.colliders.push({ x, z, r: 1.1 });
     }
+    // The Rift is not a portal. It is damage: a ragged seam in the air, dark
+    // inside (a hole, with somebody else's stars in it), a thin cold fringe
+    // where the light bends round it, and faint ripples spreading into the
+    // air. Shut, it is a hairline you could miss. (Also the sky's tear.)
     const mat = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
       uniforms: { uTime: { value: 0 }, uOpen: { value: 0 } },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
       fragmentShader: `
         varying vec2 vUv; uniform float uTime; uniform float uOpen;
+        float h21(vec2 p){ p = fract(p*vec2(233.34,851.73)); p += dot(p, p+23.45); return fract(p.x*p.y); }
+        float vn(float x){ float i = floor(x), f = fract(x); return mix(h21(vec2(i, 3.1)), h21(vec2(i + 1.0, 3.1)), f*f*(3.0-2.0*f)); }
         void main(){
-          vec2 p = vUv - 0.5; float r = length(p)*2.0; float a = atan(p.y,p.x);
-          float swirl = sin(a*5.0 + r*14.0 - uTime*3.0)*0.5+0.5;
-          float edge = smoothstep(1.0,0.85,r);
-          float core = smoothstep(0.9, 0.0, r);
-          // rift colour language: cyan for the unknown, white at the heart of it
-          vec3 col = mix(vec3(0.08,0.45,0.62), vec3(0.85,1.0,1.0), swirl * 0.7 + core * 0.5) * (0.4+core);
-          float alpha = edge * (0.08 + 0.9*uOpen) * (0.4 + 0.6*swirl);
+          vec2 p = vUv - 0.5;
+          float t = uTime;
+          // the seam wanders, jagged, and crawls slowly
+          float w = (vn(p.y * 9.0 + t * 0.08) - 0.5) * 0.09 + (vn(p.y * 31.0 - t * 0.2) - 0.5) * 0.025 + sin(p.y * 7.0 + 1.3) * 0.02;
+          float taper = 1.0 - smoothstep(0.12, 0.47, abs(p.y));
+          float open = clamp(uOpen, 0.0, 1.0);
+          float width = (0.004 + open * 0.085) * taper * (0.75 + 0.5 * vn(p.y * 14.0 + 5.0));
+          float d = abs(p.x - w);
+          // inside: a hole, nearly black, someone else's stars drifting in it
+          float inside = smoothstep(width, width * 0.55, d) * taper;
+          vec2 sp = floor((p + vec2(0.0, t * 0.004)) * 140.0);
+          float star = step(0.985, h21(sp)) * 0.8;
+          vec3 voidC = vec3(0.004, 0.01, 0.02) + vec3(0.6, 0.85, 0.9) * star;
+          // the fringe where light bends: thin, cold, uneven, flickering when shut
+          float flick = open > 0.05 ? 1.0 : smoothstep(0.6, 0.95, vn(t * 0.7)) ;
+          float fringe = exp(-pow((d - width) / (0.0035 + open * 0.004), 2.0)) * taper * (0.5 + 0.5 * vn(p.y * 40.0 + t)) * flick;
+          // ripples in the air around it (the world bending), very faint
+          float r = length(vec2(p.x - w, p.y * 0.55));
+          float ripple = (sin(r * 70.0 - t * 1.6) * 0.5 + 0.5) * exp(-r * 9.0) * (0.15 + open) * 0.12;
+          float haze = exp(-d * (22.0 - open * 12.0)) * taper * (0.05 + open * 0.2);
+          vec3 cold = vec3(0.62, 0.9, 0.95);
+          vec3 col = mix(cold * (fringe * 1.6 + ripple + haze), voidC, inside);
+          float alpha = clamp(inside * 0.96 + fringe * 0.9 + ripple + haze, 0.0, 1.0);
           gl_FragColor = vec4(col, alpha);
         }`,
     });
-    const rift = new THREE.Mesh(new THREE.CircleGeometry(9, 64), mat);
+    const rift = new THREE.Mesh(new THREE.PlaneGeometry(18, 18), mat);
     rift.position.set(ARENA.x, ARENA.y + 11, ARENA.z + 14);
     this.scene.add(rift);
-    const frame = new THREE.Mesh(new THREE.TorusGeometry(9.3, 0.5, 8, 48), std(0x15191c, { emissive: 0x1d6c7c, emissiveIntensity: 0.6 }));
-    frame.position.copy(rift.position);
-    this.scene.add(frame);
-    const light = new THREE.PointLight(0x7ae2ff, 2, 60, 1.2);
+    // stones lifted out of the circle, drifting up against gravity around the seam
+    const debrisMat = std(0x22232a, { roughness: 0.9 });
+    for (let i = 0; i < 9; i++) {
+      const d = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + (i % 4) * 0.07, 0), debrisMat);
+      d.userData.debris = { a: (i / 9) * Math.PI * 2 + i, r: 1.2 + (i % 4) * 0.9, y: (i * 1.9) % 12, sp: 0.12 + (i % 3) * 0.06 };
+      d.castShadow = true;
+      this.riftDebris.push(d);
+      this.scene.add(d);
+    }
+    const light = new THREE.PointLight(0x9fdcea, 1, 45, 1.6);
     light.position.copy(rift.position).add(new THREE.Vector3(0, 0, -3));
     this.scene.add(light);
     return { rift, mat, light };
@@ -1032,10 +1282,13 @@ export class World {
   /** Place a shard. Dynamic ones (drops, caches) are removed once taken. */
   addShard(x: number, z: number, dynamic = false, value = 1) {
     const mesh = new THREE.Mesh(this.shardGeo, this.shardMat);
-    const y = heightAt(x, z) + 1.1;
+    // hangs just off the ground, a little tilted: something that shouldn't float
+    const y = heightAt(x, z) + 0.45;
     mesh.position.set(x, y, z);
+    mesh.scale.setScalar(0.75);
+    mesh.rotation.z = 0.35;
     const glow = new THREE.Sprite(this.shardGlow);
-    glow.scale.setScalar(1.6);
+    glow.scale.setScalar(1.3);
     mesh.add(glow);
     this.scene.add(mesh);
     const s: Shard = { mesh, taken: false, base: y, dynamic, value };
@@ -1084,7 +1337,7 @@ export class World {
     lid.position.y = 0.8;
     lid.name = "lid";
     g.add(lid);
-    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xff9a3a, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xc8d0d4, transparent: true, opacity: 0.14, depthWrite: false, blending: THREE.AdditiveBlending }));
     glow.position.y = 1.4;
     glow.scale.setScalar(1.6);
     glow.name = "glow";
@@ -1188,6 +1441,9 @@ export class World {
 
   update(dt: number, t: number, focus: THREE.Vector3, camera?: THREE.Camera) {
     this.skyMat.uniforms.uTime.value = t;
+    // the further the rift has opened, the more wrong the northern sky becomes
+    const wrong = this.skyMat.uniforms.uWrong;
+    wrong.value += (0.25 + this.riftOpen * 0.75 - wrong.value) * Math.min(1, dt * 0.3);
     this.skyTearMat.uniforms.uTime.value = t;
 
     // mood lerp
@@ -1197,6 +1453,9 @@ export class World {
     this.moodFog.lerp(new THREE.Color(mood.fog), k);
     fog.color.copy(this.moodFog);
     (this.scene.background as THREE.Color).copy(this.moodFog);
+    // the sky's horizon is the fog itself (before the mood's tint), so the land melts into it
+    const tintV = this.skyMat.uniforms.uTint.value as THREE.Vector3;
+    (this.skyMat.uniforms.uHaze.value as THREE.Color).setRGB(this.moodFog.r / tintV.x, this.moodFog.g / tintV.y, this.moodFog.b / tintV.z);
     this.moodDensity += (mood.density - this.moodDensity) * k;
     this.fogBoostNow += (this.fogBoost - this.fogBoostNow) * Math.min(1, dt * 0.5);
     fog.density = this.moodDensity + this.fogBoostNow * 0.014;
@@ -1273,7 +1532,17 @@ export class World {
 
     this.riftMat.uniforms.uTime.value = t;
     this.riftMat.uniforms.uOpen.value = this.riftOpen;
-    this.riftLight.intensity = 2 + this.riftOpen * 40 + Math.sin(t * 3) * 0.5;
+    this.riftLight.intensity = 0.6 + this.riftOpen * 16 + Math.sin(t * 0.9) * 0.3;
+    // the debris rises slowly round the seam, turning, and starts again below
+    for (const d of this.riftDebris) {
+      const u = d.userData.debris as { a: number; r: number; y: number; sp: number };
+      u.y += dt * u.sp * (0.4 + this.riftOpen);
+      if (u.y > 16) u.y = 0;
+      const a = u.a + t * 0.04;
+      d.position.set(this.rift.position.x + Math.cos(a) * u.r, ARENA.y + 1 + u.y, this.rift.position.z + Math.sin(a) * u.r * 0.6);
+      d.rotation.set(t * u.sp, t * u.sp * 0.7, 0);
+      d.visible = this.riftOpen > 0.2 || u.r < 5;
+    }
 
     // Shadow frustum follows the player.
     this.sun.position.set(focus.x - 40, focus.y + 80, focus.z + 60);
@@ -1302,15 +1571,15 @@ export class World {
     }
     for (const s of this.shards) {
       if (s.taken) continue;
-      s.mesh.rotation.y += dt * 1.6;
-      s.mesh.position.y = s.base + Math.sin(t * 2 + s.mesh.position.x) * 0.15;
+      s.mesh.rotation.y += dt * 0.35;
+      s.mesh.position.y = s.base + Math.sin(t * 0.9 + s.mesh.position.x) * 0.05;
     }
 
     for (const p of this.pylons) {
       const k = p.lit ? 1 : p.charge;
       p.rune.emissiveIntensity = 0.15 + k * 3 + (p.charge > 0 && !p.lit ? Math.sin(t * 10) * 0.3 : 0);
       p.light.intensity = k * 25;
-      (p.beam.material as THREE.MeshBasicMaterial).opacity = p.lit ? 0.35 + Math.sin(t * 4) * 0.05 : 0;
+      (p.beam.material as THREE.MeshBasicMaterial).opacity = p.lit ? 0.22 + Math.sin(t * 1.3) * 0.03 : 0;
       p.ringMat.opacity = p.lit ? 0.1 : 0.25 + p.charge * 0.6;
       p.ring.rotation.z += dt * (0.2 + p.charge * 2);
     }
@@ -1330,16 +1599,18 @@ export class World {
     }
     sp.needsUpdate = true;
 
-    // embers from the fires
+    // embers from the fires (retired: each Fire has its own sparks)
+    if (this.embers.parent) {
     const ep = this.embers.geometry.attributes.position as THREE.BufferAttribute;
     const d = this.emberData;
     for (let i = 0; i < ep.count; i++) {
       const j = i * 4;
       d[j + 3] -= dt;
       if (d[j + 3] <= 0) {
-        const f = this.fires[i % this.fires.length].light.position;
+        // the fire's world position (its light sits in the fire's own frame)
+        const f = this.fires[i % this.fires.length].fire.group.position;
         d[j] = f.x + (Math.random() - 0.5) * 2;
-        d[j + 1] = f.y - 1.5;
+        d[j + 1] = f.y + 0.3;
         d[j + 2] = f.z + (Math.random() - 0.5) * 2;
         d[j + 3] = 1.5 + Math.random() * 2.5;
       }
@@ -1348,7 +1619,27 @@ export class World {
       ep.setXYZ(i, d[j], d[j + 1], d[j + 2]);
     }
     ep.needsUpdate = true;
+    }
   }
+}
+
+/** Bright at the foot, gone by the top (for light columns). */
+let _beamFade: THREE.Texture | null = null;
+export function beamFade() {
+  if (_beamFade) return _beamFade;
+  const c = document.createElement("canvas");
+  c.width = 4;
+  c.height = 256;
+  const g = c.getContext("2d")!;
+  const grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0, "#000");
+  grd.addColorStop(0.55, "#333");
+  grd.addColorStop(0.92, "#fff");
+  grd.addColorStop(1, "#888");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 4, 256);
+  _beamFade = new THREE.CanvasTexture(c);
+  return _beamFade;
 }
 
 let _glow: THREE.Texture | null = null;
