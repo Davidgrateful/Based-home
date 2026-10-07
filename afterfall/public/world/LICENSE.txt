@@ -1,1 +1,11 @@
-Ground textures (forest_leaves_02, forest_ground_04, burned_ground_01): Rob Tuytel, Poly Haven (https://polyhaven.com). CC0 1.0, public domain.
+Forest floor assets: Poly Haven (https://polyhaven.com), CC0 1.0 (public domain).
+  forest_leaves_02: Rob Tuytel
+  forest_ground_04: Rob Tuytel, Rico Cilliers
+  burned_ground_01: Rob Tuytel
+  rock_07: Jenelle van Heerden
+  rock_09: Jenelle van Heerden
+  rock_moss_set_01: Kless Gyzen
+  tree_stump_01: Rob Tuytel
+  dead_tree_trunk: Rob Tuytel
+  fern_02: Rob Tuytel, Rico Cilliers
+Simplified and converted by tools/world/build.mjs.
