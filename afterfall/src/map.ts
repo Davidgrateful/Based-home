@@ -8,7 +8,7 @@ import { net } from "./net";
 import { save } from "./save";
 import { regionAt, REGIONS } from "./regions";
 import { CASE_POS } from "./signs";
-import { ARENA, BASIN_C, BASIN_R, BEACON, CAMP, CHOIR_C, heightAt, MAST, PYLONS, SETTLEMENT, STATION, WORLD_RADIUS } from "./world";
+import { ARENA, BASIN_C, BASIN_R, BEACON, CAMP, CHOIR_C, DEAD_TREE, heightAt, MAST, PYLONS, SCAR, SETTLEMENT, STATION, WORLD_RADIUS } from "./world";
 
 // World window drawn by the map (north = +z is up, east = -x is right).
 const CX = 0;
@@ -166,6 +166,8 @@ const MARKS: Mark[] = [
   { x: STATION.x, z: STATION.z, label: "Field station", kind: "danger" },
   ...PYLONS.map((p, i) => ({ x: p.x, z: p.z, label: "Tower", kind: "rift" as const, lit: () => world.pylons[i]?.lit ?? false })),
   { x: ARENA.x, z: ARENA.z, label: "Stone circle", kind: "rift" },
+  { x: DEAD_TREE.x, z: DEAD_TREE.z, label: "Dead tree", kind: "plain" },
+  { x: SCAR.x, z: SCAR.z, label: "Blue scar", kind: "rift" },
   { x: SETTLEMENT.x, z: SETTLEMENT.z, label: "Settlement", kind: "fire", lit: () => farlands.live },
   { x: CHOIR_C.x, z: CHOIR_C.z, label: "White light", kind: "white" },
 ];

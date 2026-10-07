@@ -8,6 +8,7 @@ import { Forest, SHADOW_LAYER, type TreeSpot } from "./flora";
 import { NearField, placeProps, type Placed } from "./props";
 import { buildAmbulance } from "./ambulance";
 import { Fire, updateFires } from "./fire";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 /** A few small glowing mushrooms: pale stems, caps that give off light. */
 function mushroomCluster() {
@@ -65,7 +66,8 @@ export function floorFx(x: number, z: number) {
   );
   const scorch = (1 - smoothstep(6, 26, Math.hypot(x + 6, z - 18))) * 0.95;
   const choir = 1 - smoothstep(14, 30, Math.hypot(x - CHOIR_C.x, z - CHOIR_C.z));
-  return { dirt, scorch, choir, basin };
+  const scar = 1 - smoothstep(5, 9, Math.hypot(x - SCAR.x, z - SCAR.z));
+  return { dirt: Math.max(dirt, scar * 0.7), scorch: Math.max(scorch, scar * 0.55), choir, basin };
 }
 
 /** The forest floor: Poly Haven scans (moss and needles, bare dirt, burnt
@@ -119,6 +121,7 @@ export const smoothstep = (a: number, b: number, x: number) => {
 };
 
 export const WORLD_RADIUS = 190;
+const SKY_LOW = typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches && !location.search.includes("high");
 
 export function heightAt(x: number, z: number) {
   const h =
@@ -163,7 +166,11 @@ export const STATION = new THREE.Vector3(80, 0, 26);
 export const MAST = new THREE.Vector3(8, 0, -22);
 /** West of this line the forest closes in: the Blackwood. */
 export const BLACKWOOD_X = -38;
-for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST]) p.y = heightAt(p.x, p.z);
+/** A giant dead tree, bleached, on the way north-west: you can steer by it. */
+export const DEAD_TREE = new THREE.Vector3(-30, 0, 64);
+/** The Blue Scar: a patch of ground the rift has damaged, east of the crash. */
+export const SCAR = new THREE.Vector3(30, 0, 34);
+for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST, DEAD_TREE, SCAR]) p.y = heightAt(p.x, p.z);
 
 export interface Circle {
   x: number;
@@ -261,6 +268,9 @@ export class World {
   riftLight: THREE.PointLight;
   riftOpen = 0;
   private riftDebris: THREE.Mesh[] = [];
+  private scarStones: THREE.Mesh[] = [];
+  /** The camera is inside the aircraft set (the outdoor light is dimmed). */
+  indoor = false;
   /** Fire and smoke behind the falling plane (off while it cruises). */
   planeTrail = true;
   hemi!: THREE.HemisphereLight;
@@ -326,6 +336,8 @@ export class World {
         uHaze: { value: new THREE.Color(0x1a2130) },
         uWrong: { value: 0.35 },
       },
+      // phones: fewer noise octaves, no faint-star layer
+      defines: { OCT: SKY_LOW ? 3 : 5, ...(SKY_LOW ? { LOW: 1 } : {}) },
       vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);} `,
       // An enormous night: a gradient that melts into the fog at the horizon,
       // stars of every brightness, the galaxy's band with its dust lanes, thin
@@ -337,7 +349,7 @@ export class World {
         float h21(vec2 p){ p = fract(p*vec2(233.34,851.73)); p += dot(p, p+23.45); return fract(p.x*p.y); }
         float vn(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
           return mix(mix(h21(i),h21(i+vec2(1,0)),u.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x), u.y); }
-        float fbm(vec2 p){ float v=0.0, a=0.5; for(int i=0;i<5;i++){ v+=a*vn(p); p=p*2.03+7.7; a*=0.5; } return v; }
+        float fbm(vec2 p){ float v=0.0, a=0.5; for(int i=0;i<OCT;i++){ v+=a*vn(p); p=p*2.03+7.7; a*=0.5; } return v; }
         // one layer of round stars: n cells around the sky, a fraction lit
         vec3 stars(vec3 d, float n, float keep, float size){
           vec3 p = d * n; vec3 cell = floor(p); vec3 f = fract(p) - 0.5;
@@ -375,7 +387,10 @@ export class World {
           c += vec3(0.07, 0.075, 0.1) * glow * smoothstep(0.02, 0.3, h);
 
           // stars: a dust of faint ones, fewer bright ones, more along the band
-          vec3 st = stars(sd, 260.0, 0.955 - band * 0.05, 0.38) + stars(sd, 520.0, 0.95 - band * 0.08, 0.3) * 0.5 + stars(sd, 90.0, 0.987, 0.32) * 1.4;
+          vec3 st = stars(sd, 260.0, 0.955 - band * 0.05, 0.38) + stars(sd, 90.0, 0.987, 0.32) * 1.4;
+          #ifndef LOW
+          st += stars(sd, 520.0, 0.95 - band * 0.08, 0.3) * 0.5;
+          #endif
           st *= smoothstep(0.0, 0.22, h);
 
           // thin cloud drifting across, lit faintly by the moons; it hides the stars
@@ -552,6 +567,7 @@ export class World {
 
     this.buildPlane();
     this.buildCrashDebris();
+    this.buildLandmarks();
     const bea = this.buildBeacon();
     this.beaconLight = bea.light;
     this.beaconMat = bea.mat;
@@ -756,6 +772,78 @@ export class World {
     at(bl, -8.6, 24.3, 0.04).rotation.set(-Math.PI / 2, 0, 1.1);
   }
 
+  /** Two places to remember the way by. */
+  private buildLandmarks() {
+    // ---- the Dead Tree: one enormous trunk, bleached grey, leafless, twisting
+    // up out of the canopy. Branches by recursion, merged into one mesh.
+    const rand = rng(77);
+    const parts: THREE.BufferGeometry[] = [];
+    const up = new THREE.Vector3(0, 1, 0);
+    const limb = (from: THREE.Vector3, dir: THREE.Vector3, len: number, r0: number, depth: number) => {
+      const r1 = r0 * 0.62;
+      const g = new THREE.CylinderGeometry(r1, r0, len, depth > 1 ? 9 : 6, 1);
+      g.translate(0, len / 2, 0);
+      g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, dir));
+      g.translate(from.x, from.y, from.z);
+      parts.push(g.index ? g.toNonIndexed() : g);
+      const tip = from.clone().addScaledVector(dir, len);
+      if (depth >= 4 || r1 < 0.05) return;
+      const n = depth === 0 ? 4 : 2 + Math.floor(rand() * 2);
+      for (let i = 0; i < n; i++) {
+        const d = dir.clone()
+          .add(new THREE.Vector3((rand() - 0.5) * 1.5, (rand() - 0.15) * 0.7, (rand() - 0.5) * 1.5))
+          .normalize();
+        const at = depth === 0 ? from.clone().addScaledVector(dir, len * (0.55 + i * 0.13)) : tip;
+        limb(at, d, len * (0.55 + rand() * 0.2), depth === 0 ? r0 * 0.42 : r1, depth + 1);
+      }
+      if (depth === 0) limb(tip, dir.clone().add(new THREE.Vector3(0.15, 0, -0.1)).normalize(), len * 0.45, r1, depth + 1);
+    };
+    limb(new THREE.Vector3(0, -0.5, 0), new THREE.Vector3(0.05, 1, 0.08).normalize(), 15, 1.25, 0);
+    // roots flaring into the ground
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + 0.4;
+      limb(new THREE.Vector3(0, 0.6, 0), new THREE.Vector3(Math.cos(a), -0.35, Math.sin(a)).normalize(), 3.2, 0.55, 3);
+    }
+    const geo = mergeGeometries(parts.map((g) => { g.deleteAttribute("uv"); return g; }));
+    const tree = new THREE.Mesh(geo, std(0x9a958c, { roughness: 0.95 }));
+    tree.position.copy(DEAD_TREE);
+    tree.castShadow = true;
+    tree.receiveShadow = true;
+    this.scene.add(tree);
+    this.colliders.push({ x: DEAD_TREE.x, z: DEAD_TREE.z, r: 1.6 });
+
+    // ---- the Blue Scar: cracked ground, a cold light down in the cracks,
+    // stones lifted a hand's width off the earth, turning very slowly
+    const crackMat = new THREE.MeshBasicMaterial({ color: 0x5fb8c8, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
+    const cr = rng(9);
+    for (let i = 0; i < 22; i++) {
+      const a = cr() * Math.PI * 2;
+      const d = cr() * 6.5;
+      const x = SCAR.x + Math.cos(a) * d;
+      const z = SCAR.z + Math.sin(a) * d;
+      const c = new THREE.Mesh(new THREE.PlaneGeometry(0.04 + cr() * 0.07, 0.8 + cr() * 2.6), crackMat);
+      c.rotation.set(-Math.PI / 2, 0, cr() * Math.PI);
+      c.position.set(x, heightAt(x, z) + 0.03, z);
+      this.scene.add(c);
+    }
+    const stone = std(0x3c3d42, { roughness: 0.9 });
+    for (let i = 0; i < 7; i++) {
+      const a = cr() * Math.PI * 2;
+      const d = 1 + cr() * 4.5;
+      const x = SCAR.x + Math.cos(a) * d;
+      const z = SCAR.z + Math.sin(a) * d;
+      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.15 + cr() * 0.3, 0), stone);
+      st.castShadow = true;
+      st.userData.hover = { y: heightAt(x, z) + 0.25 + cr() * 0.6, ph: cr() * 6 };
+      st.position.set(x, st.userData.hover.y, z);
+      this.scarStones.push(st);
+      this.scene.add(st);
+    }
+    const scarLight = new THREE.PointLight(0x6fd0e0, 1.4, 9, 2);
+    scarLight.position.set(SCAR.x, SCAR.y + 0.4, SCAR.z);
+    this.scene.add(scarLight);
+  }
+
   private buildBeacon() {
     const g = new THREE.Group();
     const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.5), std(0xff6a00, { roughness: 0.5 }));
@@ -785,9 +873,9 @@ export class World {
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
     const BASIN_V = new THREE.Vector3(BASIN_C.x, 0, BASIN_C.z);
     const SETTLE_V = new THREE.Vector3(SETTLEMENT.x, 0, SETTLEMENT.z);
-    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP];
+    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP, DEAD_TREE, SCAR];
     const clearR = (v: THREE.Vector3) =>
-      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : 14;
+      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : v === DEAD_TREE ? 12 : v === SCAR ? 11 : 14;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
@@ -1459,8 +1547,11 @@ export class World {
     this.moodDensity += (mood.density - this.moodDensity) * k;
     this.fogBoostNow += (this.fogBoost - this.fogBoostNow) * Math.min(1, dt * 0.5);
     fog.density = this.moodDensity + this.fogBoostNow * 0.014;
-    this.hemi.intensity += (mood.hemi * lift(mood.hemi) - this.hemi.intensity) * k;
-    this.sun.intensity += (mood.sun * lift(mood.hemi) - this.sun.intensity) * k;
+    // inside the aircraft the night outside barely reaches: its own lamps light it
+    const outdoor = this.indoor ? 0.22 : 1;
+    const ki = this.indoor ? 1 : k;
+    this.hemi.intensity += (mood.hemi * lift(mood.hemi) * outdoor - this.hemi.intensity) * ki;
+    this.sun.intensity += (mood.sun * lift(mood.hemi) * outdoor - this.sun.intensity) * ki;
     const tint = this.skyMat.uniforms.uTint.value as THREE.Vector3;
     tint.lerp(new THREE.Vector3(...mood.tint), k);
     this.bigMoon.color.lerp(new THREE.Color(mood.blood ? 0xc8473c : 0xe4e0d6), k);
@@ -1533,6 +1624,11 @@ export class World {
     this.riftMat.uniforms.uTime.value = t;
     this.riftMat.uniforms.uOpen.value = this.riftOpen;
     this.riftLight.intensity = 0.6 + this.riftOpen * 16 + Math.sin(t * 0.9) * 0.3;
+    for (const st of this.scarStones) {
+      const h = st.userData.hover as { y: number; ph: number };
+      st.position.y = h.y + Math.sin(t * 0.4 + h.ph) * 0.06;
+      st.rotation.y = t * 0.05 + h.ph;
+    }
     // the debris rises slowly round the seam, turning, and starts again below
     for (const d of this.riftDebris) {
       const u = d.userData.debris as { a: number; r: number; y: number; sp: number };

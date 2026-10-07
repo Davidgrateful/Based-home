@@ -5,6 +5,7 @@
 // line and is gone when you look again.
 
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { buildHumanoid, buildSpear, type Humanoid } from "./models";
 import { CAMP, glowTexture, heightAt } from "./world";
 
@@ -111,11 +112,11 @@ export class Signs {
     caseG.rotation.y = -0.5;
     // a scuffed field case (olive polymer, not metal: metal reads black at night)
     const shell = new THREE.MeshStandardMaterial({ color: 0x4d5247, roughness: 0.62, metalness: 0.05 });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.2, 0.44), shell);
+    const body = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.2, 0.44, 3, 0.035), shell);
     body.position.y = 0.1;
     body.castShadow = true;
     caseG.add(body);
-    this.caseLid = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.04, 0.44), shell);
+    this.caseLid = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.05, 0.44, 3, 0.02), shell);
     this.caseLid.geometry.translate(0, 0, -0.22);
     this.caseLid.position.set(0, 0.21, 0.22);
     this.caseLid.rotation.x = -1.9;

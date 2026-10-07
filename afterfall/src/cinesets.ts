@@ -960,6 +960,7 @@ export class PlaneSet {
     const L = (x: number, y: number, z: number) => SET.clone().add(new THREE.Vector3(x, y, z));
     // the jet outside only exists for the exterior shot: never through our own window
     this.world.fallingPlane.visible = id === "exterior" && !this.flashbackMode;
+    this.world.indoor = id !== "exterior";
     switch (id) {
       case "exterior": {
         const p = this.world.fallingPlane.position;
@@ -1060,7 +1061,7 @@ export class PlaneSet {
         // Rhea over the stretcher, hours into the shift: eyes on the patient,
         // up to the monitor; every so often she reaches to check the line or
         // the screen, then settles back, a little slower than she'd like.
-        m.setBase(talking ? "talk" : "idle", talking ? 1 : 0.75, 0.4);
+        m.setBase("idle", talking ? 0.9 : 0.75, 0.4); // she talks with her face, hands still on the job
         m.body.rotation.x = 0.05;
         a.busy = (a.busy ?? 4) - dt;
         const checking = a.busy < 1.6 && !talking;
@@ -1075,6 +1076,7 @@ export class PlaneSet {
   }
 
   dispose() {
+    this.world.indoor = false;
     this.scene.remove(this.group, this.rift, this.sea.mesh);
     for (const c of this.puffs) this.scene.remove(c);
     this.world.fallingPlane.visible = false;
