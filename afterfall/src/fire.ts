@@ -300,7 +300,7 @@ export class Fire {
       const f = this.flames[i];
       f.scale.set(0.6 + pw * 0.4, (0.45 + pw * 0.55) * (0.94 + Math.sin(t * (5 + i) + i) * 0.06), 1);
     }
-    this.bedMat.emissiveIntensity = on ? (0.6 + pw * 0.5) * flick : 0.25;
+    this.bedMat.emissiveIntensity = on ? (0.6 + pw * 0.5) * flick : 0.0; // a cold pit is just ash
     if (this.light) {
       this.light.intensity = on ? this.baseLight * (0.3 + 0.7 * pw) * flick : 0;
       this.light.position.x = Math.sin(t * 9.1 + this.seed) * 0.06 * S;

@@ -3,6 +3,7 @@
 // with a wardrobe for the player's survivor.
 
 import * as THREE from "three";
+import barkUrl from "ez-tree-assets/bark/oak_color_1k.jpg";
 import { boneMask, Person, peopleOk, type Outfit } from "./people";
 
 export interface Humanoid {
@@ -597,23 +598,55 @@ export function buildGreatAxe() {
 }
 
 export function buildClub() {
+  // a length of branch, thick at the striking end, bound with wire and
+  // studded with bone
   const g = new THREE.Group();
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 1.3, 10), mat(0x3a2416));
+  const bark = barkMaterial();
+  const geo = new THREE.CylinderGeometry(0.12, 0.045, 1.2, 10, 8);
+  const p = geo.attributes.position as THREE.BufferAttribute;
+  for (let i = 0; i < p.count; i++) {
+    // knots and a slight bend
+    const y = p.getY(i);
+    const k = 1 + Math.sin(y * 9 + p.getX(i) * 20) * 0.08;
+    p.setX(i, p.getX(i) * k + Math.sin(y * 2.4) * 0.03);
+    p.setZ(i, p.getZ(i) * k);
+  }
+  geo.computeVertexNormals();
+  const shaft = new THREE.Mesh(geo, bark);
+  shaft.position.y = 0.25;
   g.add(shaft);
-  const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 1), mat(0x5a5248));
-  head.position.y = 0.7;
-  g.add(head);
-  for (let i = 0; i < 4; i++) {
-    const sp = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.18, 8), mat(0xd9cfb8));
-    const a = (i / 4) * Math.PI * 2;
-    sp.position.set(Math.cos(a) * 0.22, 0.7, Math.sin(a) * 0.22);
-    sp.rotation.z = -Math.cos(a) * 1.5;
-    sp.rotation.x = Math.sin(a) * 1.5;
+  const wire = mat(0x6a6660, { metalness: 0.7, roughness: 0.5 });
+  for (const y of [-0.22, -0.1]) {
+    const w = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.008, 6, 14), wire);
+    w.rotation.x = Math.PI / 2;
+    w.position.y = y;
+    g.add(w);
+  }
+  const bone = mat(0xd9cfb8, { roughness: 0.6 });
+  for (let i = 0; i < 6; i++) {
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.12, 6), bone);
+    const a = (i / 6) * Math.PI * 2;
+    const y = 0.62 + (i % 2) * 0.12;
+    sp.position.set(Math.cos(a) * 0.11, y, Math.sin(a) * 0.11);
+    sp.lookAt(Math.cos(a) * 2, y, Math.sin(a) * 2);
+    sp.rotateX(Math.PI / 2);
     g.add(sp);
   }
   g.rotation.x = Math.PI / 2;
   g.position.z = 0.2;
+  g.traverse((m) => ((m as THREE.Mesh).castShadow = true));
   return g;
+}
+
+let _bark: THREE.MeshStandardMaterial | null = null;
+function barkMaterial() {
+  if (_bark) return _bark;
+  const t = new THREE.TextureLoader().load(barkUrl);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(1, 2);
+  _bark = new THREE.MeshStandardMaterial({ map: t, color: 0x8a7a6a, roughness: 0.95 });
+  return _bark;
 }
 
 /** Shaman staff; returns the orb material so it can glow while casting. */

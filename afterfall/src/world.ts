@@ -9,6 +9,47 @@ import { NearField, placeProps, type Placed } from "./props";
 import { buildAmbulance } from "./ambulance";
 import { Fire, updateFires } from "./fire";
 
+/** A few small glowing mushrooms: pale stems, caps that give off light. */
+function mushroomCluster() {
+  const parts: THREE.BufferGeometry[] = [];
+  const spots: [number, number, number][] = [
+    [0, 0, 1],
+    [0.07, 0.04, 0.7],
+    [-0.05, 0.06, 0.55],
+    [0.02, -0.07, 0.8],
+  ];
+  for (const [x, z, k] of spots) {
+    const stem = new THREE.CylinderGeometry(0.008 * k, 0.012 * k, 0.09 * k, 6);
+    stem.translate(x, 0.045 * k, z);
+    const cap = new THREE.SphereGeometry(0.03 * k, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2);
+    cap.scale(1, 0.55, 1);
+    cap.translate(x, 0.09 * k, z);
+    for (const [g, c] of [
+      [stem, 0.18],
+      [cap, 1],
+    ] as const) {
+      const n = g.attributes.position.count;
+      g.setAttribute("color", new THREE.Float32BufferAttribute(new Array(n * 3).fill(c), 3));
+      parts.push(g.index ? g.toNonIndexed() : g);
+    }
+  }
+  // merge (positions + colours only)
+  let total = 0;
+  for (const g of parts) total += g.attributes.position.count;
+  const pos = new Float32Array(total * 3);
+  const col = new Float32Array(total * 3);
+  let o = 0;
+  for (const g of parts) {
+    pos.set(g.attributes.position.array as Float32Array, o * 3);
+    col.set(g.attributes.color.array as Float32Array, o * 3);
+    o += g.attributes.position.count;
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  out.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  return out;
+}
+
 /** What the ground is at a point: trodden earth (around the camp, the crash,
  *  the settlement, and in patches), burnt ground by the wreck, Choir ash. */
 export function floorFx(x: number, z: number) {
@@ -374,13 +415,7 @@ export class World {
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Skid trench from the crash.
-    const trench = new THREE.Mesh(new THREE.PlaneGeometry(6, 40), new THREE.MeshStandardMaterial({ color: 0x0c0a0c, roughness: 1, transparent: true, opacity: 0.55, depthWrite: false }));
-    trench.rotation.x = -Math.PI / 2;
-    trench.rotation.z = 0.25;
-    trench.position.set(-6, 0.03, 12);
-    trench.receiveShadow = true;
-    scene.add(trench);
+    // (the skid scar is burnt ground in the terrain itself now)
 
     this.shardGlow = new THREE.SpriteMaterial({
       map: glowTexture(),
@@ -582,8 +617,9 @@ export class World {
       if (this.treeSpots.some((t) => Math.hypot(t.x - x, t.z - z) < 3.2)) continue;
       plant(x, z);
     }
-    bulbs.count = bi;
-    this.scene.add(bulbs);
+    // the old seed-pods hung where blob canopies used to be; real crowns don't
+    // hold them, so they stay unplanted (the rand() calls keep the forest in place)
+    bulbs.count = 0;
     this.forest = new Forest(spots);
     this.scene.add(this.forest.group);
     this.near = new NearField(heightAt, (x, z) => {
@@ -633,7 +669,7 @@ export class World {
 
     // glowing ground flora
     const F = 420;
-    const flora = new THREE.InstancedMesh(new THREE.ConeGeometry(0.035, 0.32, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }), F);
+    const flora = new THREE.InstancedMesh(mushroomCluster(), new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true }), F);
     for (let i = 0; i < F; i++) {
       const x = (rand() - 0.5) * 2 * WORLD_RADIUS;
       const z = (rand() - 0.5) * 2 * WORLD_RADIUS + 30;
@@ -641,11 +677,11 @@ export class World {
         m.makeScale(0, 0, 0);
       } else {
         const sc = 0.5 + rand();
-        m.compose(p.set(x, heightAt(x, z) + 0.2 * sc, z), q.identity(), s.setScalar(sc));
+        m.compose(p.set(x, heightAt(x, z) - 0.01, z), q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand() * 6.28), s.setScalar(sc));
       }
       flora.setMatrixAt(i, m);
       // nothing grows light in the Blackwood
-      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x5fa894 : 0x7a6e9a).multiplyScalar(x < BLACKWOOD_X ? 0.08 : 0.55));
+      flora.setColorAt(i, new THREE.Color(rand() < 0.5 ? 0x6fe0c4 : 0x9a8cff).multiplyScalar(x < BLACKWOOD_X ? 0.08 : 0.8));
     }
     this.scene.add(flora);
   }
