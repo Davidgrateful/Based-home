@@ -964,8 +964,8 @@ export class World {
     wall(0.9, H, -W / 2 + 0.45, D / 2, 0);
     wall(0.9, H, W / 2 - 0.45, D / 2, 0);
     const roof = new THREE.Mesh(new THREE.PlaneGeometry(W + 0.4, D + 0.4), sheet);
-    roof.rotation.x = -Math.PI / 2 + 0.08;
-    roof.position.y = H + 0.05;
+    roof.rotation.x = -Math.PI / 2;
+    roof.position.y = H;
     g.add(roof);
     // the marks, on the inside of the back wall
     const marks = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.2, H - 0.4), new THREE.MeshStandardMaterial({ map: wallMarksTex(), transparent: true, roughness: 0.8, metalness: 0.3, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
@@ -1010,7 +1010,7 @@ export class World {
     const mon = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.32, 0.18, 2, 0.02), std(0x5a4636, { roughness: 0.9, metalness: 0.4 }));
     mon.position.set(1.1, 1.25, 0.9);
     mon.rotation.y = -0.6;
-    const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.24), new THREE.MeshStandardMaterial({ color: 0x050806, emissive: 0x4fa86a, emissiveIntensity: 0.35, emissiveMap: textTex(["", "STANDBY"], 128, 96, "#000", "#9fd8a8") }));
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.24), new THREE.MeshStandardMaterial({ color: 0x050806, emissive: 0x4fa86a, emissiveIntensity: 0.2, emissiveMap: textTex(["", "", "", "            standby", "", ""], 256, 192, "#060a07", "#5f9a6c") }));
     scr.position.set(1.1 - Math.sin(0.6) * 0.092, 1.25, 0.9 + Math.cos(0.6) * 0.092);
     scr.rotation.y = -0.6;
     g.add(stand, mon, scr);
@@ -2325,7 +2325,7 @@ export class World {
     this.riftLight.intensity = 0.6 + this.riftOpen * 16 + Math.sin(t * 0.9) * 0.3;
     // the shed's monitor on standby: a slow breath of green
     const sb = 0.75 + Math.sin(t * 0.8) * 0.25;
-    this.shedScreen.emissiveIntensity = 0.35 * sb;
+    this.shedScreen.emissiveIntensity = 0.2 * sb;
     this.shedLight.intensity = 0.9 * sb;
     // the old camp's lantern: a weak battery, stuttering
     const lk = Math.sin(t * 1.3) > 0.93 ? 0.15 : 0.75 + Math.sin(t * 17) * 0.08;
