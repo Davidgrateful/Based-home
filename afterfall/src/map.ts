@@ -217,7 +217,7 @@ const MARKS: Mark[] = [
   { x: 0, z: 0, label: "Ambulance", kind: "warm" },
   { x: CAMP.x, z: CAMP.z, label: "Fire", kind: "fire", lit: () => world.campfire.lit },
   { x: -12, z: 30, label: "Crash site", kind: "crash", known: () => true },
-  { x: BEACON.x, z: BEACON.z, label: "Black box", kind: "plain" },
+  { x: BEACON.x, z: BEACON.z, label: "", kind: "plain" }, // the black box: in the wreck, under "Crash site"
   { x: CASE_POS.x, z: CASE_POS.z, label: "", kind: "plain" },
   { x: MAST.x, z: MAST.z, label: "Watchtower", kind: "tower", known: () => landmarkFound("watchtower") },
   { x: STATION.x, z: STATION.z, label: "", kind: "danger", known: () => save.regions.includes("station") },
