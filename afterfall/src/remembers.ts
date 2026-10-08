@@ -134,6 +134,19 @@ export const remembers = {
     };
   },
 
+  /** Died after the first night: the world resets, a little wrong (story.ts). */
+  onDeath(n: number) {
+    apply(n);
+    const pool = unfoundEchoes();
+    if (pool.length && !world.ghosts.length) {
+      const [x, z] = ECHO_SPOTS[(n + 3) % ECHO_SPOTS.length];
+      spawnEcho(pool[Math.floor(Math.random() * pool.length)], x, z);
+    }
+    const lines = S.WAKE_AGAIN[Math.min(n - 1, S.WAKE_AGAIN.length - 1)] ?? S.WAKE_AGAIN[0];
+    // the last one repeats; the ones before it happen once
+    window.setTimeout(() => void say(n > S.WAKE_AGAIN.length ? S.WAKE_AGAIN[S.WAKE_AGAIN.length - 1] : lines), 2200);
+  },
+
   /** A story that's already past a few nights (Continue, tests). */
   restore() {
     apply(survival.run);

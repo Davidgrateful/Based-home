@@ -45,6 +45,7 @@ import { setMemoryCamera } from "./memory";
 import { Person, peopleReady, track, updatePeople } from "./people";
 import { PlaneSet } from "./cinesets";
 import { base } from "./camp";
+import { chapterTwo } from "./chapter2";
 import { supplies, survival } from "./survival";
 import { CATALOG, earn, PRICES, purchase, quote } from "./economy";
 import { tradingPost } from "./trade";
@@ -589,4 +590,6 @@ tick();
   economy: { CATALOG, PRICES, quote, purchase, earn },
   tradingPost,
   camp: base,
+  ch2: chapterTwo,
+  storyState: story,
 };

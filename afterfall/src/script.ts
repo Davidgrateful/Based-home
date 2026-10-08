@@ -428,25 +428,6 @@ export const THING_FIRST: Line[] = [
 ];
 
 // ---------------------------------------------------------------- ACT II
-export const AMBUSH_START: Line[] = [
-  ["HOLLOW", "Fall. Forget. Belong."],
-  ["HOLLOW", "Ten thousand and one! The one has come home!", { pitch: 0.7 }],
-];
-
-export const AMBUSH_CLEARED: Line[] = [
-  ["YOU", "Wristbands. All of them. Meridian."],
-  ["RHEA", "Same as yours."],
-  ["YOU", "Ten thousand people, Rhea."],
-  ["RHEA", "Not all of them are out here. Some went missing. Some were transferred."],
-  ["YOU", "Transferred where?"],
-  ["RHEA", "That was the word they used. I never asked."],
-  ["YOU", "You never asked."],
-  ["RHEA", "I know how that sounds."],
-  ["RHEA", "Okafor said stay away from the towers. They're also the only thing that can carry a signal. So. Something stupid."],
-  ["YOU", "Light the towers."],
-  ["RHEA", "Light the towers."],
-];
-
 export const PYLON_TOUCH: Line[] = [["HOLLOW", "No! No, the towers wake him!"]];
 
 export const PYLON_LIT: Line[][] = [
@@ -612,12 +593,6 @@ export const ENDING_PLANE: Line[] = [
 export const ENDING_WHISPER: Line[] = [
   ["YOU", "I know.", { name: "The patient", rate: 0.7, pitch: 0.85 }],
   ["RHEA", "Sleeper?"],
-];
-
-export const RESPAWN: Line[][] = [
-  [["RHEA", "{name}! Get up. Don't you dare quit on me."]],
-  [["RHEA", "Breathe. In. Out. You're not done, and I'm not done with you."]],
-  [["RHEA", "Up! You can bleed later. That's a medical opinion."]],
 ];
 
 // ---------------------------------------------------------------- HOLLOW BARKS
@@ -804,4 +779,100 @@ export const CAMP_RADIO: Line[][] = [
   [["RHEA", "You sound closer when you're at your fire. I know that's not how radios work."]],
   [["YOU", "Talk to me about anything."], ["RHEA", "There's a song stuck in my head and I can't remember a single word of it."]],
   [["RHEA", "Keep the fire high tonight. I don't know why I said tonight. It's always tonight."]],
+];
+
+// ---------------------------------------------------------------- CHAPTER II: THE THING IN THE DARK
+export const CH2_RING: Line[] = [
+  ["YOU", "Prints. All the way round the fire."],
+  ["RHEA", "An animal?"],
+  ["YOU", "Bare feet. It stopped every few steps. Like it was listening."],
+  ["YOU", "Then it went that way."],
+  ["RHEA", "That's toward the Blackwood. Don't."],
+  ["YOU", "It knows where I sleep. I want to know where it goes."],
+];
+/** Rhea's voice, from the trees. It isn't Rhea. */
+export const CH2_MIMIC: Line[] = [["RHEA", "Over here. Quickly.", { radio: false, fx: "far" }]];
+export const CH2_NOT_ME: Line[] = [
+  ["YOU", "Rhea? Where are you?"],
+  ["RHEA", "Where I always am. On the radio."],
+  ["YOU", "I just heard you. Out there, in the trees."],
+  ["RHEA", "That wasn't me."],
+];
+/** A later attempt: the one in the trail knows you. */
+export const CH2_KNOWS: Line[] = [["HOLLOW", "Again."]];
+export const CH2_FOLLOWED: Line[] = [
+  ["YOU", "It's behind me. It isn't trying to catch up."],
+  ["RHEA", "Then what's it doing?"],
+  ["YOU", "Seeing where I go."],
+];
+/** The first major Echo: a patient who was here before, at the same fire. */
+export const CH2_ECHO: Line[] = [
+  ["ECHO", "Second day. It walked round my fire in the night. All the way round.", { name: "Patient 4012" }],
+  ["ECHO", "It isn't hunting me. Hunting would be quicker.", { name: "Patient 4012" }],
+  ["ECHO", "It wants to know where I go. So I stopped going anywhere.", { name: "Patient 4012" }],
+  ["ECHO", "If you can hear this, you made a fire too.", { name: "Patient 4012" }],
+];
+export const CH2_ECHO_FRAGMENT = "It wants to know where you go.";
+export const CH2_AFTER_ECHO: Line[] = [
+  ["RHEA", "You went quiet. Are you all right?"],
+  ["YOU", "It's my second day too."],
+  ["RHEA", "What?"],
+  ["YOU", "Nothing. I'm coming back."],
+];
+export const CH2_RHEA_CUT: Line[] = [["RHEA", "There you are. Listen, I went back through the transfer logs. Your flight was never—"]];
+export const CH2_RHEA_GONE: Line[] = [
+  ["YOU", "Rhea?"],
+  ["YOU", "Rhea. Say something."],
+];
+export const CH2_SIGNAL: Line[] = [
+  ["YOU", "That's not her."],
+  ["YOU", "It's close. It's coming from out there."],
+];
+export const CH2_HIDE_NEAR: Line[] = [["YOU", "I walked right past here this morning."]];
+export const CH2_CAMERA_1: Line[] = [
+  ["YOU", "It's pointed at the crash."],
+  ["YOU", "Somebody's been watching us."],
+];
+export const CH2_CAMERA_2: Line[] = [
+  ["YOU", "It started recording at two fifty-one."],
+  ["YOU", "We came down at twelve minutes past three."],
+];
+/** Out of the black: she's back. Chapter III begins. */
+export const CH3_OPEN: Line[] = [
+  ["RHEA", "Can you hear me? Please. Say anything."],
+  ["YOU", "I'm here."],
+  ["RHEA", "You were gone four hours. Everything went dead. What happened?"],
+  ["YOU", "Somebody filmed the crash, Rhea. From before it happened."],
+  ["RHEA", "That's not possible."],
+  ["YOU", "Then somebody knew."],
+  ["RHEA", "There are towers north of you. Old ones. Your signal's riding on something up there. If anyone's listening, that's where from."],
+];
+
+// ---------------------------------------------------------------- DYING, AFTER THE FIRST NIGHT
+/** Waking at the fire again. Nobody explains it. */
+export const WAKE_AGAIN: Line[][] = [
+  [
+    ["RHEA", "You went quiet for a minute there."],
+    ["YOU", "I was out. I think."],
+  ],
+  [
+    ["RHEA", "Careful past the big rock this time."],
+    ["YOU", "This time?"],
+    ["RHEA", "I don't know why I said that."],
+  ],
+  [
+    ["YOU", "Somebody's fed the fire."],
+    ["RHEA", "Well, it wasn't me."],
+  ],
+  [
+    ["RHEA", "Welcome back."],
+    ["YOU", "Back from where?"],
+    ["RHEA", "I meant to the fire. Didn't I?"],
+  ],
+];
+/** The trader, after you've died a couple of times. Once. */
+export const TRADER_KNOWS: Line[] = [
+  ["TRADER", "You look better than last time."],
+  ["YOU", "Last time?"],
+  ["TRADER", "Hm? Never mind me."],
 ];

@@ -113,6 +113,12 @@ export class Sfx {
   dash() { this.noise(0.25, 900, 0.5, 0.4, "highpass"); }
   heal() { this.tone(440, 0.4, 0.2, "sine", 880); }
   beep() { this.tone(1000, 0.08, 0.15, "square"); }
+  /** A carrier on the radio: two short pips, then nothing (Chapter II's signal). */
+  signal(gain = 0.1, pitch = 1) {
+    this.tone(1480 * pitch, 0.06, gain, "sine");
+    this.tone(1480 * pitch, 0.06, gain, "sine", undefined, 0.12);
+    this.noise(0.22, 2600, 0.7, gain * 0.35, "bandpass");
+  }
   door() { this.noise(0.6, 250, 2, 0.6, "lowpass"); this.tone(70, 0.5, 0.3, "sawtooth", 50); }
   slam() { this.noise(0.9, 120, 1, 1.2, "lowpass"); this.tone(55, 0.8, 0.8, "sine", 30); }
   charge() { this.tone(200, 0.6, 0.12, "sawtooth", 600); }

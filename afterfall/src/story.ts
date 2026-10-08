@@ -47,12 +47,13 @@ import { tradingPost } from "./trade";
 import { remembers } from "./remembers";
 import { buildDiscoveries } from "./discoveries";
 import { base } from "./camp";
+import { chapterTwo } from "./chapter2";
 import { toggleMap } from "./map";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
 type Stage =
-  | "intro" | "wake" | "outside" | "signs" | "fire" | "records" | "first" | "night1" | "ambush" | "pylons" | "boss" | "ending"
+  | "intro" | "wake" | "outside" | "signs" | "fire" | "records" | "first" | "night1" | "ch2" | "ambush" | "pylons" | "boss" | "ending"
   | "changed" | "settlement" | "basin" | "choir" | "finale" | "done";
 
 export const story = {
@@ -64,13 +65,10 @@ export const story = {
 let checkpoint = new THREE.Vector3(0, 0.36, -1.2);
 let activePylon = -1;
 let pylonSpawned = 0;
-let stageClock = 0;
 let barkCd = 8;
-let respawns = 0;
 let bossHalf = false;
 let bossLow = false;
 let firstShardSaid = false;
-const waveTimers: { at: number; n: number; kind: "hollow" | "runner" }[] = [];
 
 // Chapter One set dressing lives in the world for every mode (the tracks are
 // still there on the hundredth night).
@@ -84,6 +82,8 @@ survival.onLoop = (run) => remembers.onLoop(run);
 base.build();
 base.onMap = () => toggleMap(true);
 survival.campRadio = () => base.radioHere;
+chapterTwo.build();
+chapterTwo.onEnd = () => void chapterThreeOpen();
 let signStep = 0;
 let seenFor = 0;
 let fireFoundSaid = false;
@@ -445,6 +445,7 @@ async function firstHollowDown() {
 /** Keep the fire until dawn (survival.ts runs the night itself). */
 function startFirstNight() {
   story.stage = "night1";
+  chapter("night1");
   checkpoint = CAMP.clone().add(new THREE.Vector3(-2, 0, -2));
   survival.begin();
 }
@@ -485,7 +486,7 @@ async function firstNightEnd() {
   player.pos.y = heightAt(player.pos.x, player.pos.z);
   await wait(600);
   void fade(0, 1600);
-  startAmbush();
+  startChapterTwo();
 }
 
 /** The recording plays over what it describes: Okafor alone at the stick. */
@@ -515,26 +516,33 @@ async function blackBoxFlashback() {
 }
 
 // ------------------------------------------------------------------ ACT II
-function startAmbush() {
-  story.stage = "ambush";
+/** Chapter II: something has been keeping track of you (chapter2.ts runs it). */
+function startChapterTwo() {
+  story.stage = "ch2";
+  chapter("ch2");
   checkpoint = CAMP.clone().add(new THREE.Vector3(-2, 0, -2));
-  stageClock = 0;
-  waveTimers.length = 0;
-  waveTimers.push({ at: 0.2, n: 3, kind: "hollow" }, { at: 7, n: 2, kind: "runner" }, { at: 14, n: 2, kind: "hollow" });
-  sfx.roar();
-  card("CHAPTER II", "THE THING IN THE DARK", "It came toward the light", 2600);
-  setObjective("II · THE THING IN THE DARK", "Survive.");
-  say(S.AMBUSH_START);
+  world.campfire.lit = true;
+  card("CHAPTER II", "THE THING IN THE DARK", "Something walked round the fire", 3200);
+  chapterTwo.start();
 }
 
-async function ambushCleared() {
-  story.stage = "pylons";
+/** Out of the black at the camera: Rhea's back, and the towers are next. */
+async function chapterThreeOpen() {
+  voice.static = 0;
   reward("ambush");
+  await card("CHAPTER III", "WHAT THEY BUILT", "", 3400);
+  startPylons();
+  sfx.ambienceTo(0.16, 3);
+  void fade(0, 2200);
+  await wait(1200);
+  await say(S.CH3_OPEN);
+}
+
+function startPylons() {
+  story.stage = "pylons";
   chapter("pylons");
   activePylon = -1;
   setObjective("III · WHAT THEY BUILT", "Wake the towers (0/3).");
-  await say(S.AMBUSH_CLEARED);
-  if (story.stage === "pylons") card("CHAPTER III", "WHAT THEY BUILT", "The towers are still humming", 2800);
 }
 
 async function pylonLit(i: number) {
@@ -961,20 +969,36 @@ export async function storyPlayerDown() {
     void fade(0, 2600);
     return;
   }
-  $("dead").classList.add("show");
-  await wait(1200);
-  say(S.RESPAWN[respawns++ % S.RESPAWN.length]);
-  await wait(2200);
+  // Not GAME OVER. The world resets, and some of it doesn't.
+  //   kept:  the map, the records, Echoes, what you found, the camp, what you know
+  //   lost:  where you were, what you carried (half of it lies where you fell),
+  //          the small caches (they're somewhere else now), the objective
+  const deaths = Number(save.flags.deaths ?? 0) + 1;
+  save.flags.deaths = String(deaths);
+  persist();
+  await fade(1, 1600);
   enemies.clear();
-  player.pos.copy(checkpoint);
-  player.pos.y = bounds.groundAt(checkpoint.x, checkpoint.z);
+  // the first chapters wake you at the fire (the shelter, once it's up); later
+  // ones at the last place you made it to
+  const home = ["first", "records", "ch2"].includes(story.stage);
+  const shelter = base.built("shelter") ? base.slots.find((s) => s.p.id === "shelter")!.pos : null;
+  const wake = home ? (shelter ? shelter.clone().add(new THREE.Vector3(0, 0, -1.4)) : CAMP.clone().add(new THREE.Vector3(-1.6, 0, -2.6))) : checkpoint;
+  player.pos.copy(wake);
+  player.pos.y = bounds.groundAt(wake.x, wake.z);
+  player.yaw = Math.atan2(CAMP.x - wake.x, CAMP.z - wake.z) || player.yaw;
   player.hp = player.maxHp;
   player.medkits = Math.max(player.medkits, 1);
-  player.invuln = 2;
+  player.invuln = 3;
+  survival.reroll();
+  if (home) {
+    world.campfire.lit = true; // burning when you wake. You didn't feed it.
+    world.campfire.hp = world.campfire.maxHp;
+  }
+  remembers.onDeath(deaths);
+  if (story.stage === "ch2") chapterTwo.onDeath(deaths);
   if (story.stage === "first") spawnFirstHollow(false);
 
   if (story.stage === "basin" && late.fightDone && checkpoint.z >= 240) late.fightDone = false; // the fight comes again
-  if (story.stage === "ambush") startAmbush();
   if (story.stage === "pylons" && activePylon >= 0) {
     world.pylons[activePylon].charge = 0;
     activePylon = -1;
@@ -985,8 +1009,12 @@ export async function storyPlayerDown() {
     hud.bossBar.classList.remove("show");
     setObjective("IV · PATIENT ONE", "Return to the stone circle.");
   }
-  $("dead").classList.remove("show");
   state.dead = false;
+  $("blur").classList.remove("waking");
+  void $("blur").offsetWidth;
+  $("blur").classList.add("waking");
+  await wait(900);
+  void fade(0, 2600);
 }
 
 export function storyTarget(): THREE.Vector3 | null {
@@ -1009,6 +1037,8 @@ export function storyTarget(): THREE.Vector3 | null {
       return CASE_POS;
     case "night1":
       return survival.target();
+    case "ch2":
+      return chapterTwo.target();
     case "pylons": {
       if (activePylon >= 0) return null;
       let best: THREE.Vector3 | null = null;
@@ -1031,7 +1061,6 @@ export function storyTarget(): THREE.Vector3 | null {
 }
 
 export function storyUpdate(dt: number) {
-  stageClock += dt;
   if (player.hp <= 0 && !state.dead) {
     storyPlayerDown();
     return;
@@ -1043,7 +1072,7 @@ export function storyUpdate(dt: number) {
   }
 
   const echo = echoInteract();
-  const sv = [...survival.interacts(story.stage), ...tradingPost.interacts(), ...(state.exited ? base.interacts(story.stage) : [])];
+  const sv = [...(story.stage === "ch2" ? chapterTwo.interacts() : []), ...survival.interacts(story.stage), ...tradingPost.interacts(), ...(state.exited ? base.interacts(story.stage) : [])];
   runInteractions(echo ? [...interacts, ...sv, ...evidenceInteracts(), echo] : [...interacts, ...sv, ...evidenceInteracts()]);
   survival.update(dt, story.stage);
   if (story.stage === "night1") remembers.update(dt);
@@ -1082,18 +1111,7 @@ export function storyUpdate(dt: number) {
   }
   if (story.stage === "basin") basinUpdate(dt);
 
-  if (story.stage === "ambush") {
-    for (const w of waveTimers) {
-      if (w.n > 0 && stageClock >= w.at) {
-        enemies.spawnAround(player.pos, w.n, 15, 20, w.kind);
-        w.n = 0;
-      }
-    }
-    if (waveTimers.length && waveTimers.every((w) => w.n === 0) && enemies.aliveCount === 0) {
-      waveTimers.length = 0;
-      ambushCleared();
-    }
-  }
+  if (story.stage === "ch2") chapterTwo.update(dt);
 
   if (story.stage === "pylons" && activePylon >= 0) {
     const p = world.pylons[activePylon];
@@ -1128,7 +1146,7 @@ export function storyUpdate(dt: number) {
 
   barkCd -= dt;
   // the night's Hollow murmur instead (survival.ts): no shouting at the fire
-  if (barkCd <= 0 && enemies.aliveCount > 0 && !voice.busy && story.stage !== "night1" && story.stage !== "first") {
+  if (barkCd <= 0 && enemies.aliveCount > 0 && !voice.busy && story.stage !== "night1" && story.stage !== "first" && story.stage !== "ch2") {
     barkCd = 9 + Math.random() * 6;
     say([["HOLLOW", pick(S.HOLLOW_BARKS)]]);
   }
@@ -1175,12 +1193,12 @@ export function storySkip(to: Stage) {
     player.pos.copy(CAMP).add(new THREE.Vector3(-2, 0, -2.5));
     startFirstNight();
   }
-  if (to === "ambush") {
+  if (to === "ambush" || to === "ch2") {
     world.setCampfire(true);
     player.pos.copy(CAMP).add(new THREE.Vector3(-2, 0, -2));
-    startAmbush();
+    startChapterTwo();
   }
-  if (to === "pylons") ambushCleared();
+  if (to === "pylons") startPylons();
   if (to === "boss") {
     world.pylons.forEach((p) => (p.lit = true));
     player.pos.set(0, heightAt(0, 128), 128);
@@ -1226,6 +1244,8 @@ export function resumeStory(ch: Stage) {
 }
 
 export const CHAPTER_NAMES: Record<string, string> = {
+  night1: "Chapter I · The First Night",
+  ch2: "Chapter II · The Thing in the Dark",
   pylons: "Chapter III · What They Built",
   boss: "Chapter IV · Patient One",
   changed: "Chapter V · The People Who Came Before",

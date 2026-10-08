@@ -391,6 +391,11 @@ class TradingPost {
       save.flags.surplusSeen = true;
       void say(S.SURPLUS_FIRST);
     }
+    // she says something she couldn't know
+    if (station === "post" && Number(save.flags.deaths ?? 0) >= 2 && !save.flags.traderKnows) {
+      save.flags.traderKnows = true;
+      void say(S.TRADER_KNOWS);
+    }
     this.render();
   }
 

@@ -188,7 +188,7 @@ export const REWARDS = {
   records: [6, "A sample tube in the Meridian case: shards."],
   firstHollow: [4, "It was carrying shards."],
   firstNight: [12, "The storm left shards in the ash."],
-  ambush: [8, "They all carried shards."],
+  ambush: [8, "The camera's battery. Somebody will trade for that."],
   tower: [5, "The tower shed shards as it woke."],
   warden: [20, "He'd been keeping them. All of them."],
   evidence: [2, "Someone left shards with it."],

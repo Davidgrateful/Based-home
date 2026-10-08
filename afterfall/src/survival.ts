@@ -817,6 +817,12 @@ class Survival {
     this.onLoop(run);
   }
 
+  /** After a death outside the first night: the small caches are somewhere else. */
+  reroll() {
+    this.roll();
+    this.renderInv(true);
+  }
+
   /** How many times the night has begun again (persistent). */
   get run() {
     return Number(save.flags.run ?? 0);

@@ -43,7 +43,7 @@ interface Piece {
 const built = (id: CampId) => !!save.flags["camp:" + id];
 export const camp = { built };
 
-const PAST_FIRST = ["ambush", "ch2", "blackwood", "echo2", "return", "signal", "pylons", "boss", "ending", "changed", "settlement", "basin", "choir", "finale", "done"];
+const PAST_FIRST = ["ch2", "pylons", "boss", "ending", "changed", "settlement", "basin", "choir", "finale", "done"];
 const evidenceCount = () => Object.keys(save.flags).filter((k) => k.startsWith("ev:")).length;
 
 const PIECES: Piece[] = [
@@ -71,7 +71,7 @@ const PIECES: Piece[] = [
     noun: "An empty crate",
     at: [-4.1, -0.3, -1.3],
     cost: { batteries: 2, scrap: 2 },
-    gate: (st) => (evidenceFound("d-radio") || ["return", "signal"].includes(st) ? null : "Nothing to build a radio out of. Not yet."),
+    gate: (st) => (evidenceFound("d-radio") || st === "ch2" ? null : "Nothing to build a radio out of. Not yet."),
   },
   {
     id: "table",
@@ -374,6 +374,7 @@ interface Slot {
 
 class Camp {
   slots: Slot[] = [];
+  built = built;
   /** what's stowed in the crates (outlives you) */
   stash: Record<Res, number> = { food: 0, water: 0, fuel: 0, scrap: 0, batteries: 0 };
   private restCd = 0;
