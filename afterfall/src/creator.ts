@@ -6,6 +6,7 @@ import { $, camera, persist, player, scene, sfx, voice, world } from "./ctx";
 import { DEFAULT_LOOK, LOOK, type Look, randomLook, type Swatch } from "./models";
 import { playerName, save } from "./save";
 import { CAMP, heightAt } from "./world";
+import { renderDesignation } from "./history";
 
 const NAMES = [
   "Kai Mercer", "Jordan Vale", "Sam Okoye", "Rin Calder", "Alex Moreau", "Noor Haddad",
@@ -61,6 +62,7 @@ export function applySaved() {
   voice.playerName = playerName();
   voice.altVoice = (save.look?.voice ?? 0) === 1;
   $("hud-name").textContent = playerName();
+  renderDesignation();
   $("char-sub").textContent = save.look ? `${playerName()}. Change name and clothing.` : "Name and dress your character.";
 }
 

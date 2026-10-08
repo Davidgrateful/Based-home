@@ -165,7 +165,7 @@ function buildBase() {
       g.strokeStyle = t.kind === 2 ? "rgba(150,70,58,0.55)" : "rgba(170,176,160,0.32)";
       g.lineWidth = 1;
       g.beginPath();
-      g.arc(x, y, 2.4, 0, Math.PI * 2);
+      g.arc(x, y, 1.5, 0, Math.PI * 2);
       g.stroke();
     }
   }
@@ -220,10 +220,10 @@ const MARKS: Mark[] = [
   { x: BEACON.x, z: BEACON.z, label: "Black box", kind: "plain" },
   { x: CASE_POS.x, z: CASE_POS.z, label: "", kind: "plain" },
   { x: MAST.x, z: MAST.z, label: "Watchtower", kind: "tower", known: () => landmarkFound("watchtower") },
-  { x: STATION.x, z: STATION.z, label: "The Watch", kind: "danger", known: () => save.regions.includes("station") },
+  { x: STATION.x, z: STATION.z, label: "", kind: "danger", known: () => save.regions.includes("station") },
   { x: DEAD_TREE.x, z: DEAD_TREE.z, label: "Dead tree", kind: "plain", known: () => landmarkFound("deadtree") },
-  { x: SCAR.x, z: SCAR.z, label: "Blue scar", kind: "rift", known: () => save.regions.includes("scar") },
-  { x: OLD_CAMP.x, z: OLD_CAMP.z, label: "Old camp", kind: "fire", lit: () => false, known: () => save.regions.includes("oldcamp") },
+  { x: SCAR.x, z: SCAR.z, label: "", kind: "rift", known: () => save.regions.includes("scar") },
+  { x: OLD_CAMP.x, z: OLD_CAMP.z, label: "", kind: "fire", lit: () => false, known: () => save.regions.includes("oldcamp") },
   ...PYLONS.map((p, i) => ({ x: p.x, z: p.z, label: "Tower", kind: "rift" as const, lit: () => world.pylons[i]?.lit ?? false })),
   { x: ARENA.x, z: ARENA.z, label: "Stone circle", kind: "rift" },
   { x: SETTLEMENT.x, z: SETTLEMENT.z, label: "Settlement", kind: "fire", lit: () => farlands.live },
@@ -421,16 +421,30 @@ function draw() {
   g.font = `500 ${10 * u}px "IBM Plex Mono", monospace`;
   g.fillStyle = COL.pencil;
   const placed = new Map<string, number>();
+  g.strokeStyle = COL.pencil;
+  g.lineWidth = 1 * u;
+  const done = new Set<string>();
   for (const e of EVIDENCE) {
     if (!evidenceFound(e.id) || !e.patients.length) continue;
+    const fresh = e.patients.filter((p) => !done.has(p));
+    if (!fresh.length) continue;
+    fresh.forEach((p) => done.add(p));
     const key = e.where;
     const n = placed.get(key) ?? 0;
     placed.set(key, n + 1);
+    const ex = sx(e.at.x);
+    const ey = sz(e.at.z);
+    const lx = ex + 34 * u;
+    const ly = ey + 26 * u + n * 12 * u;
+    g.beginPath();
+    g.moveTo(ex + 2 * u, ey + 2 * u);
+    g.lineTo(lx - 3 * u, ly - 4 * u);
+    g.stroke();
     g.save();
-    g.translate(sx(e.at.x) + 14 * u, sz(e.at.z) - 10 * u - n * 11 * u);
-    g.rotate(-0.06);
+    g.translate(lx, ly);
+    g.rotate(-0.05);
     g.textAlign = "left";
-    g.fillText(e.patients.join(" · "), 0, 0);
+    g.fillText(fresh.join(" · "), 0, 0);
     g.restore();
   }
 
@@ -453,7 +467,7 @@ function draw() {
   g.font = `600 ${11 * u}px "IBM Plex Mono", monospace`;
   g.textAlign = "center";
   g.fillStyle = designation() >= 2 ? COL.pencil : COL.fire;
-  g.fillText(designation() >= 2 ? "10001" : "YOU", px, py - 13 * u);
+  g.fillText(designation() >= 2 ? "10001" : "YOU", px, py + 20 * u);
 }
 
 /** The notes beside the sheet: how much is surveyed, the places, the numbers. */

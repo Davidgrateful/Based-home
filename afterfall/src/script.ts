@@ -194,9 +194,9 @@ export const NAV: Record<string, Line[]> = {
   signs: [["RHEA", "Head back to the ambulance. Keep the dead tree behind you."]],
   fire: [["RHEA", "The fire pit's by the ambulance. Look for the stones."]],
   records: [["RHEA", "The case. It's by the stones, where the fire is."]],
-  pylons: [["RHEA", "Listen for the towers. One's east, past that blue scar. One's west, out by the dead tree. One's north."]],
+  pylons: [["RHEA", "Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north."]],
   boss: [["RHEA", "Follow the beams north. To the stones."]],
-  changed: [["RHEA", "West. Where the trees go black."]],
+  changed: [["RHEA", "East. Where the trees go black."]],
   basin: [["RHEA", "North. Toward the white light."]],
 };
 

@@ -70,7 +70,7 @@ export class Farlands {
     const S = SETTLEMENT;
     const wood = std(0x3a2a1e);
     const darkWood = std(0x241a12);
-    // palisade: sharpened logs in a ring, gate facing east toward the Fallsite
+    // palisade: sharpened logs in a ring, gate facing west toward the Fallsite
     const logs: THREE.Vector3[] = [];
     for (let i = 0; i < 64; i++) {
       const a = (i / 64) * Math.PI * 2;

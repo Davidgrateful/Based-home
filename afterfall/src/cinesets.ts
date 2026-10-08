@@ -696,6 +696,10 @@ export class PlaneSet {
     cabin[0].position.set(0, 1.1, 0.6);
     cabin[1].position.set(0, 1.1, -3.6);
     cabin[2].position.set(0.42, 1.2, -0.2); // reading light over the patient
+    // the monitor's spill on Rhea's face: soft, low, a little cold-warm
+    const face = new THREE.PointLight(0xf2e2d0, 0.9, 1.8, 2);
+    face.position.set(0.15, 1.45, 0.35);
+    g.add(face);
     const cockpit = new THREE.PointLight(0x8fb4ff, 1.2, 3, 1.5);
     cockpit.position.set(0, -0.15, 7.2);
     const alarm = [new THREE.PointLight(0xff2a1a, 0, 7, 1.5), new THREE.PointLight(0xff2a1a, 0, 4, 1.5)];
@@ -1062,14 +1066,15 @@ export class PlaneSet {
         // up to the monitor; every so often she reaches to check the line or
         // the screen, then settles back, a little slower than she'd like.
         m.setBase("idle", talking ? 0.9 : 0.75, 0.4); // she talks with her face, hands still on the job
-        m.body.rotation.x = 0.05;
+        // hours into the shift: shoulders a little forward, head low between checks
+        m.body.rotation.x = talking ? 0.05 : 0.09;
         a.busy = (a.busy ?? 4) - dt;
         const checking = a.busy < 1.6 && !talking;
         if (a.busy <= 0) {
           a.busy = 6 + ((t * 7.3) % 4);
           if (!talking && !this.alarm) void m.play("interact", 0.8);
         }
-        m.lookPitch = talking ? 0.15 : checking ? -0.1 : 0.35;
+        m.lookPitch = talking ? 0.12 : checking ? -0.1 : 0.42 + Math.sin(t * 0.4) * 0.05;
         m.lookYaw = checking ? -0.45 : Math.sin(t * 0.25) > 0.6 ? -0.4 : 0.05;
       }
     }

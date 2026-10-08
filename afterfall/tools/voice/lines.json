@@ -2436,11 +2436,11 @@
   "from": "NAV"
  },
  {
-  "key": "RHEA|1|Listen for the towers. One's east, past that blue scar. One's west, out by the dead tree. One's north.",
+  "key": "RHEA|1|Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north.",
   "id": "RHEA",
   "radio": true,
-  "text": "Listen for the towers. One's east, past that blue scar. One's west, out by the dead tree. One's north.",
-  "say": "Listen for the towers. One's east, past that blue scar. One's west, out by the dead tree. One's north.",
+  "text": "Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north.",
+  "say": "Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north.",
   "name": "",
   "pitch": null,
   "rate": null,
@@ -2460,11 +2460,11 @@
   "from": "NAV"
  },
  {
-  "key": "RHEA|1|West. Where the trees go black.",
+  "key": "RHEA|1|East. Where the trees go black.",
   "id": "RHEA",
   "radio": true,
-  "text": "West. Where the trees go black.",
-  "say": "West. Where the trees go black.",
+  "text": "East. Where the trees go black.",
+  "say": "East. Where the trees go black.",
   "name": "",
   "pitch": null,
   "rate": null,

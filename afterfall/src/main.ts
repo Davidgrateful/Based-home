@@ -239,7 +239,7 @@ $("btn-reset").addEventListener("click", () => {
   if (confirm("Erase your survivor and all AFTERFALL progress on this browser?")) {
     resetSave();
     applySaved();
-renderDesignation();
+    renderDesignation();
     renderMenu();
   }
 });
@@ -493,6 +493,7 @@ function tick(now?: number) {
 }
 
 applySaved();
+renderDesignation();
 applyMemories();
 world.setCampfire(true);
 renderMenu();
@@ -536,4 +537,5 @@ tick();
   net,
   enterRoom,
   voiceChat,
+  regions: { regionsUpdate, historyUpdate },
 };

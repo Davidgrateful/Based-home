@@ -3,6 +3,7 @@
 // with a wardrobe for the player's survivor.
 
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import barkUrl from "ez-tree-assets/bark/oak_color_1k.jpg";
 import { boneMask, Person, peopleOk, type Outfit } from "./people";
 
@@ -376,10 +377,33 @@ export function accessorize(look: Look, S: THREE.Object3D, head: THREE.Object3D,
       break;
     }
     case 3: {
-      const canvas = mat(0x3f4436, { roughness: 0.9 });
-      add(B, new THREE.BoxGeometry(0.3 * w, 0.38, 0.15), canvas, 0, 0.38, -0.2 * (w > 1.05 ? 1.1 : 1));
-      add(B, new THREE.BoxGeometry(0.26 * w, 0.1, 0.06), canvas, 0, 0.22, -0.29 * (w > 1.05 ? 1.1 : 1));
-      for (const x of [-1, 1]) add(B, new THREE.BoxGeometry(0.04, 0.38, 0.015), dark, x * 0.1 * w, 0.4, 0.127 * (w > 1.05 ? 1.1 : 1));
+      // a survivor's pack: worn canvas, a flap and buckle, a side pocket, a
+      // red medical pouch off the plane, the foil blanket rolled underneath
+      const k = w > 1.05 ? 1.1 : 1;
+      const z0 = -0.2 * k;
+      const canvas = new THREE.MeshStandardMaterial({ color: 0x5a5c48, map: canvasTex(), roughness: 0.95 });
+      const webbing = mat(0x22231f, { roughness: 0.9 });
+      const metal = mat(0x8c8e8a, { metalness: 0.7, roughness: 0.4 });
+      add(B, new RoundedBoxGeometry(0.29 * w, 0.36, 0.14, 3, 0.04), canvas, 0, 0.39, z0);
+      const flap = add(B, new RoundedBoxGeometry(0.27 * w, 0.03, 0.15, 2, 0.012), canvas, 0, 0.56, z0 - 0.005);
+      flap.rotation.x = 0.12;
+      add(B, new THREE.BoxGeometry(0.035, 0.03, 0.012), metal, 0, 0.5, z0 - 0.078);
+      add(B, new RoundedBoxGeometry(0.06, 0.16, 0.08, 2, 0.02), canvas, 0.17 * w, 0.33, z0); // side pocket
+      const med = add(B, new RoundedBoxGeometry(0.06, 0.1, 0.07, 2, 0.015), mat(0x7e2a24, { roughness: 0.85 }), -0.17 * w, 0.4, z0);
+      med.rotation.z = 0.05;
+      add(B, new THREE.BoxGeometry(0.004, 0.035, 0.012), mat(0xd8d4cc), -0.2 * w, 0.41, z0);
+      add(B, new THREE.BoxGeometry(0.004, 0.012, 0.035), mat(0xd8d4cc), -0.2 * w, 0.41, z0);
+      const roll = add(B, new THREE.CylinderGeometry(0.045, 0.045, 0.27 * w, 12), mat(0xb8bcc0, { metalness: 0.6, roughness: 0.35 }), 0, 0.18, z0);
+      roll.rotation.z = Math.PI / 2;
+      for (const x of [-1, 1]) {
+        // compression straps on the back, shoulder straps over the top and down the chest
+        add(B, new THREE.BoxGeometry(0.025, 0.34, 0.006), webbing, x * 0.07 * w, 0.39, z0 - 0.073);
+        const over = add(B, new THREE.TorusGeometry(0.11 * k, 0.012, 4, 10, Math.PI * 0.75), webbing, x * 0.1 * w, 0.5, -0.02 * k);
+        over.rotation.set(0, Math.PI / 2, Math.PI * 0.25);
+        add(B, new THREE.BoxGeometry(0.04, 0.3, 0.012), webbing, x * 0.1 * w, 0.42, 0.127 * k);
+      }
+      add(B, new THREE.BoxGeometry(0.2 * w, 0.02, 0.01), webbing, 0, 0.46, 0.133 * k); // chest strap
+      add(B, new THREE.BoxGeometry(0.04, 0.03, 0.014), metal, 0, 0.46, 0.138 * k);
       break;
     }
     case 4: {
@@ -750,4 +774,35 @@ export function buildChanged(o: { cloth: number; skin: number; pants: number; ha
   }
   for (let i = 0; i < 3; i++) add(h.body, new THREE.OctahedronGeometry(0.04, 0), crystal, -0.2 - i * 0.03, 0.62 + i * 0.05, -0.02 + i * 0.03).scale.y = 2;
   return finish(h);
+}
+
+/** Worn canvas: a weave, grime toward the bottom, a few scuffs. */
+let _canvas: THREE.Texture | null = null;
+function canvasTex() {
+  if (_canvas) return _canvas;
+  const S = 128;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#b8b8b0";
+  g.fillRect(0, 0, S, S);
+  for (let i = 0; i < S; i += 2) {
+    g.fillStyle = `rgba(0,0,0,${0.06 + Math.random() * 0.05})`;
+    g.fillRect(0, i, S, 1);
+    g.fillRect(i, 0, 1, S);
+  }
+  const grime = g.createLinearGradient(0, 0, 0, S);
+  grime.addColorStop(0, "rgba(40,30,20,0)");
+  grime.addColorStop(1, "rgba(40,30,20,0.45)");
+  g.fillStyle = grime;
+  g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 14; i++) {
+    g.fillStyle = `rgba(30,24,18,${0.1 + Math.random() * 0.2})`;
+    g.beginPath();
+    g.ellipse(Math.random() * S, Math.random() * S, 3 + Math.random() * 10, 2 + Math.random() * 6, Math.random() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  _canvas = new THREE.CanvasTexture(c);
+  _canvas.colorSpace = THREE.SRGBColorSpace;
+  return _canvas;
 }

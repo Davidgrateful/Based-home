@@ -39,9 +39,18 @@ export function renderDesignation(from?: string) {
   const el = $("hud-desig");
   if (!el) return;
   const now = NAMES[designation()].toUpperCase();
-  // unnamed, you're already "Sleeper" on the HUD: don't say it twice
-  el.style.display = !save.name.trim() && designation() === 0 ? "none" : "";
   clearTimeout(strikeT);
+  // unnamed, the designation IS your name on the HUD (no second line)
+  if (!save.name.trim()) {
+    el.style.display = "none";
+    const nm = $("hud-name");
+    if (from) {
+      nm.innerHTML = `<s style="opacity:.5;margin-right:8px">${from}</s>${NAMES[designation()]}`;
+      strikeT = window.setTimeout(() => (nm.textContent = NAMES[designation()]), 5000);
+    } else nm.textContent = NAMES[designation()];
+    return;
+  }
+  el.style.display = "";
   if (from) {
     el.innerHTML = `<s>${from.toUpperCase()}</s> ${now}`;
     el.classList.add("changed");

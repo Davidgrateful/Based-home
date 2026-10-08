@@ -276,6 +276,8 @@ export class World {
   riftOpen = 0;
   private riftDebris: THREE.Mesh[] = [];
   private scarStones: THREE.Mesh[] = [];
+  private lanternLight!: THREE.PointLight;
+  private lanternGlass!: THREE.MeshStandardMaterial;
   /** The camera is inside the aircraft set (the outdoor light is dimmed). */
   indoor = false;
   /** Fire and smoke behind the falling plane (off while it cruises). */
@@ -826,6 +828,16 @@ export class World {
     tarp.position.set(0, 0.95, 0.75);
     lean.add(p1, p2, tarp);
     at(lean, -3.1, 1.2).rotation.y = 1.2;
+    // a battery lantern hung from the lean-to, nearly dead. Still on.
+    const lantern = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.2, 10), std(0x3a3d40, { metalness: 0.5, roughness: 0.6 }));
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 10), new THREE.MeshStandardMaterial({ color: 0x222018, emissive: 0xffe2a8, emissiveIntensity: 0.6 }));
+    glass.position.y = 0.02;
+    this.lanternGlass = glass.material as THREE.MeshStandardMaterial;
+    this.lanternLight = new THREE.PointLight(0xffe2b0, 2.4, 10, 1.8);
+    this.lanternLight.position.y = -0.05;
+    lantern.add(body, glass, this.lanternLight);
+    at(lantern, -3.1 + Math.cos(1.2) * 0.9, 1.2 - Math.sin(1.2) * 0.9, 1.55);
     // a cot of lashed branches, a name cut into the frame
     const cot = new THREE.Group();
     for (const x of [-0.35, 0.35]) {
@@ -1046,9 +1058,7 @@ export class World {
       this.scarStones.push(st);
       this.scene.add(st);
     }
-    const scarLight = new THREE.PointLight(0x6fd0e0, 1.4, 9, 2);
-    scarLight.position.set(SCAR.x, SCAR.y + 0.4, SCAR.z);
-    this.scene.add(scarLight);
+    // (no light of its own: the cracks glow, and every point light costs every pixel)
   }
 
   private buildBeacon() {
@@ -1831,6 +1841,10 @@ export class World {
     this.riftMat.uniforms.uTime.value = t;
     this.riftMat.uniforms.uOpen.value = this.riftOpen;
     this.riftLight.intensity = 0.6 + this.riftOpen * 16 + Math.sin(t * 0.9) * 0.3;
+    // the old camp's lantern: a weak battery, stuttering
+    const lk = Math.sin(t * 1.3) > 0.93 ? 0.15 : 0.75 + Math.sin(t * 17) * 0.08;
+    this.lanternLight.intensity = 2.4 * lk;
+    this.lanternGlass.emissiveIntensity = 0.6 * lk;
     for (const st of this.scarStones) {
       const h = st.userData.hover as { y: number; ph: number };
       st.position.y = h.y + Math.sin(t * 0.4 + h.ph) * 0.06;
