@@ -15,20 +15,21 @@
 // fire already has; at most four Hollow, two at a time.
 
 import * as THREE from "three";
-import { $, camera, cine, enemies, fx, hud, type Interact, LOW, pick, player, say, setObjective, sfx, state, toast, TOUCH, voice, world } from "./ctx";
+import { $, camera, cine, collectShard, enemies, fx, hud, type Interact, LOW, pick, player, say, setObjective, sfx, state, toast, TOUCH, voice, world } from "./ctx";
 import type { Enemy } from "./enemies";
 import type { Signs } from "./signs";
 import * as S from "./script";
 import { CAMP, heightAt, MICRO, OLD_CAMP, STATION } from "./world";
 
 export type Res = "food" | "water" | "fuel" | "scrap" | "batteries";
-type Give = Partial<Record<Res | "med", number>>;
+type Give = Partial<Record<Res | "med" | "shards", number>>;
 type Phase = "off" | "early" | "deep" | "storm" | "dawn" | "home";
 
 /** What you're carrying. Medkits live on the player (Q / Heal uses one). */
 export const supplies: Record<Res, number> = { food: 0, water: 0, fuel: 0, scrap: 0, batteries: 0 };
 
-const NAMES: Record<Res | "med", [string, string]> = {
+const NAMES: Record<Res | "med" | "shards", [string, string]> = {
+  shards: ["Shard", "Shards"],
   food: ["Food", "Food"],
   water: ["Water", "Water"],
   fuel: ["Fuel", "Fuel"],
@@ -36,7 +37,8 @@ const NAMES: Record<Res | "med", [string, string]> = {
   batteries: ["Battery", "Batteries"],
   med: ["Medkit", "Medkits"],
 };
-const HINT: Record<Res | "med", string> = {
+const HINT: Record<Res | "med" | "shards", string> = {
+  shards: "People out here trade in them.",
   fuel: "Fuel keeps the fire alive.",
   food: "Eat by the fire to recover.",
   water: "Drink by the fire to recover.",
@@ -163,22 +165,22 @@ class Survival {
     add("kit", -3.2, 29.6, "Search the medical kit", { med: 1 });
     add("can", -23.5, 25.6, "Take the fuel can", { fuel: 2 }, jerrican(), 0.7);
     add("wreck", -26.5, 34.2, "Search the wreckage", { scrap: 2 });
-    add("cockpit", -8.4, 31.6, "Search the cockpit", { batteries: 1, scrap: 1 });
+    add("cockpit", -8.4, 31.6, "Search the cockpit", { batteries: 1, scrap: 1, shards: 2 });
     add("stretcher", -20, 33.5, "Strip the stretcher", { scrap: 1 });
     // the ambulance
-    add("locker", -1.95, -1.2, "Search the side locker", { med: 1, batteries: 1 }, undefined, 0, 1.6);
+    add("locker", -1.95, -1.2, "Search the side locker", { med: 1, batteries: 1, shards: 2 }, undefined, 0, 1.6);
     add("tank", 1.95, -2.2, "Siphon the ambulance's tank", { fuel: 1 }, undefined, 0, 1.6);
     // dead wood at the edge of the trees, near enough to the fire to risk it
     add("wood-a", 20, 2, "Gather dead wood", { fuel: 1 }, woodpile(4), 0.4);
     add("wood-b", -9, 14, "Gather dead wood", { fuel: 1 }, woodpile(3), 1.9);
     add("wood-c", 14, 24, "Gather dead wood", { fuel: 1 }, woodpile(4), -0.6);
     // what other people left
-    add("pack", MICRO.pack[0] + 0.8, MICRO.pack[1] + 0.6, "Search the pack", { food: 1, batteries: 1 });
-    add("medbag", MICRO.cups[0] + 0.8, MICRO.cups[1] - 0.8, "Search the medical bag", { med: 1, water: 1 });
-    add("tins", OLD_CAMP.x + 2, OLD_CAMP.z - 3, "Search the supply tins", { food: 2, water: 1 });
+    add("pack", MICRO.pack[0] + 0.8, MICRO.pack[1] + 0.6, "Search the pack", { food: 1, batteries: 1, shards: 3 });
+    add("medbag", MICRO.cups[0] + 0.8, MICRO.cups[1] - 0.8, "Search the medical bag", { med: 1, water: 1, shards: 2 });
+    add("tins", OLD_CAMP.x + 2, OLD_CAMP.z - 3, "Search the supply tins", { food: 2, water: 1, shards: 4 });
     add("firewood", OLD_CAMP.x - 4.5, OLD_CAMP.z + 3.5, "Take the firewood", { fuel: 2 }, woodpile(7), 0.3);
     // the Watch
-    add("case", STATION.x - 9, STATION.z + 3, "Open the Meridian case", { med: 1, batteries: 2 }, undefined, 0, 2.0);
+    add("case", STATION.x - 9, STATION.z + 3, "Open the Meridian case", { med: 1, batteries: 2, shards: 5 }, undefined, 0, 2.0);
     add("generator", STATION.x - 3, STATION.z + 3, "Drain the generator", { fuel: 2 }, undefined, 0, 2.2);
     add("tent", STATION.x - 7, STATION.z - 4, "Search the tent", { food: 1, water: 2, scrap: 1 }, undefined, 0, 3.4);
 
@@ -227,8 +229,9 @@ class Survival {
     sfx.rummage();
     const parts: string[] = [];
     const hints: string[] = [];
-    for (const [k, n] of Object.entries(s.give) as [Res | "med", number][]) {
+    for (const [k, n] of Object.entries(s.give) as [Res | "med" | "shards", number][]) {
       if (k === "med") player.medkits += n;
+      else if (k === "shards") collectShard(n);
       else supplies[k] += n;
       parts.push(`+${n} ${NAMES[k][n === 1 ? 0 : 1]}`);
       if (!this.hinted.has(k)) {
@@ -361,8 +364,8 @@ class Survival {
   }
 
   // -------------------------------------------------------------- inventory
-  private flash(k: Res | "med") {
-    const el = document.querySelector<HTMLElement>(`#supplies [data-r="${k}"]`);
+  private flash(k: Res | "med" | "shards") {
+    const el = k === "shards" ? document.getElementById("shards")?.parentElement : document.querySelector<HTMLElement>(`#supplies [data-r="${k}"]`);
     if (!el) return;
     el.classList.remove("got");
     void el.offsetWidth;
@@ -371,7 +374,8 @@ class Survival {
 
   renderInv(force = false) {
     const box = $("supplies");
-    const show = state.mode === "story" && (this.found > 0 || this.phase !== "off");
+    const any = player.medkits > 2 || Object.values(supplies).some((n) => n > 0);
+    const show = state.mode === "story" && (this.found > 0 || this.phase !== "off" || any);
     box.hidden = !show;
     hud.root.classList.toggle("sup", show);
     const s = `${player.medkits}|${supplies.food}|${supplies.water}|${supplies.fuel}|${supplies.scrap}|${supplies.batteries}`;

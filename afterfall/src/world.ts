@@ -211,8 +211,10 @@ export const SHED = new THREE.Vector3(-36, 0, 82);
 /** Where the shed's bed is (the wristband on its rail), for the inspect prompt. */
 export const SHED_BED = new THREE.Vector3(-36, 0, 82.4);
 /** Small stories in the woods: seen, never explained. */
+/** The trading post: survivors' table on the path between the fire and the Old Camp. */
+export const TRADE = new THREE.Vector3(-21, 0, 10.5);
 export const MICRO = { pack: [-46, 34], cups: [48, 19], grave: [20, 50] } as const;
-for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST, DEAD_TREE, SCAR, OLD_CAMP, SHED, SHED_BED]) p.y = heightAt(p.x, p.z);
+for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST, DEAD_TREE, SCAR, OLD_CAMP, SHED, SHED_BED, TRADE]) p.y = heightAt(p.x, p.z);
 
 export interface Circle {
   x: number;
@@ -626,7 +628,7 @@ export class World {
       avoid: [
         { x: 0, z: 0, r: 6 }, { x: CAMP.x, z: CAMP.z, r: 6 }, { x: -14, z: 31, r: 14 }, { x: OLD_CAMP.x, z: OLD_CAMP.z, r: 9 },
         { x: STATION.x, z: STATION.z, r: 17 }, { x: ARENA.x, z: ARENA.z, r: 30 }, { x: SHED.x, z: SHED.z, r: 5 }, { x: SETTLEMENT.x, z: SETTLEMENT.z, r: 22 },
-        { x: SCAR.x, z: SCAR.z, r: 9 },
+        { x: SCAR.x, z: SCAR.z, r: 9 }, { x: TRADE.x, z: TRADE.z, r: 4 },
       ],
       inside: (x, z) => Math.hypot(x, z - 20) < WORLD_RADIUS - 6 && Math.hypot(x - BASIN_C.x, z - BASIN_C.z) > 80,
     });
@@ -1600,9 +1602,9 @@ export class World {
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
     const BASIN_V = new THREE.Vector3(BASIN_C.x, 0, BASIN_C.z);
     const SETTLE_V = new THREE.Vector3(SETTLEMENT.x, 0, SETTLEMENT.z);
-    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP, DEAD_TREE, SCAR, OLD_CAMP, SHED, new THREE.Vector3(MICRO.pack[0], 0, MICRO.pack[1]), new THREE.Vector3(MICRO.cups[0], 0, MICRO.cups[1]), new THREE.Vector3(MICRO.grave[0], 0, MICRO.grave[1])];
+    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP, DEAD_TREE, SCAR, OLD_CAMP, SHED, TRADE, new THREE.Vector3(MICRO.pack[0], 0, MICRO.pack[1]), new THREE.Vector3(MICRO.cups[0], 0, MICRO.cups[1]), new THREE.Vector3(MICRO.grave[0], 0, MICRO.grave[1])];
     const clearR = (v: THREE.Vector3) =>
-      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : v === DEAD_TREE ? 12 : v === SCAR ? 11 : v === OLD_CAMP ? 11 : v === SHED ? 8 : 14;
+      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : v === DEAD_TREE ? 12 : v === SCAR ? 11 : v === OLD_CAMP ? 11 : v === SHED ? 8 : v === TRADE ? 7 : 14;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();

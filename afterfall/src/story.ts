@@ -42,6 +42,8 @@ import { CHOIR_CASE, CHOIR_PIT, inBasin, inChoir, WALL_POS } from "./farlands";
 import { choose } from "./choice";
 import { evidenceInteracts, setDesignation } from "./history";
 import { survival } from "./survival";
+import { restock, reward } from "./economy";
+import { tradingPost } from "./trade";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
@@ -70,6 +72,7 @@ const waveTimers: { at: number; n: number; kind: "hollow" | "runner" }[] = [];
 // still there on the hundredth night).
 export const signs = new Signs(world.scene, world.ambulance);
 survival.build(signs);
+tradingPost.build(world);
 survival.onHome = () => void firstNightEnd();
 let signStep = 0;
 let seenFor = 0;
@@ -262,6 +265,7 @@ export async function startStory() {
 
   farlands.dressAs(save.look); // the Choir will wear what you're wearing
   survival.reset();
+  restock();
   await coldOpen();
 
   // WAKE
@@ -372,6 +376,7 @@ async function readRecords() {
   hud.prompt.classList.remove("show");
   await showRecords();
   setDesignation(2);
+  reward("records");
   player.frozen = false;
   setObjective("I · THE FALL", "Patient 10001. Active.");
   await say(S.RECORDS_READ);
@@ -418,6 +423,7 @@ async function spawnFirstHollow(cinematic: boolean) {
 
 async function firstHollowDown() {
   firstHollow = null;
+  reward("firstHollow");
   sfx.ambienceTo(0.18, 3);
   await say(S.FIRST_HOLLOW_DOWN);
   if (story.stage !== "first") return;
@@ -451,6 +457,8 @@ async function firstNightEnd() {
   await card("END OF CHAPTER I", "THE FALL", "", 4200);
   await fade(1, 1400);
   survival.end();
+  reward("firstNight");
+  restock(); // whoever keeps the table came by in the night
   cine.end();
   player.frozen = false;
   world.setMood("night");
@@ -503,6 +511,7 @@ function startAmbush() {
 
 async function ambushCleared() {
   story.stage = "pylons";
+  reward("ambush");
   chapter("pylons");
   activePylon = -1;
   setObjective("III · WHAT THEY BUILT", "Wake the towers (0/3).");
@@ -512,6 +521,7 @@ async function ambushCleared() {
 
 async function pylonLit(i: number) {
   const lit = world.pylons.filter((p) => p.lit).length;
+  reward("tower", false);
   sfx.charge();
   sfx.sting();
   toast(`Tower ${lit}/3 resonating`);
@@ -551,6 +561,7 @@ async function spawnBoss() {
 
 async function bossDefeated() {
   story.stage = "ending";
+  reward("warden");
   hud.bossBar.classList.remove("show");
   state.slowMo = 0.25;
   setTimeout(() => (state.slowMo = 1), 1600);
@@ -1000,9 +1011,10 @@ export function storyUpdate(dt: number) {
   }
 
   const echo = echoInteract();
-  const sv = survival.interacts(story.stage);
+  const sv = [...survival.interacts(story.stage), tradingPost.interact()];
   runInteractions(echo ? [...interacts, ...sv, ...evidenceInteracts(), echo] : [...interacts, ...sv, ...evidenceInteracts()]);
   survival.update(dt, story.stage);
+  tradingPost.update(dt);
 
   if (state.exited)
     pickupShards(() => {

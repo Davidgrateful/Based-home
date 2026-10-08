@@ -45,6 +45,8 @@ import { setMemoryCamera } from "./memory";
 import { Person, peopleReady, track, updatePeople } from "./people";
 import { PlaneSet } from "./cinesets";
 import { supplies, survival } from "./survival";
+import { CATALOG, earn, PRICES, purchase, quote } from "./economy";
+import { tradingPost } from "./trade";
 
 // ------------------------------------------------------------------ hooks
 voice.onLine = (id, radio) => {
@@ -93,6 +95,8 @@ enemies.onDeath = (e) => {
   sfx.kill();
   fx.sparks(e.pos.clone().add(new THREE.Vector3(0, 1, 0)), 20, 6);
   survival.onEnemyDeath(e);
+  // the Hollow carry shards: some of them drop where they fall
+  if (state.mode === "story" && e.kind !== "thing" && e.kind !== "warden" && Math.random() < 0.5) world.addShard(e.pos.x, e.pos.z, true);
   storyOnDeath(e);
   nightOnDeath(e);
 };
@@ -270,6 +274,7 @@ initTouch(() => {
   $("pause").classList.add("show");
 });
 document.addEventListener("pointerlockchange", () => {
+  if (tradingPost.open) return; // the post pauses the world itself; leaving it resumes
   const overlay = $("shop").classList.contains("show") || $("end").classList.contains("show");
   const playing = state.mode !== "title" && !cine.active && !overlay;
   state.paused = !input.locked && playing;
@@ -497,7 +502,7 @@ function tick(now?: number) {
   hud.hp.style.width = `${(player.hp / player.maxHp) * 100}%`;
   hud.st.style.width = `${player.stamina}%`;
   hud.med.textContent = String(player.medkits);
-  hud.shards.textContent = String(state.runShards);
+  hud.shards.textContent = String(save.bank); // what you have to spend
   hud.root.classList.toggle("low", player.hp < player.maxHp * 0.3);
   updateMarker();
 
@@ -553,4 +558,6 @@ tick();
   regions: { regionsUpdate, historyUpdate },
   survival,
   supplies,
+  economy: { CATALOG, PRICES, quote, purchase, earn },
+  tradingPost,
 };

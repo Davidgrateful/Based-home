@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { $, cine, persist, player, sfx, state, type Interact } from "./ctx";
 import { save } from "./save";
 import { showPlaceCard } from "./regions";
+import { reward } from "./economy";
 import { CHOIR_C, DEAD_TAG, DEAD_TREE, MAST, OC, OLD_CAMP, SHED_BED, STATION, WATCH, heightAt } from "./world";
 
 // ------------------------------------------------------------------ designation
@@ -245,6 +246,7 @@ export function evidenceInteracts(): Interact[] {
       save.flags["ev:" + e.id] = true;
       persist();
       sfx.monitor();
+      if (state.mode === "story") window.setTimeout(() => reward("evidence", false), 900);
       if (e.id === "oc-board") setDesignation(1);
     },
   })));

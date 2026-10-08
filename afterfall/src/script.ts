@@ -326,6 +326,13 @@ export const DAWN1: Line[] = [
   ["YOU", "They're going back into the trees."],
   ["RHEA", "Sun's coming up. Or whatever that is. Come back to the fire."],
 ];
+/** The trading post, the first time you come up to it. */
+export const TRADE_FIRST: Line[] = [
+  ["YOU", "Somebody's set up a table out here. Medkits. Fuel. Prices, in shards."],
+  ["RHEA", "People out there trade in those?"],
+  ["YOU", "There's a tin for the money. And a note. Take what you need. Leave what it's worth."],
+  ["RHEA", "Then leave what it's worth."],
+];
 /** Back at the fire, after the first night. She says one thing too many. */
 export const FIRST_NIGHT_END: Line[] = [
   ["RHEA", "You're back."],

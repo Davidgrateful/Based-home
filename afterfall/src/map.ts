@@ -8,7 +8,7 @@ import { net } from "./net";
 import { save } from "./save";
 import { regionAt, REGIONS } from "./regions";
 import { CASE_POS } from "./signs";
-import { ARENA, BASIN_C, BASIN_R, BEACON, CAMP, CHOIR_C, DEAD_TREE, heightAt, MAST, OLD_CAMP, PYLONS, SHED, SCAR, SETTLEMENT, STATION, WORLD_RADIUS } from "./world";
+import { ARENA, BASIN_C, BASIN_R, BEACON, CAMP, CHOIR_C, DEAD_TREE, heightAt, MAST, OLD_CAMP, PYLONS, SHED, SCAR, SETTLEMENT, STATION, TRADE, WORLD_RADIUS } from "./world";
 import { designation, EVIDENCE, evidenceFound, knownPatients, LANDMARKS, landmarkFound } from "./history";
 
 // World window drawn by the map (north = +z is up, east = -x is right).
@@ -223,6 +223,7 @@ const MARKS: Mark[] = [
   { x: STATION.x, z: STATION.z, label: "", kind: "danger", known: () => save.regions.includes("station") },
   { x: DEAD_TREE.x, z: DEAD_TREE.z, label: "Dead tree", kind: "plain", known: () => landmarkFound("deadtree") },
   { x: SHED.x, z: SHED.z, label: "Shed", kind: "plain" },
+  { x: TRADE.x, z: TRADE.z, label: "Trading post", kind: "plain", known: () => !!save.flags.tradeFound },
   { x: SCAR.x, z: SCAR.z, label: "", kind: "rift", known: () => save.regions.includes("scar") },
   { x: OLD_CAMP.x, z: OLD_CAMP.z, label: "", kind: "fire", lit: () => false, known: () => save.regions.includes("oldcamp") },
   ...PYLONS.map((p, i) => ({ x: p.x, z: p.z, label: "Tower", kind: "rift" as const, lit: () => world.pylons[i]?.lit ?? false })),

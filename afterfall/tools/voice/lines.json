@@ -3756,6 +3756,54 @@
   "from": "THING_FIRST"
  },
  {
+  "key": "YOU|0|Somebody's set up a table out here. Medkits. Fuel. Prices, in shards.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Somebody's set up a table out here. Medkits. Fuel. Prices, in shards.",
+  "say": "Somebody's set up a table out here. Medkits. Fuel. Prices, in shards.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADE_FIRST"
+ },
+ {
+  "key": "RHEA|1|People out there trade in those?",
+  "id": "RHEA",
+  "radio": true,
+  "text": "People out there trade in those?",
+  "say": "People out there trade in those?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADE_FIRST"
+ },
+ {
+  "key": "YOU|0|There's a tin for the money. And a note. Take what you need. Leave what it's worth.",
+  "id": "YOU",
+  "radio": false,
+  "text": "There's a tin for the money. And a note. Take what you need. Leave what it's worth.",
+  "say": "There's a tin for the money. And a note. Take what you need. Leave what it's worth.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADE_FIRST"
+ },
+ {
+  "key": "RHEA|1|Then leave what it's worth.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Then leave what it's worth.",
+  "say": "Then leave what it's worth.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADE_FIRST"
+ },
+ {
   "key": "RHEA|1|Sleeper? Oh, thank God. Tap the radio if you can hear me. Anything.",
   "id": "RHEA",
   "radio": true,

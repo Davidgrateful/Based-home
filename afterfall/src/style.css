@@ -433,3 +433,35 @@ body.touch .choice-opt kbd { display: none; }
   #title .records { display: none; }
   #menu-desc { display: none; }
 }
+
+/* ------------------------------------------------------------ the trading post */
+#trade { position: fixed; inset: 0; z-index: 45; display: flex; align-items: center; justify-content: center; background: rgba(8, 9, 11, 0.62); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+#trade.show { opacity: 1; pointer-events: auto; }
+.tr-box { width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 40px); display: flex; flex-direction: column; background: rgba(14, 15, 17, 0.94); border-top: 2px solid var(--fire); padding: 22px 26px 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+.tr-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid rgba(233, 230, 223, 0.12); }
+.tr-kick { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fire); }
+.tr-title { font: 600 26px var(--display); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+.tr-sub { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.tr-bal { text-align: right; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+.tr-bal b { display: block; font: 600 30px var(--display); letter-spacing: 0.04em; color: #8fd6e0; font-variant-numeric: tabular-nums; }
+#tr-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; min-height: 0; }
+.tr-item { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; padding: 11px 0; border-bottom: 1px solid rgba(233, 230, 223, 0.07); }
+.tr-info { min-width: 0; }
+.tr-info b { display: block; font: 600 16px var(--display); letter-spacing: 0.1em; text-transform: uppercase; }
+.tr-info span { display: block; font-size: 13px; color: rgba(233, 230, 223, 0.72); margin-top: 2px; }
+.tr-info em { display: block; font-style: normal; font-size: 11px; letter-spacing: 0.06em; color: var(--dim); margin-top: 3px; }
+.tr-price { font: 600 20px var(--display); text-align: right; font-variant-numeric: tabular-nums; min-width: 52px; }
+.tr-price small { display: block; font: 500 10px var(--ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.tr-item .btn { min-width: 92px; }
+.tr-item.off .tr-price { color: var(--dim); }
+.tr-foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 14px; }
+#tr-msg { font-size: 13px; color: rgba(233, 230, 223, 0.8); min-height: 1em; }
+.inv span.got { animation: got 1.2s ease-out; }
+body.touch .tr-box { padding: 14px 16px 12px; }
+body.touch .tr-title { font-size: 20px; }
+body.touch .tr-sub { display: none; }
+body.touch .tr-item { padding: 7px 0; gap: 10px; }
+body.touch .tr-info span { font-size: 12px; }
+body.touch .tr-info em { display: none; }
+body.touch #tr-close kbd { display: none; }
+@media (max-height: 520px) { .tr-item { padding: 6px 0; } .tr-info span { font-size: 12px; } .tr-sub { display: none; } }
