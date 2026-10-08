@@ -2448,5 +2448,236 @@
   "speaker": "RHEA",
   "say": "Follow the smoke back. The fire's by the ambulance.",
   "two_voices": false
+ },
+ {
+  "id": "DEEPWOOD-01",
+  "key": "RHEA|1|You're in the dark part of the woods. Your signal's going.",
+  "speaker": "RHEA",
+  "say": "You're in the dark part of the woods. Your signal's going.",
+  "two_voices": false
+ },
+ {
+  "id": "DEEPWOOD-02",
+  "key": "YOU|0|There's something out here worth finding.",
+  "speaker": "YOU",
+  "say": "There's something out here worth finding.",
+  "two_voices": true
+ },
+ {
+  "id": "DEEPWOOD-03",
+  "key": "RHEA|1|There's always something out there. Be quick.",
+  "speaker": "RHEA",
+  "say": "There's always something out there. Be quick.",
+  "two_voices": false
+ },
+ {
+  "id": "MARK-01",
+  "key": "YOU|0|Somebody's cut a mark into this tree.",
+  "speaker": "YOU",
+  "say": "Somebody's cut a mark into this tree.",
+  "two_voices": true
+ },
+ {
+  "id": "MARK-02",
+  "key": "YOU|0|It's fresh.",
+  "speaker": "YOU",
+  "say": "It's fresh.",
+  "two_voices": true
+ },
+ {
+  "id": "AGAIN-01",
+  "key": "YOU|0|You always say that.",
+  "speaker": "YOU",
+  "say": "You always say that.",
+  "two_voices": true
+ },
+ {
+  "id": "AGAIN-02",
+  "key": "RHEA|1|Do I?",
+  "speaker": "RHEA",
+  "say": "Do I?",
+  "two_voices": false
+ },
+ {
+  "id": "OLDFIRE-01",
+  "key": "YOU|0|Their fire's lit.",
+  "speaker": "YOU",
+  "say": "Their fire's lit.",
+  "two_voices": true
+ },
+ {
+  "id": "OLDFIRE-02",
+  "key": "RHEA|1|Is that another survivor?",
+  "speaker": "RHEA",
+  "say": "Is that another survivor?",
+  "two_voices": false
+ },
+ {
+  "id": "OLDFIRE-03",
+  "key": "YOU|0|There's nobody here.",
+  "speaker": "YOU",
+  "say": "There's nobody here.",
+  "two_voices": true
+ },
+ {
+  "id": "PACK-01",
+  "key": "YOU|0|That's my pack.",
+  "speaker": "YOU",
+  "say": "That's my pack.",
+  "two_voices": true
+ },
+ {
+  "id": "PACK-02",
+  "key": "YOU|0|I don't remember putting it down.",
+  "speaker": "YOU",
+  "say": "I don't remember putting it down.",
+  "two_voices": true
+ },
+ {
+  "id": "RARE-01",
+  "key": "YOU|0|A Meridian crate. Somebody dropped this out here on purpose.",
+  "speaker": "YOU",
+  "say": "A Meridian crate. Somebody dropped this out here on purpose.",
+  "two_voices": true
+ },
+ {
+  "id": "STORMWAKE-01",
+  "key": "RHEA|1|The storm's coming in again. It only ever starts when you wake up.",
+  "speaker": "RHEA",
+  "say": "The storm's coming in again. It only ever starts when you wake up.",
+  "two_voices": false
+ },
+ {
+  "id": "STORMWAKE-02",
+  "key": "YOU|0|When I wake up?",
+  "speaker": "YOU",
+  "say": "When I wake up?",
+  "two_voices": true
+ },
+ {
+  "id": "STORMWAKE-03",
+  "key": "RHEA|1|That isn't what I meant.",
+  "speaker": "RHEA",
+  "say": "That isn't what I meant.",
+  "two_voices": false
+ },
+ {
+  "id": "NEED-01",
+  "key": "YOU|0|I need more than what's lying around. Fuel. Medicine.",
+  "speaker": "YOU",
+  "say": "I need more than what's lying around. Fuel. Medicine.",
+  "two_voices": true
+ },
+ {
+  "id": "NEED-02",
+  "key": "RHEA|1|There's a light on the path toward the old camp. A lantern. It isn't mine.",
+  "speaker": "RHEA",
+  "say": "There's a light on the path toward the old camp. A lantern. It isn't mine.",
+  "two_voices": false
+ },
+ {
+  "id": "NEED-03",
+  "key": "YOU|0|Somebody else is out here?",
+  "speaker": "YOU",
+  "say": "Somebody else is out here?",
+  "two_voices": true
+ },
+ {
+  "id": "SURPLUS-01",
+  "key": "YOU|0|Meridian surplus. Somebody's chalked prices on the lids.",
+  "speaker": "YOU",
+  "say": "Meridian surplus. Somebody's chalked prices on the lids.",
+  "two_voices": true
+ },
+ {
+  "id": "TRADER-01",
+  "key": "TRADER|0|Watch my hands. I'll only do it once.",
+  "speaker": "TRADER",
+  "say": "Watch my hands. I'll only do it once.",
+  "two_voices": false
+ },
+ {
+  "id": "TRADER-02",
+  "key": "TRADER|0|Fair.",
+  "speaker": "TRADER",
+  "say": "Fair.",
+  "two_voices": false
+ },
+ {
+  "id": "TRADER-03",
+  "key": "TRADER|0|That'll keep you a while.",
+  "speaker": "TRADER",
+  "say": "That'll keep you a while.",
+  "two_voices": false
+ },
+ {
+  "id": "TRADER-04",
+  "key": "TRADER|0|Spend it before it spends you.",
+  "speaker": "TRADER",
+  "say": "Spend it before it spends you.",
+  "two_voices": false
+ },
+ {
+  "id": "TRADER-05",
+  "key": "YOU|0|There's someone at that table.",
+  "speaker": "YOU",
+  "say": "There's someone at that table.",
+  "two_voices": true
+ },
+ {
+  "id": "TRADER-06",
+  "key": "TRADER|0|Sit if you want. Pay for what you touch.",
+  "speaker": "TRADER",
+  "say": "Sit if you want. Pay for what you touch.",
+  "two_voices": false
+ },
+ {
+  "id": "TRADER-07",
+  "key": "YOU|0|Pay with what?",
+  "speaker": "YOU",
+  "say": "Pay with what?",
+  "two_voices": true
+ },
+ {
+  "id": "TRADER-08",
+  "key": "TRADER|0|Shards. Same as everyone.",
+  "speaker": "TRADER",
+  "say": "Shards. Same as everyone.",
+  "two_voices": false
+ },
+ {
+  "id": "TRADER-09",
+  "key": "RHEA|1|Who's that with you?",
+  "speaker": "RHEA",
+  "say": "Who's that with you?",
+  "two_voices": false
+ },
+ {
+  "id": "TRADER-10",
+  "key": "YOU|0|Somebody selling medkits.",
+  "speaker": "YOU",
+  "say": "Somebody selling medkits.",
+  "two_voices": true
+ },
+ {
+  "id": "TRADER-11",
+  "key": "RHEA|1|Then buy one.",
+  "speaker": "RHEA",
+  "say": "Then buy one.",
+  "two_voices": false
+ },
+ {
+  "id": "WATCHER-01",
+  "key": "HOLLOW|0|And one.",
+  "speaker": "HOLLOW",
+  "say": "And one.",
+  "two_voices": false
+ },
+ {
+  "id": "WHO-01",
+  "key": "YOU|0|Who's there?",
+  "speaker": "YOU",
+  "say": "Who's there?",
+  "two_voices": true
  }
 ]

@@ -456,7 +456,7 @@ class Survival {
       else if (k === "shards") collectShard(n);
       else supplies[k] += n;
       parts.push(`+${n} ${NAMES[k][n === 1 ? 0 : 1]}`);
-      if (!this.hinted.has(k)) {
+      if (!this.hinted.has(k) && s.id !== "mine") {
         this.hinted.add(k);
         hints.push(HINT[k]);
       }
