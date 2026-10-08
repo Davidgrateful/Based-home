@@ -424,18 +424,22 @@ function draw() {
   g.strokeStyle = COL.pencil;
   g.lineWidth = 1 * u;
   const done = new Set<string>();
+  const anchors = new Map<string, [number, number]>();
   for (const e of EVIDENCE) {
     if (!evidenceFound(e.id) || !e.patients.length) continue;
     const fresh = e.patients.filter((p) => !done.has(p));
     if (!fresh.length) continue;
     fresh.forEach((p) => done.add(p));
+    // one pencilled column per place, anchored at the first thing found there
     const key = e.where;
     const n = placed.get(key) ?? 0;
     placed.set(key, n + 1);
     const ex = sx(e.at.x);
     const ey = sz(e.at.z);
-    const lx = ex + 34 * u;
-    const ly = ey + 26 * u + n * 12 * u;
+    const anchor = anchors.get(key) ?? [ex + 34 * u, ey + 26 * u];
+    anchors.set(key, anchor);
+    const lx = anchor[0];
+    const ly = anchor[1] + n * 12 * u;
     g.beginPath();
     g.moveTo(ex + 2 * u, ey + 2 * u);
     g.lineTo(lx - 3 * u, ly - 4 * u);
