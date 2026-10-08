@@ -44,6 +44,7 @@ import { faunaUpdate } from "./fauna";
 import { setMemoryCamera } from "./memory";
 import { Person, peopleReady, track, updatePeople } from "./people";
 import { PlaneSet } from "./cinesets";
+import { base } from "./camp";
 import { supplies, survival } from "./survival";
 import { CATALOG, earn, PRICES, purchase, quote } from "./economy";
 import { tradingPost } from "./trade";
@@ -527,7 +528,7 @@ function tick(now?: number) {
   }
 
   hud.hp.style.width = `${(player.hp / player.maxHp) * 100}%`;
-  hud.st.style.width = `${player.stamina}%`;
+  hud.st.style.width = `${(player.stamina / player.maxStamina) * 100}%`;
   hud.med.textContent = String(player.medkits);
   hud.shards.textContent = String(save.bank); // what you have to spend
   hud.root.classList.toggle("low", player.hp < player.maxHp * 0.3);
@@ -587,4 +588,5 @@ tick();
   supplies,
   economy: { CATALOG, PRICES, quote, purchase, earn },
   tradingPost,
+  camp: base,
 };

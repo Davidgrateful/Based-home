@@ -547,7 +547,7 @@ class Survival {
     if (supplies.water > 0) {
       supplies.water--;
       player.hp = Math.min(player.maxHp, player.hp + 12);
-      player.stamina = 100;
+      player.stamina = player.maxStamina;
       msg.push(msg.length ? "drink" : "You drink");
       this.flash("water");
     }
@@ -873,6 +873,15 @@ class Survival {
   }
 
   // -------------------------------------------------------------- per frame
+  /** The camp's radio: Rhea comes through clearer near it (camp.ts sets this). */
+  campRadio = () => false;
+
+  /** A full charge (the camp's radio set tops yours up). */
+  chargeRadio() {
+    radio.charge = 1;
+    radio.warned = false;
+  }
+
   update(dt: number, stage: string) {
     if (state.mode !== "story") return;
     const cf = world.campfire;
@@ -880,7 +889,8 @@ class Survival {
     const level = cf.lit ? cf.hp / cf.maxHp : 0;
 
     // the light they won't walk into (and the fire bar, while it matters)
-    enemies.fear = fireStory && cf.lit ? { pos: CAMP, r: 5 + 7 * level, k: level } : null;
+    const pit = save.flags["camp:pit"] ? 1 : 0; // stones stacked round it: more light, further out
+    enemies.fear = fireStory && cf.lit ? { pos: CAMP, r: 5 + 7 * level + pit * 2, k: level } : null;
     if (this.phase !== "off") hud.fireFill.style.width = `${level * 100}%`;
 
     // healing: slow anywhere quiet, faster by the fire
@@ -943,7 +953,7 @@ class Survival {
     // the fire burns down: slowly, then faster in the wind and rain
     const burn = { off: 0, early: 0.36, deep: 0.42, storm: 0.62, dawn: 0.15, home: 0 }[this.phase];
     if (cf.lit) {
-      cf.hp = Math.max(0, cf.hp - burn * (up("keeper") ? 0.85 : 1) * dt);
+      cf.hp = Math.max(0, cf.hp - burn * (up("keeper") ? 0.85 : 1) * (save.flags["camp:pit"] ? 0.8 : 1) * dt);
       if (cf.hp / cf.maxHp < 0.25 && !this.fireWarned && !voice.busy) {
         this.fireWarned = true;
         void say(S.FIRE_LOW);
@@ -961,7 +971,7 @@ class Survival {
     }
 
     // the radio runs down; fresh batteries go in when it's nearly gone
-    radio.charge = Math.max(0, radio.charge - dt / 240);
+    radio.charge = this.campRadio() ? Math.min(1, radio.charge + dt / 30) : Math.max(0, radio.charge - dt / 240);
     if (radio.charge < 0.22 && supplies.batteries > 0) {
       supplies.batteries--;
       radio.charge = 1;
@@ -974,7 +984,7 @@ class Survival {
       void say(S.RADIO_BATTERY);
     }
     const phaseRel = { off: 1, early: 1, deep: 0.8, storm: 0.35, dawn: 0.9, home: 1 }[this.phase];
-    voice.static = Math.max(0, Math.min(0.9, 1 - phaseRel * (radio.charge > 0 ? 0.55 + 0.45 * Math.min(1, radio.charge * 2) : 0.3)));
+    voice.static = Math.max(0, Math.min(0.9, 1 - phaseRel * (radio.charge > 0 ? 0.55 + 0.45 * Math.min(1, radio.charge * 2) : 0.3))) * (this.campRadio() ? 0.4 : 1);
 
     // a deep-night glimpse running its course
     if (this.glimpseOn && this.signs) {

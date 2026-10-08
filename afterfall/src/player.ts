@@ -82,6 +82,8 @@ export class Player {
   hp = 100;
   maxHp = 100;
   stamina = 100;
+  /** how deep it runs (Last breath raises it) */
+  maxStamina = 100;
   medkits = 2;
   invuln = 0;
   hurtFlash = 0;
@@ -212,7 +214,7 @@ export class Player {
     if (moving) wish.normalize();
     else wish.set(0, 0, 0);
     const sprint = moving && (input.down("ShiftLeft") || stick > 0.93) && this.stamina > 1 && !this.firstPerson;
-    this.stamina = THREE.MathUtils.clamp(this.stamina + (sprint ? -22 : 18 * this.regenMul) * dt, 0, 100);
+    this.stamina = THREE.MathUtils.clamp(this.stamina + (sprint ? -22 : 18 * this.regenMul) * dt, 0, this.maxStamina);
     let speed = this.firstPerson ? 2.4 : sprint ? 9.5 : 5.6;
     if (stick > 0 && !sprint) speed *= Math.max(0.35, Math.min(1, stick * 1.25));
     if (this.attackT > 0) speed *= 0.45;

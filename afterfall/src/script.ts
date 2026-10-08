@@ -774,3 +774,34 @@ export const ECHOES: Echo[] = [
 ];
 
 export const ECHO_FIRST_FIND: Line[] = [["RHEA", "{name}? Your signal just doubled. Like there are two of you standing there."]];
+
+// ---------------------------------------------------------------- THE CAMP
+/** Said as each piece of the camp goes up (camp.ts). */
+export const CAMP_BUILT: Record<"pit" | "storage" | "shelter" | "medic" | "radio" | "table", Line[]> = {
+  pit: [["YOU", "Stones round it. It'll hold the heat now."]],
+  storage: [["YOU", "Somewhere to keep things. Somewhere that stays put."]],
+  shelter: [
+    ["YOU", "A roof. More or less."],
+    ["YOU", "First time it's felt like I'm staying."],
+  ],
+  medic: [
+    ["YOU", "Clean cloth. Needle. Everything laid out in the right order."],
+    ["YOU", "I don't remember learning the right order."],
+  ],
+  radio: [
+    ["YOU", "Rhea. Is that better?"],
+    ["RHEA", "Clear as anything. What did you do?"],
+    ["YOU", "Built a radio out of a broken one."],
+  ],
+  table: [
+    ["YOU", "Everything I've found, in one place."],
+    ["YOU", "Some of these pencil marks were here already. Same hand as mine."],
+  ],
+};
+/** Calling her from the camp set. Which one you get shifts from life to life. */
+export const CAMP_RADIO: Line[][] = [
+  [["YOU", "Still there?"], ["RHEA", "Still here. Still no planes."]],
+  [["RHEA", "You sound closer when you're at your fire. I know that's not how radios work."]],
+  [["YOU", "Talk to me about anything."], ["RHEA", "There's a song stuck in my head and I can't remember a single word of it."]],
+  [["RHEA", "Keep the fire high tonight. I don't know why I said tonight. It's always tonight."]],
+];

@@ -206,6 +206,7 @@ export function applyMemories() {
   player.pickupBonus = m.sense * 1.2;
   // survival knowledge (progress.ts): small, and it stays learned
   const up = (k: string) => !!save.flags["up:" + k];
+  player.maxStamina = up("breath") ? 125 : 100;
   if (up("breath")) player.regenMul *= 1.25;
   if (up("feet")) player.dodgeCost -= 5;
   player.healAmount = up("medic") ? 60 : 45;

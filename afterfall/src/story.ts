@@ -46,6 +46,8 @@ import { restock, reward } from "./economy";
 import { tradingPost } from "./trade";
 import { remembers } from "./remembers";
 import { buildDiscoveries } from "./discoveries";
+import { base } from "./camp";
+import { toggleMap } from "./map";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
@@ -79,6 +81,9 @@ buildDiscoveries();
 survival.onHome = () => void firstNightEnd();
 survival.onNeedSupplies = () => tradingPost.reveal();
 survival.onLoop = (run) => remembers.onLoop(run);
+base.build();
+base.onMap = () => toggleMap(true);
+survival.campRadio = () => base.radioHere;
 let signStep = 0;
 let seenFor = 0;
 let fireFoundSaid = false;
@@ -1038,10 +1043,11 @@ export function storyUpdate(dt: number) {
   }
 
   const echo = echoInteract();
-  const sv = [...survival.interacts(story.stage), ...tradingPost.interacts()];
+  const sv = [...survival.interacts(story.stage), ...tradingPost.interacts(), ...(state.exited ? base.interacts(story.stage) : [])];
   runInteractions(echo ? [...interacts, ...sv, ...evidenceInteracts(), echo] : [...interacts, ...sv, ...evidenceInteracts()]);
   survival.update(dt, story.stage);
   if (story.stage === "night1") remembers.update(dt);
+  base.update(dt);
   tradingPost.update(dt);
 
   if (state.exited)

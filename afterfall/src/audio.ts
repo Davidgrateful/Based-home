@@ -242,6 +242,15 @@ export class Sfx {
   rummage() {
     for (let i = 0; i < 4; i++) this.noise(0.06 + Math.random() * 0.06, 1200 + Math.random() * 2400, 1.4, 0.25, "bandpass", i * 0.07 + Math.random() * 0.04);
   }
+  /** Putting something together: knocks of wood, a stone set down, a strap pulled tight. */
+  build() {
+    for (let i = 0; i < 6; i++) {
+      const t = i * 0.22 + Math.random() * 0.06;
+      this.noise(0.05, 700 + Math.random() * 500, 2.5, 0.32, "bandpass", t);
+      this.tone(110 + Math.random() * 40, 0.08, 0.16, "triangle", 70, t);
+    }
+    this.noise(0.25, 1800, 1, 0.12, "bandpass", 1.4);
+  }
   /** The tin-can line rattling. */
   cans() {
     for (let i = 0; i < 9; i++) this.tone(1900 + Math.random() * 1400, 0.07, 0.07, "triangle", 1500 + Math.random() * 600, i * 0.045 + Math.random() * 0.03);

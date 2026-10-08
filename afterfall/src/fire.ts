@@ -306,6 +306,12 @@ export class Fire {
   }
 
   /** Called every frame by updateFires(). */
+  /** A better-built fire: more light, a little more reach. */
+  setBoost(k: number) {
+    this.baseLight = (this.o.light ?? 0) * k;
+    if (this.light) this.light.distance = (this.o.lightRange ?? 24) * Math.sqrt(k);
+  }
+
   update(dt: number, t: number, cam: THREE.Camera) {
     const on = this.lit;
     const S = this.o.size;

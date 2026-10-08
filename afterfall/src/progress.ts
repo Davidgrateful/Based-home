@@ -31,7 +31,7 @@ const survivedNight = () => !!save.flags["rw:firstNight"];
 export const KNOW: Know[] = [
   { id: "field", name: "Field training", desc: "Pack it properly. Carry more of everything.", shards: 12, scrap: 2, needs: () => ({ ok: true, what: "" }) },
   { id: "hand", name: "Steady hand", desc: "Search things in half the time.", shards: 10, needs: () => ({ ok: evidenceCount() >= 2, what: "Look closely at two things the others left behind." }) },
-  { id: "breath", name: "Last breath", desc: "Your stamina comes back faster.", shards: 14, needs: () => ({ ok: survivedNight(), what: "Survive a night." }) },
+  { id: "breath", name: "Last breath", desc: "Your stamina runs deeper and comes back faster.", shards: 14, needs: () => ({ ok: survivedNight(), what: "Survive a night." }) },
   { id: "medic", name: "Field medic", desc: "Medkits restore more health.", shards: 16, needs: () => ({ ok: evidenceCount() >= 4, what: "Find four of the things the others left behind." }) },
   { id: "feet", name: "Light feet", desc: "A dodge costs less of you.", shards: 12, scrap: 1, needs: () => ({ ok: kills() >= 3, what: "Put down three of the Hollow." }) },
   { id: "keeper", name: "Firekeeper", desc: "Fuel catches better and the fire burns slower.", shards: 14, scrap: 2, needs: () => ({ ok: survivedNight(), what: "Keep a fire through a storm." }) },

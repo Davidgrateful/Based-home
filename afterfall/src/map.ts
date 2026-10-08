@@ -215,7 +215,8 @@ interface Mark {
 const near = (x: number, z: number) => () => discovered(x, z);
 const MARKS: Mark[] = [
   { x: 0, z: 0, label: "Ambulance", kind: "warm" },
-  { x: CAMP.x, z: CAMP.z, label: "Fire", kind: "fire", lit: () => world.campfire.lit },
+  { x: CAMP.x, z: CAMP.z, label: "Fire", kind: "fire", lit: () => world.campfire.lit, known: () => !save.flags["camp:shelter"] },
+  { x: CAMP.x, z: CAMP.z, label: "Camp", kind: "fire", lit: () => world.campfire.lit, known: () => !!save.flags["camp:shelter"] },
   { x: -12, z: 30, label: "Crash site", kind: "crash", known: () => true },
   { x: BEACON.x, z: BEACON.z, label: "", kind: "plain" }, // the black box: in the wreck, under "Crash site"
   { x: CASE_POS.x, z: CASE_POS.z, label: "", kind: "plain" },
@@ -420,6 +421,20 @@ function draw() {
       g.fillStyle = "rgba(233,230,223,0.78)";
       g.fillText(m.label.toUpperCase(), 0, 0);
       g.restore();
+    }
+  }
+  // with a map table at camp, every find gets a pencil cross where it was
+  if (save.flags["camp:table"]) {
+    g.strokeStyle = COL.pencil;
+    g.lineWidth = 1.2 * u;
+    for (const e of EVIDENCE) {
+      if (!evidenceFound(e.id)) continue;
+      const ex = sx(e.at.x);
+      const ey = sz(e.at.z);
+      g.beginPath();
+      g.moveTo(ex - 3 * u, ey - 3 * u); g.lineTo(ex + 3 * u, ey + 3 * u);
+      g.moveTo(ex + 3 * u, ey - 3 * u); g.lineTo(ex - 3 * u, ey + 3 * u);
+      g.stroke();
     }
   }
   // the evidence, pencilled where it was found: numbers that don't stop
