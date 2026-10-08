@@ -75,7 +75,7 @@ interface Landmark {
 
 export const LANDMARKS: Landmark[] = [
   { id: "deadtree", name: "Dead Tree", x: DEAD_TREE.x, z: DEAD_TREE.z, r: 16, line: "Discovered." },
-  { id: "watchtower", name: "The Watchtower", x: MAST.x, z: MAST.z, r: 13, line: "Discovered." },
+  { id: "watchtower", name: "The Radio Mast", x: MAST.x, z: MAST.z, r: 13, line: "Discovered." },
   // the white light can't be reached: it is found by seeing it from the north fields
   { id: "whitelight", name: "The White Light", x: CHOIR_C.x, z: CHOIR_C.z, r: 0, line: "Sighted. Too far to reach.", found: () => player.pos.z > 112 },
 ];

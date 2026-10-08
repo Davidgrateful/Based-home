@@ -219,7 +219,7 @@ const MARKS: Mark[] = [
   { x: -12, z: 30, label: "Crash site", kind: "crash", known: () => true },
   { x: BEACON.x, z: BEACON.z, label: "", kind: "plain" }, // the black box: in the wreck, under "Crash site"
   { x: CASE_POS.x, z: CASE_POS.z, label: "", kind: "plain" },
-  { x: MAST.x, z: MAST.z, label: "Watchtower", kind: "tower", known: () => landmarkFound("watchtower") },
+  { x: MAST.x, z: MAST.z, label: "Radio mast", kind: "tower", known: () => landmarkFound("watchtower") },
   { x: STATION.x, z: STATION.z, label: "", kind: "danger", known: () => save.regions.includes("station") },
   { x: DEAD_TREE.x, z: DEAD_TREE.z, label: "Dead tree", kind: "plain", known: () => landmarkFound("deadtree") },
   { x: SHED.x, z: SHED.z, label: "Shed", kind: "plain" },
@@ -348,8 +348,11 @@ function draw() {
   }
   for (const r of REGIONS) {
     const c = sum.get(r.id);
-    const x = c ? sx(c[0] / c[2]) : sx(r.label[0]);
-    const y = c ? sz(c[1] / c[2]) : sz(r.label[1]);
+    // hand-placed, so two neighbours never write over each other; only a
+    // place with no set spot falls back to the middle of what you've seen
+    void c;
+    const x = sx(r.label[0]);
+    const y = sz(r.label[1]);
     g.save();
     g.translate(x, y);
     g.rotate(tilt(r.name) - 0.04);
@@ -437,7 +440,9 @@ function draw() {
     placed.set(key, n + 1);
     const ex = sx(e.at.x);
     const ey = sz(e.at.z);
-    const anchor = anchors.get(key) ?? [ex + 34 * u, ey + 26 * u];
+    // the column goes on whichever side of the mark has paper left
+    const left = ex + 90 * u > S;
+    const anchor = anchors.get(key) ?? [left ? ex - 34 * u : ex + 34 * u, ey + 26 * u];
     anchors.set(key, anchor);
     const lx = anchor[0];
     const ly = anchor[1] + n * 12 * u;
@@ -448,7 +453,7 @@ function draw() {
     g.save();
     g.translate(lx, ly);
     g.rotate(-0.05);
-    g.textAlign = "left";
+    g.textAlign = lx < ex ? "right" : "left";
     g.fillText(fresh.join(" · "), 0, 0);
     g.restore();
   }
