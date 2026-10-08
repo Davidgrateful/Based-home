@@ -101,6 +101,8 @@ export class Enemy {
   strafe = Math.random() < 0.5 ? 1 : -1;
   flee = 0;
   murmurT = 2 + Math.random() * 4;
+  /** how quickly this one works itself up (the first Hollow is bolder) */
+  bold = 1;
 
   constructor(kind: EnemyKind, at: THREE.Vector3, o: SpawnOpts) {
     this.kind = kind;
@@ -684,7 +686,7 @@ export class EnemyManager {
     look = Math.atan2(Math.sin(look), Math.cos(look));
     const watched = Math.abs(look) < 0.65;
 
-    let rate = 0.12 * this.aggression;
+    let rate = 0.12 * this.aggression * e.bold;
     if (!watched) rate *= 1.9; // it comes when you aren't looking
     if (playerInLight && fear) rate *= 1 - 0.75 * fear.k;
     e.courage += rate * dt;

@@ -388,7 +388,8 @@ async function spawnFirstHollow(cinematic: boolean) {
   // decide, until they can
   firstHollow.stalk = true;
   firstHollow.windup = 0.7;
-  firstHollow.courage = -0.6;
+  firstHollow.courage = -0.2;
+  firstHollow.bold = 2.4;
   barkCd = 14; // let it speak its own line first
   setObjective("I · THE FALL", "It's coming into the light.");
   sfx.ambienceTo(0.03, 1);
