@@ -314,6 +314,7 @@ export class World {
   private lanternLight!: THREE.PointLight;
   private lanternGlass!: THREE.MeshStandardMaterial;
   private shedScreen!: THREE.MeshStandardMaterial;
+  private lookoutWin!: THREE.MeshStandardMaterial;
   private shedLight!: THREE.PointLight;
   /** The camera is inside the aircraft set (the outdoor light is dimmed). */
   indoor = false;
@@ -1391,7 +1392,9 @@ export class World {
     lroof.position.y = L + 2.55;
     look.add(cab, lroof);
     // the window toward the crash: one lamp still flickers behind it
-    const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.8), this.stationFlicker);
+    // its own lamp, dimmer than the station's, stuttering with it
+    this.lookoutWin = this.stationFlicker.clone();
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.8), this.lookoutWin);
     win.position.set(-1.71, L + 1.35, 0);
     win.rotation.y = -Math.PI / 2;
     const deck = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.1, 4.2), lsteel);
@@ -1673,7 +1676,7 @@ export class World {
    *  in a hurry, and something came in after they did. */
   private buildStation() {
     const S = STATION;
-    const canvas = std(0xcfcac0, { roughness: 0.95 });
+    const canvas = std(0x7f7c6e, { roughness: 1 }); // weathered canvas, not new white
     const steel = std(0x8d939a, { metalness: 0.6, roughness: 0.45 });
     const dark = std(0x24262a);
     const red = std(0xc4161c);
@@ -1713,7 +1716,7 @@ export class World {
 
     // lab cabin, door hanging open, one cold light still alive inside
     const cabin = new THREE.Group();
-    const shell = new THREE.Mesh(new THREE.BoxGeometry(6, 2.6, 3), std(0xb9bec4, { roughness: 0.7 }));
+    const shell = new THREE.Mesh(new THREE.BoxGeometry(6, 2.6, 3), new THREE.MeshStandardMaterial({ color: 0x8b9095, map: corrugatedTex(), roughness: 0.75, metalness: 0.3 }));
     shell.position.y = 1.5;
     cabin.add(shell);
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(6.02, 0.25, 3.02), red);
@@ -2362,6 +2365,7 @@ export class World {
     this.mastLight.opacity = this.mastDark ? 0 : t % 1.8 < 0.25 ? 0.95 : 0.3;
     this.stationLamp.intensity = this.stationDark ? 0 : 6 + Math.max(0, Math.sin(t * 2.4)) * 18;
     this.stationFlicker.emissiveIntensity = Math.random() < 0.08 ? 0.1 : Math.sin(t * 31) > -0.6 ? 1.6 : 0.3;
+    this.lookoutWin.emissiveIntensity = this.stationFlicker.emissiveIntensity * 0.35;
     this.beaconMat.emissiveIntensity = Math.sin(t * 5) > 0 ? 3 : 0.2;
     this.beaconLight.intensity = Math.sin(t * 5) > 0 ? 5 : 0.3;
 
