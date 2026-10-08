@@ -2652,34 +2652,60 @@ function corrugatedTex() {
 /** Hundreds of short marks cut into the wall, row on row, by somebody lying
  *  down. One of them is newer: brighter metal, not yet dulled. */
 function wallMarksTex() {
-  const W = 512;
-  const H = 384;
+  // scratched by hand, in fives, row after row: the oldest at the top, faded;
+  // the hand drifts, the rows wander, some groups crowd, some sit apart
+  const W = 1024;
+  const H = 768;
   const c = document.createElement("canvas");
   c.width = W;
   c.height = H;
   const g = c.getContext("2d")!;
-  g.lineWidth = 1.6;
+  g.lineCap = "round";
   let n = 0;
-  for (let row = 0; row < 14; row++)
-    for (let x = 14; x < W - 14; x += 6 + Math.random() * 2) {
-      if (row === 13 && x > W * 0.55) break;
-      const y = 20 + row * 25 + Math.sin(x * 0.05 + row) * 2;
-      g.strokeStyle = `rgba(200,198,190,${0.32 + Math.random() * 0.2})`;
+  const R = 13;
+  let endX = 0;
+  let endY = 0;
+  for (let row = 0; row < R; row++) {
+    const age = 1 - row / R; // older rows are fainter
+    const baseY = 40 + row * 52 + (Math.random() - 0.5) * 8;
+    const drift = (Math.random() - 0.5) * 0.04;
+    const stop = row === R - 1 ? W * 0.58 : W - 30 - Math.random() * 40;
+    for (let x = 28 + Math.random() * 14; x < stop; ) {
+      const gy = baseY + (x - 28) * drift + (Math.random() - 0.5) * 5;
+      const slant = (Math.random() - 0.5) * 3;
+      const h = 26 + Math.random() * 8;
+      const alpha = (0.22 + Math.random() * 0.18) * (0.55 + 0.45 * (1 - age));
+      g.strokeStyle = `rgba(205,202,192,${alpha})`;
+      g.lineWidth = 2.2 + Math.random() * 1.2;
+      const step = 6 + Math.random() * 2.5;
+      for (let k = 0; k < 4; k++) {
+        const kx = x + k * step;
+        g.beginPath();
+        g.moveTo(kx, gy + Math.random() * 2);
+        g.lineTo(kx + slant + (Math.random() - 0.5) * 2, gy + h);
+        g.stroke();
+      }
+      // the strike through
       g.beginPath();
-      g.moveTo(x, y);
-      g.lineTo(x + (Math.random() - 0.5) * 2, y + 15 + Math.random() * 3);
+      g.moveTo(x - 4, gy + h * 0.75 + Math.random() * 4);
+      g.lineTo(x + step * 3 + 4, gy + h * 0.2 + Math.random() * 4);
       g.stroke();
-      n++;
+      n += 5;
+      endX = x + step * 4 + 12;
+      endY = gy;
+      x += step * 4 + 10 + Math.random() * 10 + (Math.random() < 0.08 ? 20 : 0);
     }
-  // the newer one, at the end of the last row
-  g.strokeStyle = "rgba(240,238,232,0.95)";
-  g.lineWidth = 2.2;
-  const x = W * 0.55 + 7;
-  const y = 20 + 13 * 25;
+  }
+  // the newer one: alone, starting a group nobody finished
+  g.strokeStyle = "rgba(244,242,236,0.95)";
+  g.lineWidth = 4;
   g.beginPath();
-  g.moveTo(x, y);
-  g.lineTo(x + 0.5, y + 17);
+  g.moveTo(endX, endY);
+  g.lineTo(endX + 0.8, endY + 33);
   g.stroke();
+  // fresh dust under it
+  g.fillStyle = "rgba(230,226,216,0.25)";
+  g.fillRect(endX - 3, endY + 33, 8, 3);
   void n;
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
