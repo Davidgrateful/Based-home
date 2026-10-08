@@ -1482,14 +1482,14 @@ export class World {
       ms.position.set(SCAR.x + dx, heightAt(SCAR.x + dx, SCAR.z + dz) + 0.7, SCAR.z + dz);
       this.scene.add(ms);
     }
-    const crackMat = new THREE.MeshBasicMaterial({ color: 0x5fb8c8, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
+    const crackMat = new THREE.MeshBasicMaterial({ color: 0x5fb8c8, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending });
     const cr = rng(9);
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 44; i++) {
       const a = cr() * Math.PI * 2;
-      const d = cr() * 6.5;
+      const d = Math.sqrt(cr()) * 8;
       const x = SCAR.x + Math.cos(a) * d;
       const z = SCAR.z + Math.sin(a) * d;
-      const c = new THREE.Mesh(new THREE.PlaneGeometry(0.04 + cr() * 0.07, 0.8 + cr() * 2.6), crackMat);
+      const c = new THREE.Mesh(new THREE.PlaneGeometry(0.06 + cr() * 0.12, 1 + cr() * 3.2), crackMat);
       c.rotation.set(-Math.PI / 2, 0, cr() * Math.PI);
       c.position.set(x, heightAt(x, z) + 0.03, z);
       this.scene.add(c);
