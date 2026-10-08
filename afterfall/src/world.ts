@@ -3,11 +3,13 @@
 // resonance pylons and the Warden's arena.
 
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { buildAircraft, wreckPieces, type Aircraft } from "./aircraft";
 import { Forest, SHADOW_LAYER, type TreeSpot } from "./flora";
 import { NearField, placeProps, type Placed } from "./props";
 import { buildAmbulance } from "./ambulance";
 import { Fire, updateFires } from "./fire";
+import { buildLitter } from "./litter";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import barkUrl from "ez-tree-assets/bark/oak_color_1k.jpg";
 
@@ -65,10 +67,37 @@ export function floorFx(x: number, z: number) {
     arena * 0.9,
     basin * 0.6,
   );
-  const scorch = (1 - smoothstep(6, 26, Math.hypot(x + 6, z - 18))) * 0.95;
+  // the slide: the fuselage gouged a furrow west to east, tail first
+  const furrow = 1 - smoothstep(1.2, 3.4, segDist(x, z, -36, 28.5, 1, 37.5));
+  const scorch = Math.max((1 - smoothstep(6, 26, Math.hypot(x + 6, z - 18))) * 0.95, furrow * 0.7);
   const choir = 1 - smoothstep(14, 30, Math.hypot(x - CHOIR_C.x, z - CHOIR_C.z));
   const scar = 1 - smoothstep(5, 9, Math.hypot(x - SCAR.x, z - SCAR.z));
-  return { dirt: Math.max(dirt, scar * 0.7), scorch: Math.max(scorch, scar * 0.55), choir, basin };
+  // worn paths where people walked, again and again
+  const path = 1 - smoothstep(0.7, 1.9, pathDist(x, z));
+  return { dirt: Math.max(dirt, scar * 0.7, path * 0.9, furrow * 0.6), scorch: Math.max(scorch, scar * 0.55), choir, basin };
+}
+
+function segDist(x: number, z: number, ax: number, az: number, bx: number, bz: number) {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+  return Math.hypot(x - ax - dx * t, z - az - dz * t);
+}
+
+/** Trodden tracks between the places people went: camp to the Old Camp, the
+ *  scar and the Watch, the wreck to the Dead Tree and the shed past it. They
+ *  wander a little, the way feet do. */
+export const PATHS: [number, number][][] = [
+  [[3, 6], [-12, 8], [-26, 4], [-40, 6], [-53, 4]],
+  [[8, 11], [16, 20], [26, 29], [40, 31], [56, 29], [68, 27]],
+  [[-8, 26], [-15, 40], [-22, 52], [-28, 60]],
+  [[-27, 66], [-31, 73], [-34, 79]],
+];
+function pathDist(x: number, z: number) {
+  let d = Infinity;
+  const wob = Math.sin(x * 0.21 + z * 0.13) * 0.7;
+  for (const p of PATHS) for (let i = 0; i < p.length - 1; i++) d = Math.min(d, segDist(x + wob, z, p[i][0], p[i][1], p[i + 1][0], p[i + 1][1]));
+  return d;
 }
 
 /** The forest floor: Poly Haven scans (moss and needles, bare dirt, burnt
@@ -174,10 +203,16 @@ export const SCAR = new THREE.Vector3(30, 0, 34);
 /** The Old Camp: survivors lived here once, at the edge of the Blackwood. */
 export const OLD_CAMP = new THREE.Vector3(-58, 0, 4);
 /** Where the evidence lies (offsets from its place), for the props and the inspect prompts. */
-export const OC = { post: [3.6, -2.8], board: [-4.2, -2.4], graves: [0.4, -7.2], cot: [2.9, 2.6], bag: [-1.4, 1.9] } as const;
+export const OC = { post: [3.6, -2.8], board: [-4.2, -2.4], graves: [0.4, -7.2], cot: [2.9, 2.6], bag: [-1.4, 1.9], can: [-2.4, -0.9], roll: [-2.6, 2.2], note: [-0.9, -3.4] } as const;
 export const WATCH = { camera: [-12, 4], desk: [-11, 0.6] } as const;
 export const DEAD_TAG = [2.6, -1.8] as const;
-for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST, DEAD_TREE, SCAR, OLD_CAMP]) p.y = heightAt(p.x, p.z);
+/** A Meridian shed past the Dead Tree: one bed, facing a wall. */
+export const SHED = new THREE.Vector3(-36, 0, 82);
+/** Where the shed's bed is (the wristband on its rail), for the inspect prompt. */
+export const SHED_BED = new THREE.Vector3(-36, 0, 82.4);
+/** Small stories in the woods: seen, never explained. */
+export const MICRO = { pack: [-46, 34], cups: [48, 19], grave: [20, 50] } as const;
+for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST, DEAD_TREE, SCAR, OLD_CAMP, SHED, SHED_BED]) p.y = heightAt(p.x, p.z);
 
 export interface Circle {
   x: number;
@@ -278,6 +313,8 @@ export class World {
   private scarStones: THREE.Mesh[] = [];
   private lanternLight!: THREE.PointLight;
   private lanternGlass!: THREE.MeshStandardMaterial;
+  private shedScreen!: THREE.MeshStandardMaterial;
+  private shedLight!: THREE.PointLight;
   /** The camera is inside the aircraft set (the outdoor light is dimmed). */
   indoor = false;
   /** Fire and smoke behind the falling plane (off while it cruises). */
@@ -579,6 +616,17 @@ export class World {
     this.buildLandmarks();
     this.buildOldCamp();
     this.buildWatch();
+    this.buildShed();
+    this.buildMicroStories();
+    buildLitter(this.scene, heightAt, {
+      trees: this.treeSpots.filter((t) => t.kind === 0),
+      avoid: [
+        { x: 0, z: 0, r: 6 }, { x: CAMP.x, z: CAMP.z, r: 6 }, { x: -14, z: 31, r: 14 }, { x: OLD_CAMP.x, z: OLD_CAMP.z, r: 9 },
+        { x: STATION.x, z: STATION.z, r: 17 }, { x: ARENA.x, z: ARENA.z, r: 30 }, { x: SHED.x, z: SHED.z, r: 5 }, { x: SETTLEMENT.x, z: SETTLEMENT.z, r: 22 },
+        { x: SCAR.x, z: SCAR.z, r: 9 },
+      ],
+      inside: (x, z) => Math.hypot(x, z - 20) < WORLD_RADIUS - 6 && Math.hypot(x - BASIN_C.x, z - BASIN_C.z) > 80,
+    });
     const bea = this.buildBeacon();
     this.beaconLight = bea.light;
     this.beaconMat = bea.mat;
@@ -781,6 +829,256 @@ export class World {
     blanket.computeVertexNormals();
     const bl = new THREE.Mesh(blanket, std(0x4b5f7a, { roughness: 1, side: THREE.DoubleSide }));
     at(bl, -8.6, 24.3, 0.04).rotation.set(-Math.PI / 2, 0, 1.1);
+
+    // the trees it went through: snapped at head height, their tops thrown down along the slide
+    const bark = new THREE.TextureLoader().load(barkUrl);
+    bark.colorSpace = THREE.SRGBColorSpace;
+    bark.wrapS = bark.wrapT = THREE.RepeatWrapping;
+    bark.repeat.set(1, 2);
+    const wood = std(0x6a5c4e, { roughness: 1, map: bark });
+    const raw = std(0xb8a07a, { roughness: 1 }); // fresh broken wood
+    for (const [x, z, h, fall] of [[-33, 24.5, 2.8, 0.3], [-24, 41.5, 3.4, -0.2], [-15, 23, 2.2, 0.5], [-6, 42.5, 3, -0.4], [-28, 23, 1.6, 0.2]] as const) {
+      const g = new THREE.Group();
+      const stump = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, h, 9), wood);
+      stump.position.y = h / 2;
+      const snap = new THREE.Mesh(new THREE.ConeGeometry(0.31, 0.55, 9), raw);
+      snap.position.y = h + 0.2;
+      snap.scale.set(1, 1, 0.5);
+      snap.rotation.z = 0.35;
+      g.add(stump, snap);
+      at(g, x, z);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 7, 8), wood);
+      top.rotation.set(Math.PI / 2, 0, fall);
+      at(top, x + 3.2, z + Math.sign(31 - z) * -1.5, 0.3).rotation.y = 1.4 + fall;
+      this.colliders.push({ x, z, r: 0.5 });
+    }
+    // a stretcher, folded in half against the ground
+    const strG = new THREE.Group();
+    const alu = std(0xb8bcc0, { metalness: 0.7, roughness: 0.35 });
+    for (const [ry, dz] of [[0, 0], [0.7, 0.9]] as const) {
+      const half = new THREE.Group();
+      for (const x of [-0.27, 0.27]) {
+        const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 6), alu);
+        rail.rotation.x = Math.PI / 2;
+        rail.position.set(x, 0.05, 0);
+        half.add(rail);
+      }
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.05, 0.95), std(0x2b3f57, { roughness: 0.9 }));
+      pad.position.y = 0.07;
+      half.add(pad);
+      half.rotation.x = ry;
+      half.position.z = dz;
+      strG.add(half);
+    }
+    at(strG, -20, 33.5).rotation.y = 0.6;
+    // a landing light torn off the wing, its glass cracked
+    const lamp = new THREE.Group();
+    const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.22, 14), std(0x9a9da0, { metalness: 0.6, roughness: 0.4 }));
+    housing.rotation.x = Math.PI / 2 - 0.3;
+    const lensG = new THREE.Mesh(new THREE.CircleGeometry(0.15, 14), std(0x22282c, { roughness: 0.1, metalness: 0.4 }));
+    lensG.position.z = 0.12;
+    lensG.rotation.x = -0.3;
+    lamp.add(housing, lensG);
+    at(lamp, -25, 36.5, 0.12).rotation.y = 2.2;
+    // paper: the flight's documents, blown out and caught in the grass
+    const paper = std(0xd8d2c4, { roughness: 1, side: THREE.DoubleSide });
+    const pr = rng(31);
+    for (let i = 0; i < 10; i++) {
+      const sh = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.29), paper);
+      at(sh, -12 + pr() * 9, 31 + (pr() - 0.5) * 6, 0.03 + pr() * 0.04).rotation.set(-Math.PI / 2 + (pr() - 0.5) * 0.4, 0, pr() * 6);
+    }
+    // a second oxygen bottle, and a dark stain by the seat on its back
+    const o2b = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.75, 14), std(0x2c6a3c, { roughness: 0.4, metalness: 0.3 }));
+    at(o2b, -19, 29, 0.09).rotation.set(0, -0.4, Math.PI / 2);
+    const stain = new THREE.Mesh(new THREE.CircleGeometry(0.35, 12), std(0x2a0a08, { roughness: 0.6, transparent: true, opacity: 0.7, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    stain.scale.set(1, 0.6, 1);
+    at(stain, -13.2, 26.8, 0.035).rotation.set(-Math.PI / 2, 0, 0.5);
+    // boots, from the cockpit out into the trees: somebody walked away from this
+    this.prints([[-1, 39], [3, 44], [6, 49], [9, 55], [11, 61]], true);
+  }
+
+  /** Put something on the ground at a world point (casting and taking shadow). */
+  private put(o: THREE.Object3D, x: number, z: number, lift = 0) {
+    o.position.set(x, heightAt(x, z) + lift, z);
+    o.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = true), (m.receiveShadow = true))));
+    this.scene.add(o);
+    return o;
+  }
+
+  /** Footprints along a line, alternating feet (bare or booted). */
+  private prints(pts: [number, number][], boot: boolean, col = 0x1e1a16) {
+    const geo = new THREE.CircleGeometry(0.5, 10);
+    geo.rotateX(-Math.PI / 2);
+    const out: THREE.Matrix4[] = [];
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, az] = pts[i];
+      const [bx, bz] = pts[i + 1];
+      const len = Math.hypot(bx - ax, bz - az);
+      const yaw = Math.atan2(bx - ax, bz - az);
+      const n = Math.floor(len / 0.7);
+      for (let k = 0; k < n; k++) {
+        const t = k / n;
+        const side = (out.length % 2 ? 1 : -1) * 0.13;
+        const x = ax + (bx - ax) * t + Math.cos(yaw) * side;
+        const z = az + (bz - az) * t - Math.sin(yaw) * side;
+        q.setFromAxisAngle(up, yaw);
+        m.compose(new THREE.Vector3(x, heightAt(x, z) + 0.035, z), q, new THREE.Vector3(boot ? 0.24 : 0.2, 1, boot ? 0.58 : 0.5));
+        out.push(m.clone());
+      }
+    }
+    const im = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: 1, transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }), out.length);
+    out.forEach((mm, i) => im.setMatrixAt(i, mm));
+    im.receiveShadow = true;
+    this.scene.add(im);
+  }
+
+  /** Past the Dead Tree: a Meridian shed of corrugated sheet. One bed in it,
+   *  facing the back wall. The wall is cut with hundreds of marks; one of them
+   *  is newer than the rest. A monitor in the corner is still on standby: from
+   *  the path it looks like somebody's light. */
+  private buildShed() {
+    const C = SHED;
+    const g = new THREE.Group();
+    const sheet = new THREE.MeshStandardMaterial({ color: 0x6b6862, map: corrugatedTex(), roughness: 0.7, metalness: 0.55, side: THREE.DoubleSide });
+    const W = 3.2, H = 2.5, D = 3.8;
+    const wall = (w: number, h: number, x: number, z: number, ry: number) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), sheet);
+      m.position.set(x, h / 2, z);
+      m.rotation.y = ry;
+      g.add(m);
+      return m;
+    };
+    wall(D, H, -W / 2, 0, Math.PI / 2);
+    wall(D, H, W / 2, 0, Math.PI / 2);
+    wall(W, H, 0, -D / 2, 0);
+    // the front: half a wall, the door gone
+    wall(0.9, H, -W / 2 + 0.45, D / 2, 0);
+    wall(0.9, H, W / 2 - 0.45, D / 2, 0);
+    const roof = new THREE.Mesh(new THREE.PlaneGeometry(W + 0.4, D + 0.4), sheet);
+    roof.rotation.x = -Math.PI / 2 + 0.08;
+    roof.position.y = H + 0.05;
+    g.add(roof);
+    // the marks, on the inside of the back wall
+    const marks = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.2, H - 0.4), new THREE.MeshStandardMaterial({ map: wallMarksTex(), transparent: true, roughness: 0.8, metalness: 0.3, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    marks.position.set(0, H / 2 + 0.1, -D / 2 + 0.02);
+    g.add(marks);
+    // the bed, its foot to the wall: whoever lay here looked at the marks
+    const steel = std(0x5c5a56, { metalness: 0.7, roughness: 0.6 });
+    const bed = new THREE.Group();
+    const mattress = new THREE.Mesh(new RoundedBoxGeometry(0.85, 0.14, 1.95, 2, 0.05), std(0x77736a, { roughness: 1 }));
+    mattress.position.y = 0.62;
+    bed.add(mattress);
+    for (const x of [-0.42, 0.42]) {
+      const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.95, 6), steel);
+      rail.rotation.x = Math.PI / 2;
+      rail.position.set(x, 0.74, 0);
+      bed.add(rail);
+      for (const z of [-0.9, 0.9]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 6), steel);
+        leg.position.set(x, 0.3, z);
+        bed.add(leg);
+      }
+    }
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.5, 0.04), steel);
+    head.position.set(0, 0.85, 0.97);
+    bed.add(head);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 4, 14), std(0xd6d2c8, { roughness: 0.8 }));
+    band.position.set(0.42, 0.74, 0.35);
+    band.rotation.y = Math.PI / 2;
+    bed.add(band);
+    bed.position.set(0, 0, 0.4);
+    g.add(bed);
+    // IV pole, the bag long empty
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 1.9, 6), steel);
+    pole.position.set(-0.8, 0.95, 0.9);
+    const bag = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.2, 0.03, 2, 0.012), new THREE.MeshStandardMaterial({ color: 0xc8d4d8, transparent: true, opacity: 0.45, roughness: 0.2 }));
+    bag.position.set(-0.8, 1.75, 0.9);
+    bag.scale.y = 0.6; // flat: emptied
+    g.add(pole, bag);
+    // a monitor on a stand, rusted, still on standby
+    const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 6), steel);
+    stand.position.set(1.1, 0.55, 0.9);
+    const mon = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.32, 0.18, 2, 0.02), std(0x5a4636, { roughness: 0.9, metalness: 0.4 }));
+    mon.position.set(1.1, 1.25, 0.9);
+    mon.rotation.y = -0.6;
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.24), new THREE.MeshStandardMaterial({ color: 0x050806, emissive: 0x4fa86a, emissiveIntensity: 0.35, emissiveMap: textTex(["", "STANDBY"], 128, 96, "#000", "#9fd8a8") }));
+    scr.position.set(1.1 - Math.sin(0.6) * 0.092, 1.25, 0.9 + Math.cos(0.6) * 0.092);
+    scr.rotation.y = -0.6;
+    g.add(stand, mon, scr);
+    const glow = new THREE.PointLight(0x7fd09a, 0.9, 6, 2);
+    glow.position.set(0.9, 1.3, 1.2);
+    g.add(glow);
+    this.shedScreen = scr.material as THREE.MeshStandardMaterial;
+    this.shedLight = glow;
+    // the doorway faces the path from the Dead Tree
+    g.rotation.y = Math.atan2(DEAD_TREE.x - C.x, DEAD_TREE.z - C.z);
+    this.put(g, C.x, C.z);
+    for (const [dx, dz] of [[-1.6, 0], [1.6, 0], [0, -1.9]]) this.colliders.push({ x: C.x + dx, z: C.z + dz, r: 1.1 });
+  }
+
+  /** Stories that take a few seconds to understand, and that nobody explains. */
+  private buildMicroStories() {
+    // 1. A pack against a dead trunk, a broken torch beside it. Two people came
+    //    here. One left.
+    {
+      const [x, z] = MICRO.pack;
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 2.6, 9), std(0x3a332c, { roughness: 1 }));
+      this.put(trunk, x, z, 1.25);
+      const pack = new THREE.Group();
+      const body = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.55, 0.22, 2, 0.06), std(0x3e4434, { roughness: 1 }));
+      body.position.y = 0.28;
+      body.rotation.x = -0.25;
+      pack.add(body);
+      this.put(pack, x + 0.1, z + 0.45).rotation.y = 0.2;
+      const torch = new THREE.Group();
+      const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.22, 10), std(0x22252a, { metalness: 0.5, roughness: 0.4 }));
+      tb.rotation.z = Math.PI / 2;
+      const lens = new THREE.Mesh(new THREE.CircleGeometry(0.032, 10), std(0x8a9096, { roughness: 0.2, metalness: 0.3 }));
+      lens.position.x = 0.112;
+      lens.rotation.y = Math.PI / 2;
+      torch.add(tb, lens);
+      this.put(torch, x + 0.7, z + 0.6, 0.03).rotation.y = 0.8;
+      this.prints([[x + 6, z + 7], [x + 2.5, z + 3], [x + 0.6, z + 0.9]], true); // in
+      this.prints([[x + 5.5, z - 5], [x + 2, z - 2], [x + 0.6, z + 0.4]], true); // in
+      this.prints([[x - 0.2, z + 0.5], [x - 4, z + 2.5], [x - 9, z + 3]], true); // and out: one
+    }
+    // 2. A cold fire. Two cups. One seat. A medical bag nobody came back for.
+    {
+      const [x, z] = MICRO.cups;
+      const f = new Fire({ size: 0.6, logs: true, stones: true });
+      f.lit = false;
+      this.put(f.group, x, z);
+      const tin = std(0x7a7470, { metalness: 0.6, roughness: 0.5 });
+      for (const [dx, dz] of [[0.75, 0.3], [-0.55, 0.62]]) {
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.09, 10), tin);
+        this.put(cup, x + dx, z + dz, 0.045);
+      }
+      const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.25, 0.42, 10), std(0x4a3d32, { roughness: 1 }));
+      this.put(seat, x + 1.1, z + 0.5, 0.21);
+      const bag = new THREE.Mesh(new RoundedBoxGeometry(0.4, 0.22, 0.24, 2, 0.04), std(0x6e2a24, { roughness: 0.9 }));
+      this.put(bag, x - 0.9, z - 0.7, 0.11).rotation.y = 0.9;
+      this.colliders.push({ x, z, r: 0.7 });
+    }
+    // 3. A small grave. No name on it.
+    {
+      const [x, z] = MICRO.grave;
+      const gr = new THREE.Group();
+      const mound = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), std(0x3a3128, { roughness: 1 }));
+      mound.scale.set(0.35, 0.12, 0.6);
+      const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.55, 6), std(0x2e2620, { roughness: 1 }));
+      stake.position.set(0, 0.27, -0.66);
+      gr.add(mound, stake);
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07 + (i % 3) * 0.02, 0), std(0x6c6a66, { roughness: 1 }));
+        st.position.set(Math.cos(a) * 0.42, 0.04, Math.sin(a) * 0.7);
+        gr.add(st);
+      }
+      this.put(gr, x, z).rotation.y = 0.4;
+    }
   }
 
   /** The Old Camp, at the edge of the Blackwood: people lived here, for a
@@ -853,7 +1151,7 @@ export class World {
     }
     const bed = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, 1.8), std(0x6a6450, { roughness: 1 }));
     bed.position.y = 0.36;
-    const name = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.14), new THREE.MeshStandardMaterial({ map: textTex(["MARA  4012"], 256, 84, "#3a2f26", "#b8ab94"), roughness: 1 }));
+    const name = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.14), new THREE.MeshStandardMaterial({ map: textTex(["0217"], 256, 84, "#3a2f26", "#b8ab94"), roughness: 1 }));
     name.position.set(0, 0.32, 0.951);
     cot.add(bed, name);
     at(cot, OC.cot[0], OC.cot[1]).rotation.y = -0.4;
@@ -920,6 +1218,89 @@ export class World {
     gown.rotation.y = 0.15;
     line.add(rope, gown);
     at(line, 4.6, 2.4).rotation.y = -1.1;
+    // a shelter they started and never finished: four poles, two crossbars
+    const frame = new THREE.Group();
+    for (const [x, z] of [[-1, -0.8], [1, -0.8], [-1, 0.8], [1, 0.8]]) {
+      const pole = stick(2, 0.05, darkWood);
+      pole.position.set(x, 1, z);
+      pole.rotation.z = x * 0.04;
+      frame.add(pole);
+    }
+    for (const z of [-0.8, 0.8]) {
+      const bar = stick(2.1, 0.04);
+      bar.rotation.z = Math.PI / 2;
+      bar.position.set(0, 1.85, z);
+      frame.add(bar);
+    }
+    // a shirt hung on the crossbar to dry, never taken down
+    const shirt = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.7, 3, 3), std(0x6d6658, { roughness: 1, side: THREE.DoubleSide }));
+    shirt.position.set(0.3, 1.5, 0.8);
+    frame.add(shirt);
+    at(frame, 5.6, -3.8).rotation.y = 0.3;
+    // a pot hung over the cold fire on a tripod of sticks
+    const tri = new THREE.Group();
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
+      const leg = stick(1.5, 0.03, darkWood);
+      leg.position.set(Math.cos(a) * 0.35, 0.7, Math.sin(a) * 0.35);
+      leg.rotation.set(Math.sin(a) * 0.25, 0, -Math.cos(a) * 0.25);
+      tri.add(leg);
+    }
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.18, 12, 1, true), std(0x2a2826, { metalness: 0.6, roughness: 0.6, side: THREE.DoubleSide }));
+    pot.position.y = 0.6;
+    tri.add(pot);
+    at(tri, 0, 0);
+    // a water canister, a number stencilled on its side
+    const can = new THREE.Group();
+    const cb = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.46, 0.16, 2, 0.03), std(0x3e4a3a, { roughness: 0.7, metalness: 0.2 }));
+    cb.position.y = 0.23;
+    const cs = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.09), new THREE.MeshStandardMaterial({ map: textTex(["0891"], 192, 66, "rgba(0,0,0,0)", "#d8d2c8"), transparent: true, roughness: 0.8 }));
+    cs.position.set(0, 0.25, 0.082);
+    can.add(cb, cs);
+    at(can, OC.can[0], OC.can[1]).rotation.y = -0.5;
+    // a name on a sleeping place
+    const tagR = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.1), new THREE.MeshStandardMaterial({ map: textTex(["MARA 4012"], 256, 84, "#c8c2b4", "#2a2622"), roughness: 1, side: THREE.DoubleSide }));
+    at(tagR, OC.roll[0], OC.roll[1], 0.07).rotation.set(-Math.PI / 2, 0, 0.9);
+    // a radio, its case split, the dial gone
+    const radio = new THREE.Group();
+    const rb = new THREE.Mesh(new RoundedBoxGeometry(0.3, 0.18, 0.12, 2, 0.02), std(0x2a2c2e, { roughness: 0.6 }));
+    rb.position.y = 0.09;
+    rb.rotation.z = 0.08;
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.45, 4), std(0x8a8c8e, { metalness: 0.8 }));
+    ant.position.set(0.1, 0.32, 0);
+    ant.rotation.z = -0.9;
+    radio.add(rb, ant);
+    at(radio, 1.7, 3.8).rotation.y = 0.4;
+    // a note pinned under a stone
+    const note = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.26), new THREE.MeshStandardMaterial({ map: textTex(["", "wait for", "hundred", ""], 128, 160, "#cfc8b6", "#3a3530"), roughness: 1 }));
+    at(note, OC.note[0], OC.note[1], 0.025).rotation.set(-Math.PI / 2, 0, 0.3);
+    const pin = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07, 0), std(0x6c6a66, { roughness: 1 }));
+    at(pin, OC.note[0] + 0.05, OC.note[1] - 0.08, 0.04);
+    // a spear leaning on the lean-to, a coil of rope, a snare at the trees
+    const spear = stick(2.1, 0.022, darkWood);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.16, 6), std(0x9a9c9e, { metalness: 0.7, roughness: 0.4 }));
+    tip.position.y = 1.12;
+    spear.add(tip);
+    at(spear, -2.2, 2.6, 1.0).rotation.set(0.35, 0, 0.1);
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.02, 6, 18), std(0x8a7a5a, { roughness: 1 }));
+    at(coil, -1.5, 3.3, 0.02).rotation.x = Math.PI / 2;
+    const snare = new THREE.Group();
+    const peg = stick(0.5, 0.015, darkWood);
+    peg.position.y = 0.2;
+    const loop = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.004, 4, 16), std(0x9a9488));
+    loop.position.set(0.12, 0.08, 0);
+    loop.rotation.y = Math.PI / 2;
+    snare.add(peg, loop);
+    at(snare, 7.2, 4.5);
+    // something buried, a corner of a box showing through the dirt
+    const buried = new THREE.Group();
+    const dm = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), std(0x3a3128, { roughness: 1 }));
+    dm.scale.set(0.6, 0.15, 0.45);
+    const corner = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.25), std(0x4d5247, { roughness: 0.7 }));
+    corner.position.set(0.18, 0.08, 0.05);
+    corner.rotation.set(0.3, 0.5, 0.2);
+    buried.add(dm, corner);
+    at(buried, -5.2, 5.4);
     // tins and a cup by the fire
     for (const [dx, dz] of [[0.9, 0.6], [1.1, 0.35], [-0.8, 1.0]] as const) {
       const tin = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1, 10), std(0x7a7470, { metalness: 0.6, roughness: 0.5 }));
@@ -977,6 +1358,60 @@ export class World {
     desk.add(screen, glass, clip);
     at(desk, WATCH.desk).rotation.y = Math.PI / 2;
     this.colliders.push({ x: S.x + WATCH.desk[0], z: S.z + WATCH.desk[1], r: 0.8 });
+
+    // the lookout: a cabin on steel legs, its windows facing the crash, a camera
+    // pod on the rail. Someone built this to watch one place.
+    const look = new THREE.Group();
+    const lsteel = std(0x3a3d40, { metalness: 0.6, roughness: 0.5 });
+    const L = 9;
+    for (const [x, z] of [[-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3]]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, L, 6), lsteel);
+      leg.position.set(x * 1.15, L / 2, z * 1.15);
+      leg.rotation.set(-z * 0.03, 0, x * 0.03);
+      look.add(leg);
+    }
+    for (let k = 1; k < 4; k++) {
+      const y = (k / 4) * L;
+      for (const [x, z, ry] of [[0, -1.42, 0], [0, 1.42, 0], [-1.42, 0, Math.PI / 2], [1.42, 0, Math.PI / 2]] as const) {
+        const brace = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 3.4, 5), lsteel);
+        brace.rotation.set(0, ry, Math.PI / 2 + (k % 2 ? 0.7 : -0.7));
+        brace.position.set(x, y, z);
+        look.add(brace);
+      }
+    }
+    const cab = new THREE.Mesh(new RoundedBoxGeometry(3.4, 2.2, 3.4, 2, 0.06), new THREE.MeshStandardMaterial({ color: 0x5d625e, map: corrugatedTex(), roughness: 0.75, metalness: 0.4 }));
+    cab.position.y = L + 1.1;
+    const lroof = new THREE.Mesh(new THREE.ConeGeometry(2.8, 0.7, 4), lsteel);
+    lroof.rotation.y = Math.PI / 4;
+    lroof.position.y = L + 2.55;
+    look.add(cab, lroof);
+    // the window toward the crash: one lamp still flickers behind it
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.8), this.stationFlicker);
+    win.position.set(-1.71, L + 1.35, 0);
+    win.rotation.y = -Math.PI / 2;
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.1, 4.2), lsteel);
+    deck.position.y = L - 0.05;
+    look.add(win, deck);
+    const pod = new THREE.Mesh(new RoundedBoxGeometry(0.5, 0.3, 0.3, 2, 0.05), std(0xd4d6d2, { roughness: 0.4 }));
+    pod.position.set(-1.9, L + 2.1, 1.3);
+    const podLens = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.12, 12), std(0x111214, { roughness: 0.2 }));
+    podLens.rotation.z = Math.PI / 2;
+    podLens.position.set(-2.18, L + 2.1, 1.3);
+    look.add(pod, podLens);
+    // a ladder up one leg
+    for (let y = 0.4; y < L; y += 0.4) {
+      const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.45, 4), lsteel);
+      rung.rotation.z = Math.PI / 2;
+      rung.position.set(1.5, y, 1.75);
+      look.add(rung);
+    }
+    // its window looks east: toward the crash (east is -x)
+    const lx = S.x - 4;
+    const lz = S.z - 11;
+    look.position.set(lx, heightAt(lx, lz), lz);
+    look.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = true), (m.receiveShadow = true))));
+    this.scene.add(look);
+    for (const [x, z] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) this.colliders.push({ x: lx + x, z: lz + z, r: 0.3 });
   }
 
   /** Two places to remember the way by. */
@@ -1019,6 +1454,7 @@ export class World {
     bark.repeat.set(2, 6);
     const tree = new THREE.Mesh(geo, std(0x8c8984, { roughness: 1, map: bark }));
     tree.position.copy(DEAD_TREE);
+    tree.scale.setScalar(1.4); // a head taller than anything around it
     tree.castShadow = true;
     tree.receiveShadow = true;
     this.scene.add(tree);
@@ -1033,6 +1469,14 @@ export class World {
 
     // ---- the Blue Scar: cracked ground, a cold light down in the cracks,
     // stones lifted a hand's width off the earth, turning very slowly
+    // a cold low mist sits on the scar and doesn't drift with the rest
+    const scarMist = new THREE.SpriteMaterial({ map: glowTexture(), color: 0x8fb4c0, transparent: true, opacity: 0.1, depthWrite: false });
+    for (const [dx, dz, sc] of [[0, 0, 13], [-4, 3, 9], [4, -3, 10]]) {
+      const ms = new THREE.Sprite(scarMist);
+      ms.scale.set(sc, sc * 0.22, 1);
+      ms.position.set(SCAR.x + dx, heightAt(SCAR.x + dx, SCAR.z + dz) + 0.7, SCAR.z + dz);
+      this.scene.add(ms);
+    }
     const crackMat = new THREE.MeshBasicMaterial({ color: 0x5fb8c8, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
     const cr = rng(9);
     for (let i = 0; i < 22; i++) {
@@ -1063,8 +1507,14 @@ export class World {
 
   private buildBeacon() {
     const g = new THREE.Group();
-    const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.5), std(0xff6a00, { roughness: 0.5 }));
-    box.position.y = 0.25;
+    const box = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.42, 0.44, 3, 0.06), std(0xc85a1a, { roughness: 0.55 }));
+    box.position.y = 0.21;
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 6, 12, Math.PI), std(0x2a2c2e, { roughness: 0.5 }));
+    handle.position.y = 0.42;
+    g.add(handle);
+    const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.14), new THREE.MeshStandardMaterial({ map: textTex(["ELT  406"], 192, 66, "#1a1c1e", "#d8d4cc"), roughness: 0.6 }));
+    plate.position.set(0, 0.24, 0.222);
+    g.add(plate);
     box.castShadow = true;
     g.add(box);
     const mat = std(0x330000, { emissive: 0xff2020, emissiveIntensity: 3 });
@@ -1090,9 +1540,9 @@ export class World {
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
     const BASIN_V = new THREE.Vector3(BASIN_C.x, 0, BASIN_C.z);
     const SETTLE_V = new THREE.Vector3(SETTLEMENT.x, 0, SETTLEMENT.z);
-    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP, DEAD_TREE, SCAR, OLD_CAMP];
+    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP, DEAD_TREE, SCAR, OLD_CAMP, SHED, new THREE.Vector3(MICRO.pack[0], 0, MICRO.pack[1]), new THREE.Vector3(MICRO.cups[0], 0, MICRO.cups[1]), new THREE.Vector3(MICRO.grave[0], 0, MICRO.grave[1])];
     const clearR = (v: THREE.Vector3) =>
-      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : v === DEAD_TREE ? 12 : v === SCAR ? 11 : v === OLD_CAMP ? 11 : 14;
+      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : v === DEAD_TREE ? 12 : v === SCAR ? 11 : v === OLD_CAMP ? 11 : v === SHED ? 8 : 14;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
@@ -1151,7 +1601,8 @@ export class World {
     this.scene.add(this.forest.group);
     this.near = new NearField(heightAt, (x, z) => {
       const f = floorFx(x, z);
-      const grow = (1 - f.dirt) * (1 - f.scorch) * (1 - f.choir) * (1 - f.basin * 0.9) * (Math.hypot(x, z - 20) < WORLD_RADIUS + 10 ? 1 : 0);
+      const drift = smoothstep(-0.35, 0.55, Math.sin(x * 0.045 + Math.sin(z * 0.03) * 2) * Math.cos(z * 0.052 - x * 0.012) + Math.sin(x * 0.17 + z * 0.11) * 0.25);
+      const grow = (1 - f.dirt) * (1 - f.scorch) * (1 - f.choir) * (1 - f.basin * 0.9) * (0.25 + 0.75 * drift) * (Math.hypot(x, z - 20) < WORLD_RADIUS + 10 ? 1 : 0);
       return { grow, dark: x < BLACKWOOD_X };
     });
     this.scene.add(this.near.group);
@@ -1305,12 +1756,28 @@ export class World {
 
     // generator, gurneys, crates
     const gen = new THREE.Group();
-    const gb = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 1), std(0x3d4248, { metalness: 0.4 }));
-    gb.position.y = 0.55;
+    const gb = new THREE.Mesh(new RoundedBoxGeometry(1.6, 1.0, 1, 2, 0.06), std(0x3d4248, { metalness: 0.4 }));
+    gb.position.y = 0.6;
     gen.add(gb);
-    const gs = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.12, 1.02), std(0xd8a21c));
-    gs.position.y = 0.8;
+    const gs = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.1, 1.02), std(0x9a7a2a, { roughness: 0.8 }));
+    gs.position.y = 0.82;
     gen.add(gs);
+    // skids, a vent grille, an exhaust stack, a fuel cap: a machine, not a block
+    for (const z of [-0.4, 0.4]) {
+      const skid = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.1, 0.1), std(0x26292c, { metalness: 0.5 }));
+      skid.position.set(0, 0.05, z);
+      gen.add(skid);
+    }
+    for (let i = 0; i < 6; i++) {
+      const slat = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.012), std(0x1a1c1f));
+      slat.position.set(-0.5 + i * 0.08, 0.55, 0.51);
+      gen.add(slat);
+    }
+    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 8), std(0x2a2522, { metalness: 0.6, roughness: 0.7 }));
+    stack.position.set(0.55, 1.3, -0.25);
+    const fcap = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 10), std(0x8a1c18));
+    fcap.position.set(-0.5, 1.12, 0.2);
+    gen.add(stack, fcap);
     place(gen, -3, 3, 0.2, 1);
     const gurney = (flipped: boolean) => {
       const g = new THREE.Group();
@@ -1338,13 +1805,22 @@ export class World {
     const fg = place(gurney(true), 5.5, 1.8, 0.3);
     fg.position.y += 0.35;
     for (const [dx, dz] of [[-9, 3], [-8.2, 4.1], [12, -2]]) {
-      const c = new THREE.Mesh(new THREE.BoxGeometry(1, 0.7, 0.8), std(0x59626b, { metalness: 0.5, roughness: 0.5 }));
+      // a Meridian equipment case: moulded, ribbed, latched, stencilled
+      const c = new THREE.Mesh(new RoundedBoxGeometry(1, 0.7, 0.8, 3, 0.06), std(0x4a5258, { metalness: 0.2, roughness: 0.6 }));
       c.position.y = 0.35;
       const g = new THREE.Group();
       g.add(c);
-      const st = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.12, 0.82), std(0xff6a00));
-      st.position.y = 0.5;
+      const st = new THREE.Mesh(new THREE.BoxGeometry(1.01, 0.04, 0.81), std(0x9c3a24, { roughness: 0.8 }));
+      st.position.y = 0.6;
       g.add(st);
+      for (const x of [-0.3, 0.3]) {
+        const latch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.03), std(0x8a8d90, { metalness: 0.8, roughness: 0.4 }));
+        latch.position.set(x, 0.5, 0.41);
+        g.add(latch);
+      }
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.12), new THREE.MeshStandardMaterial({ map: textTex(["MERIDIAN"], 256, 76, "rgba(0,0,0,0)", "#cfd2d4"), transparent: true, roughness: 0.8 }));
+      label.position.set(0, 0.32, 0.402);
+      g.add(label);
       place(g, dx, dz, dx * 0.7, 0.7);
     }
     // perimeter fence, broken in places
@@ -1592,9 +2068,7 @@ export class World {
     mesh.position.set(x, y, z);
     mesh.scale.setScalar(0.75);
     mesh.rotation.z = 0.35;
-    const glow = new THREE.Sprite(this.shardGlow);
-    glow.scale.setScalar(1.3);
-    mesh.add(glow);
+    // (no halo: a cold glint you notice, not a light that calls you over)
     this.scene.add(mesh);
     const s: Shard = { mesh, taken: false, base: y, dynamic, value };
     this.shards.push(s);
@@ -1841,6 +2315,10 @@ export class World {
     this.riftMat.uniforms.uTime.value = t;
     this.riftMat.uniforms.uOpen.value = this.riftOpen;
     this.riftLight.intensity = 0.6 + this.riftOpen * 16 + Math.sin(t * 0.9) * 0.3;
+    // the shed's monitor on standby: a slow breath of green
+    const sb = 0.75 + Math.sin(t * 0.8) * 0.25;
+    this.shedScreen.emissiveIntensity = 0.35 * sb;
+    this.shedLight.intensity = 0.9 * sb;
     // the old camp's lantern: a weak battery, stuttering
     const lk = Math.sin(t * 1.3) > 0.93 ? 0.15 : 0.75 + Math.sin(t * 17) * 0.08;
     this.lanternLight.intensity = 2.4 * lk;
@@ -2039,6 +2517,69 @@ function tallyTex() {
         g.stroke();
       }
     }
+  void n;
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/** Corrugated sheet: ribs, rust running down from the rivets. */
+function corrugatedTex() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d")!;
+  for (let x = 0; x < 256; x++) {
+    const k = 0.75 + 0.25 * Math.sin((x / 256) * Math.PI * 24);
+    g.fillStyle = `rgb(${Math.round(150 * k)},${Math.round(146 * k)},${Math.round(138 * k)})`;
+    g.fillRect(x, 0, 1, 256);
+  }
+  for (let i = 0; i < 26; i++) {
+    const x = Math.random() * 256;
+    const y = Math.random() * 120;
+    const gr = g.createLinearGradient(x, y, x, y + 60 + Math.random() * 100);
+    gr.addColorStop(0, "rgba(110,52,24,0.55)");
+    gr.addColorStop(1, "rgba(110,52,24,0)");
+    g.fillStyle = gr;
+    g.fillRect(x - 3, y, 6 + Math.random() * 8, 160);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(2, 1);
+  return t;
+}
+
+/** Hundreds of short marks cut into the wall, row on row, by somebody lying
+ *  down. One of them is newer: brighter metal, not yet dulled. */
+function wallMarksTex() {
+  const W = 512;
+  const H = 384;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const g = c.getContext("2d")!;
+  g.lineWidth = 1.6;
+  let n = 0;
+  for (let row = 0; row < 14; row++)
+    for (let x = 14; x < W - 14; x += 6 + Math.random() * 2) {
+      if (row === 13 && x > W * 0.55) break;
+      const y = 20 + row * 25 + Math.sin(x * 0.05 + row) * 2;
+      g.strokeStyle = `rgba(200,198,190,${0.32 + Math.random() * 0.2})`;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + (Math.random() - 0.5) * 2, y + 15 + Math.random() * 3);
+      g.stroke();
+      n++;
+    }
+  // the newer one, at the end of the last row
+  g.strokeStyle = "rgba(240,238,232,0.95)";
+  g.lineWidth = 2.2;
+  const x = W * 0.55 + 7;
+  const y = 20 + 13 * 25;
+  g.beginPath();
+  g.moveTo(x, y);
+  g.lineTo(x + 0.5, y + 17);
+  g.stroke();
   void n;
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;

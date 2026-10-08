@@ -13,7 +13,7 @@ import * as THREE from "three";
 import { $, cine, persist, player, sfx, state, type Interact } from "./ctx";
 import { save } from "./save";
 import { showPlaceCard } from "./regions";
-import { CHOIR_C, DEAD_TAG, DEAD_TREE, MAST, OC, OLD_CAMP, STATION, WATCH, heightAt } from "./world";
+import { CHOIR_C, DEAD_TAG, DEAD_TREE, MAST, OC, OLD_CAMP, SHED_BED, STATION, WATCH, heightAt } from "./world";
 
 // ------------------------------------------------------------------ designation
 const NAMES = ["Sleeper", "Hundred", "Patient 10001"];
@@ -130,8 +130,8 @@ export const EVIDENCE: Evidence[] = [
   {
     id: "oc-post",
     label: "Look at the wristbands",
-    text: ["Wristbands, nailed to a post one above another.", "0034. 0217. 0891.", "The rest are too faded to read."],
-    patients: ["0034", "0217", "0891"],
+    text: ["Wristbands, nailed to a post one above another.", "One is still readable: 0034.", "The rest have faded white."],
+    patients: ["0034"],
     where: "Old Camp",
     at: v(OLD_CAMP, OC.post),
   },
@@ -154,10 +154,26 @@ export const EVIDENCE: Evidence[] = [
   {
     id: "oc-cot",
     label: "Look at the cot",
-    text: ["A cot of lashed branches. A name cut into the frame:", "MARA. 4012.", "Somebody kept a name out here."],
-    patients: ["4012"],
+    text: ["A cot of lashed branches.", "Scratched into the frame: 0217."],
+    patients: ["0217"],
     where: "Old Camp",
     at: v(OLD_CAMP, OC.cot),
+  },
+  {
+    id: "oc-roll",
+    label: "Look at the bedroll",
+    text: ["A bedroll, a tag tied to it.", "MARA. 4012.", "Somebody kept a name out here."],
+    patients: ["4012"],
+    where: "Old Camp",
+    at: v(OLD_CAMP, OC.roll),
+  },
+  {
+    id: "oc-can",
+    label: "Look at the canister",
+    text: ["A water canister, half full.", "Stencilled on the side: 0891."],
+    patients: ["0891"],
+    where: "Old Camp",
+    at: v(OLD_CAMP, OC.can),
   },
   {
     id: "oc-bag",
@@ -170,7 +186,7 @@ export const EVIDENCE: Evidence[] = [
   {
     id: "w-camera",
     label: "Look through the camera",
-    text: ["A camera on a tripod, aimed west.", "At the crash. At the ambulance.", "The red light is still on."],
+    text: ["A camera on a tripod, aimed east.", "At the crash. At the ambulance.", "The red light is still on."],
     patients: [],
     where: "The Watch",
     at: v(STATION, WATCH.camera),
@@ -182,6 +198,15 @@ export const EVIDENCE: Evidence[] = [
     patients: [],
     where: "The Watch",
     at: v(STATION, WATCH.desk),
+  },
+  {
+    // nothing else here is explained
+    id: "shed-band",
+    label: "Look at the wristband",
+    text: ["A wristband on the bed rail.", "PATIENT 9843."],
+    patients: ["9843"],
+    where: "The shed",
+    at: SHED_BED,
   },
 ];
 
