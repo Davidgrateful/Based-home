@@ -267,6 +267,8 @@ export const MOODS = {
   basin: { fog: 0x0f2129, density: 0.017, hemi: 1.1, tint: [0.7, 1.25, 1.35], sun: 1.2 },
   choir: { fog: 0xd9e4e8, density: 0.03, hemi: 2.6, tint: [2.6, 2.7, 2.75], sun: 2.4 },
   night: { fog: 0x1a2130, density: 0.0115, hemi: 1.2, tint: [1, 1, 1], sun: 1.5 },
+  /** the small hours: darker, closer, the moons lower */
+  deep: { fog: 0x111722, density: 0.0145, hemi: 0.95, tint: [0.82, 0.86, 0.98], sun: 1.15 },
   dusk: { fog: 0x33282a, density: 0.009, hemi: 1.4, tint: [1.45, 1.05, 0.95], sun: 1.8 },
   storm: { fog: 0x11141b, density: 0.0155, hemi: 0.9, tint: [0.75, 0.78, 0.95], sun: 1.1 },
   blood: { fog: 0x24100f, density: 0.0135, hemi: 1.0, tint: [1.5, 0.6, 0.55], sun: 1.2, blood: true },

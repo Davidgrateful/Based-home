@@ -196,6 +196,15 @@ body.cine #hud { opacity: 0 !important; }
 .bar.st > div { background: var(--ink-2); opacity: 0.7; }
 .inv { display: flex; gap: 16px; margin-top: 10px; white-space: nowrap; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
 .inv b { color: var(--ink); font-weight: 500; margin-left: 4px; }
+/* supplies (Chapter One's night): a quiet 3×2 grid under the vitals */
+#supplies { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; column-gap: 16px; row-gap: 3px; margin-top: 8px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+#supplies[hidden] { display: none; }
+#supplies span { white-space: nowrap; transition: color 0.4s; }
+#supplies b { color: var(--ink); font-weight: 500; margin-left: 4px; }
+#supplies span.none { opacity: 0.45; }
+#supplies span.got { animation: got 1.2s ease-out; }
+@keyframes got { 0% { color: var(--fire); } 100% { color: var(--dim); } }
+#hud.sup .inv .inv-med { display: none; }
 #firebar { margin-top: 14px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
 #firebar .bar { margin-top: 5px; height: 3px; }
 .bar.fire > div { background: var(--fire); }
@@ -285,6 +294,7 @@ body.touch #hud-name { font-size: 14px; }
 body.touch .who { margin-bottom: 4px; }
 body.touch .inv { font-size: 10px; gap: 10px; margin-top: 6px; }
 body.touch #firebar { margin-top: 8px; }
+body.touch #supplies { font-size: 9.5px; column-gap: 10px; margin-top: 5px; }
 body.touch .hud-tr { top: calc(50px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); }
 body.touch #night-chip { font-size: 16px; }
 body.touch #room-list { font-size: 12px; }

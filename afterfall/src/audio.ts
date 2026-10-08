@@ -186,6 +186,97 @@ export class Sfx {
     for (let i = 0; i < 7; i++) this.noise(0.02, 2600 + i * 120, 4, 0.35 - i * 0.03, "bandpass", i * 0.05);
     this.tone(180, 0.6, 0.12, "triangle", 120, 0.4);
   }
+  /** A dry branch snapping somewhere out in the dark (quieter = further). */
+  twig(gain = 0.5) {
+    this.noise(0.05, 2200, 3, gain, "bandpass");
+    this.noise(0.08, 900, 1.5, gain * 0.6, "bandpass", 0.03);
+    this.tone(140, 0.09, gain * 0.25, "triangle", 70, 0.02);
+  }
+  /** Feet in leaf litter: n soft, uneven steps. */
+  steps(n = 4, gain = 0.25) {
+    let at = 0;
+    for (let i = 0; i < n; i++) {
+      at += 0.42 + Math.random() * 0.25;
+      this.noise(0.14, 520 + Math.random() * 260, 0.9, gain * (0.7 + Math.random() * 0.4), "lowpass", at);
+      this.noise(0.05, 2600, 2, gain * 0.25, "bandpass", at + 0.02);
+    }
+  }
+  /** A person's voice, too far or too low to make out: a few formant-ish syllables. */
+  murmur(gain = 0.16) {
+    const ctx = this.ctx;
+    if (!ctx || !this.master) return;
+    const n = 2 + Math.floor(Math.random() * 3);
+    let at = 0;
+    const base = 105 + Math.random() * 60;
+    for (let i = 0; i < n; i++) {
+      const t = ctx.currentTime + at;
+      const len = 0.16 + Math.random() * 0.22;
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(base * (0.9 + Math.random() * 0.25), t);
+      o.frequency.linearRampToValueAtTime(base * (0.8 + Math.random() * 0.3), t + len);
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = 500 + Math.random() * 500;
+      f.Q.value = 4;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(gain, t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      o.connect(f).connect(g).connect(this.master);
+      o.start(t);
+      o.stop(t + len + 0.05);
+      at += len + 0.05 + Math.random() * 0.15;
+    }
+  }
+  /** A sharp intake of breath: the tell before a Hollow swings. */
+  rasp() {
+    this.noise(0.32, 1500, 1.2, 0.3, "bandpass");
+    this.noise(0.25, 420, 1, 0.18, "lowpass", 0.05);
+  }
+  /** Something rummaged through: zips, clatter, cloth. */
+  rummage() {
+    for (let i = 0; i < 4; i++) this.noise(0.06 + Math.random() * 0.06, 1200 + Math.random() * 2400, 1.4, 0.25, "bandpass", i * 0.07 + Math.random() * 0.04);
+  }
+  /** The tin-can line rattling. */
+  cans() {
+    for (let i = 0; i < 9; i++) this.tone(1900 + Math.random() * 1400, 0.07, 0.07, "triangle", 1500 + Math.random() * 600, i * 0.045 + Math.random() * 0.03);
+  }
+  /** Radio static: a burst of hiss. */
+  staticBurst(dur = 0.5, gain = 0.22) {
+    this.noise(dur, 3200, 0.4, gain, "bandpass");
+    this.noise(dur * 0.7, 900, 0.6, gain * 0.5, "highpass", 0.03);
+  }
+  /** Distant thunder. */
+  thunder(near = 0.5) {
+    this.noise(2.4 + near, 90 + near * 80, 0.6, 0.45 + near * 0.6, "lowpass");
+    this.noise(0.4, 600, 0.5, near * 0.5, "lowpass");
+    this.tone(38, 2.2, 0.35 * near + 0.1, "sine", 28);
+  }
+  /** Rain on the canopy and the ground, faded in and out. */
+  rain(level: number, secs = 3) {
+    const ctx = this.ctx;
+    if (!ctx || !this.master || !this.noiseBuf) return;
+    if (!this.rainGain) {
+      const src = ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      src.loop = true;
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = 2400;
+      f.Q.value = 0.35;
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      src.connect(f).connect(g).connect(this.master);
+      src.start();
+      this.rainGain = g;
+    }
+    const g = this.rainGain;
+    g.gain.cancelScheduledValues(ctx.currentTime);
+    g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(level, ctx.currentTime + secs);
+  }
+  private rainGain?: GainNode;
   /** One pop of burning wood; call at random intervals near a fire. */
   crackle(gain = 0.2) {
     this.noise(0.03 + Math.random() * 0.04, 1800 + Math.random() * 2400, 1.2, gain, "bandpass");

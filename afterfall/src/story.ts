@@ -41,11 +41,12 @@ import { ARENA, BEACON, BLACKWOOD_X, CAMP, CHOIR_C, heightAt, PYLONS, SETTLEMENT
 import { CHOIR_CASE, CHOIR_PIT, inBasin, inChoir, WALL_POS } from "./farlands";
 import { choose } from "./choice";
 import { evidenceInteracts, setDesignation } from "./history";
+import { survival } from "./survival";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
 type Stage =
-  | "intro" | "wake" | "outside" | "signs" | "fire" | "records" | "first" | "ambush" | "pylons" | "boss" | "ending"
+  | "intro" | "wake" | "outside" | "signs" | "fire" | "records" | "first" | "night1" | "ambush" | "pylons" | "boss" | "ending"
   | "changed" | "settlement" | "basin" | "choir" | "finale" | "done";
 
 export const story = {
@@ -68,6 +69,8 @@ const waveTimers: { at: number; n: number; kind: "hollow" | "runner" }[] = [];
 // Chapter One set dressing lives in the world for every mode (the tracks are
 // still there on the hundredth night).
 export const signs = new Signs(world.scene, world.ambulance);
+survival.build(signs);
+survival.onHome = () => void firstNightEnd();
 let signStep = 0;
 let seenFor = 0;
 let fireFoundSaid = false;
@@ -258,6 +261,7 @@ export async function startStory() {
   }
 
   farlands.dressAs(save.look); // the Choir will wear what you're wearing
+  survival.reset();
   await coldOpen();
 
   // WAKE
@@ -338,6 +342,12 @@ async function signsSequence(step: number) {
     await wait(2600);
     await say(S.SIGN_BREATH);
     if (story.stage !== "signs") return;
+    // something moving between the trees: a branch, a few steps, then nothing
+    sfx.twig(0.32);
+    await wait(900);
+    sfx.steps(3, 0.16);
+    await wait(1800);
+    if (story.stage !== "signs") return;
     signs.showShape(true);
     signStep = 3;
     setObjective("I · THE FALL", "Look around.");
@@ -374,6 +384,11 @@ async function spawnFirstHollow(cinematic: boolean) {
   const dir = new THREE.Vector3(SHAPE_X - CAMP.x, 0, SHAPE_Z - CAMP.z).normalize();
   const at = CAMP.clone().addScaledVector(dir, 15);
   firstHollow = enemies.spawn("hollow", at, { rise: false, speedMul: 0.55, hpMul: 1.4 });
+  // not a monster running at you: someone at the edge of the light who can't
+  // decide, until they can
+  firstHollow.stalk = true;
+  firstHollow.windup = 0.7;
+  firstHollow.courage = -0.6;
   barkCd = 14; // let it speak its own line first
   setObjective("I · THE FALL", "It's coming into the light.");
   sfx.ambienceTo(0.03, 1);
@@ -389,7 +404,7 @@ async function spawnFirstHollow(cinematic: boolean) {
     if (h.alive && enemies.holdT > 0) h.yaw = Math.atan2(BEACON.x - h.pos.x, BEACON.z - h.pos.z);
   }, cinematic ? 6600 : 3000);
   window.setTimeout(() => {
-    if (h.alive) h.speed *= 2.6; // the walk breaks into a run
+    if (h.alive) h.speed *= 2.0; // the walk breaks into a lope
   }, (cinematic ? 9 : 5) * 1000);
   if (!cinematic) return;
   cine.begin(false);
@@ -405,6 +420,44 @@ async function firstHollowDown() {
   sfx.ambienceTo(0.18, 3);
   await say(S.FIRST_HOLLOW_DOWN);
   if (story.stage !== "first") return;
+  startFirstNight();
+}
+
+// ------------------------------------------------------------------ THE FIRST NIGHT
+/** Keep the fire until dawn (survival.ts runs the night itself). */
+function startFirstNight() {
+  story.stage = "night1";
+  checkpoint = CAMP.clone().add(new THREE.Vector3(-2, 0, -2));
+  survival.begin();
+}
+
+/** Home at dawn. She's relieved. Then she says one thing too many. */
+async function firstNightEnd() {
+  if (story.stage !== "night1") return;
+  voice.interrupt();
+  voice.static = 0;
+  player.frozen = true;
+  hud.prompt.classList.remove("show");
+  cine.begin(false);
+  const f = CAMP.clone().setY(CAMP.y + 0.9);
+  const side = new THREE.Vector3(Math.sin(player.yaw + 1.9), 0, Math.cos(player.yaw + 1.9));
+  const eye = f.clone().addScaledVector(side, 4.6).add(new THREE.Vector3(0, 0.7, 0));
+  cine.shot(key(eye, f), key(eye.clone().addScaledVector(side, -0.9).add(new THREE.Vector3(0, -0.2, 0)), f.clone().lerp(player.pos.clone().setY(player.pos.y + 1.3), 0.5)), 26);
+  await wait(1200);
+  await cine.say(S.FIRST_NIGHT_END);
+  await wait(2600); // and then nothing
+  sfx.staticBurst(1.2, 0.08);
+  await card("END OF CHAPTER I", "THE FALL", "", 4200);
+  await fade(1, 1400);
+  survival.end();
+  cine.end();
+  player.frozen = false;
+  world.setMood("night");
+  world.snapMood();
+  player.pos.copy(CAMP).add(new THREE.Vector3(-2, 0, -2.5));
+  player.pos.y = heightAt(player.pos.x, player.pos.z);
+  await wait(600);
+  void fade(0, 1600);
   startAmbush();
 }
 
@@ -869,6 +922,13 @@ export async function storyPlayerDown() {
   player.medkits = Math.max(player.medkits, 1);
   player.invuln = 2;
   if (story.stage === "first") spawnFirstHollow(false);
+  if (story.stage === "night1") {
+    survival.onRespawn();
+    if (!world.campfire.lit) {
+      world.campfire.lit = true; // you come to beside embers someone blew back up
+      world.campfire.hp = world.campfire.maxHp * 0.3;
+    }
+  }
   if (story.stage === "basin" && late.fightDone && checkpoint.z >= 240) late.fightDone = false; // the fight comes again
   if (story.stage === "ambush") startAmbush();
   if (story.stage === "pylons" && activePylon >= 0) {
@@ -903,6 +963,8 @@ export function storyTarget(): THREE.Vector3 | null {
       return late.built ? CHOIR_CASE : CHOIR_PIT;
     case "records":
       return CASE_POS;
+    case "night1":
+      return survival.target();
     case "pylons": {
       if (activePylon >= 0) return null;
       let best: THREE.Vector3 | null = null;
@@ -937,7 +999,9 @@ export function storyUpdate(dt: number) {
   }
 
   const echo = echoInteract();
-  runInteractions(echo ? [...interacts, ...evidenceInteracts(), echo] : [...interacts, ...evidenceInteracts()]);
+  const sv = survival.interacts(story.stage);
+  runInteractions(echo ? [...interacts, ...sv, ...evidenceInteracts(), echo] : [...interacts, ...sv, ...evidenceInteracts()]);
+  survival.update(dt, story.stage);
 
   if (state.exited)
     pickupShards(() => {
@@ -1016,7 +1080,8 @@ export function storyUpdate(dt: number) {
   }
 
   barkCd -= dt;
-  if (barkCd <= 0 && enemies.aliveCount > 0 && !voice.busy) {
+  // the night's Hollow murmur instead (survival.ts): no shouting at the fire
+  if (barkCd <= 0 && enemies.aliveCount > 0 && !voice.busy && story.stage !== "night1" && story.stage !== "first") {
     barkCd = 9 + Math.random() * 6;
     say([["HOLLOW", pick(S.HOLLOW_BARKS)]]);
   }
@@ -1055,6 +1120,11 @@ export function storySkip(to: Stage) {
   if (to === "records") {
     world.setCampfire(true);
     player.pos.set(CAMP.x - 1, 0, CAMP.z - 2);
+  }
+  if (to === "night1") {
+    world.setCampfire(true);
+    player.pos.copy(CAMP).add(new THREE.Vector3(-2, 0, -2.5));
+    startFirstNight();
   }
   if (to === "ambush") {
     world.setCampfire(true);

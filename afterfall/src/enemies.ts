@@ -17,6 +17,8 @@ export type State = "spawn" | "chase" | "windup" | "strike" | "recover" | "slamU
 
 export interface PlayerLike {
   pos: THREE.Vector3;
+  /** where they're looking (a stalker moves in when your back is turned) */
+  yaw?: number;
   invuln: number;
   airborne: boolean;
   down?: boolean;
@@ -89,6 +91,16 @@ export class Enemy {
   wanderYaw = 0;
   /** The state the body last animated (real people play clips on changes). */
   animState: State | "" = "";
+  /** Stalker (Chapter One's Hollow): circles, hesitates, waits for an opening,
+   *  rushes in, then backs off. Afraid of firelight. */
+  stalk = false;
+  courage = 0;
+  committed = false;
+  pausing = false;
+  burstT = 0;
+  strafe = Math.random() < 0.5 ? 1 : -1;
+  flee = 0;
+  murmurT = 2 + Math.random() * 4;
 
   constructor(kind: EnemyKind, at: THREE.Vector3, o: SpawnOpts) {
     this.kind = kind;
@@ -166,6 +178,16 @@ export class EnemyManager {
   holdT = 0;
   /** Lit fires: natives won't come into their light. */
   lights: THREE.Vector3[] = [];
+  /** Firelight the Hollow are afraid of: centre, radius, strength 0..1. */
+  fear: { pos: THREE.Vector3; r: number; k: number } | null = null;
+  /** How many may be committed to an attack at once (the rest circle). */
+  maxAttackers = Infinity;
+  /** Scales how quickly stalkers work up to an attack (the storm raises it). */
+  aggression = 1;
+  /** Dawn: the Hollow give up and walk back into the trees. */
+  retreat = false;
+  onWindup?: (e: Enemy) => void;
+  onMurmur?: (e: Enemy) => void;
   /** A native has noticed someone (first growl, first sighting line). */
   onNotice?: (e: Enemy) => void;
   onHitPlayer?: () => void;
@@ -243,6 +265,12 @@ export class EnemyManager {
       if (Math.abs(da) > arc && dist > 1.0) continue;
       e.flash = 0.15;
       e.provoked = true;
+      if (e.stalk && apply) {
+        // hurt, it backs off: it wants you, but it doesn't want this
+        e.committed = false;
+        e.courage = Math.min(e.courage, 0.2) - 0.25;
+        e.flee = heavy ? 0.9 : 0.55;
+      }
       if (!apply) {
         this.onHit?.(e, dmg, heavy);
         n++;
@@ -279,6 +307,7 @@ export class EnemyManager {
     this.holdT = Math.max(0, this.holdT - dt);
     const targets = [me, ...this.others].filter((p) => !p.down);
     if (!targets.length) targets.push(me);
+    const gone: Enemy[] = [];
     for (const e of this.list) {
       const m = e.model;
       const ground = heightAt(e.pos.x, e.pos.z);
@@ -399,12 +428,34 @@ export class EnemyManager {
                 this.onNotice?.(e);
               }
             }
-            turn(6);
-            if (this.holdT > 0 && fire && e.kind !== "warden" && Math.hypot(e.pos.x - fire.pos.x, e.pos.z - fire.pos.z) < 22) {
-              want = Math.atan2(fire.pos.x - e.pos.x, fire.pos.z - e.pos.z);
+            if (this.retreat && e.kind !== "warden") {
+              // dawn: back into the trees, not running, and gone
+              want = Math.atan2(e.pos.x - player.pos.x, e.pos.z - player.pos.z);
+              turn(3);
+              move = e.speed * 0.55;
+              if (best > 34) gone.push(e);
+              break;
+            }
+            const fearHold = this.fear ?? (fire ? { pos: fire.pos, r: 22, k: 1 } : null);
+            if (this.holdT > 0 && fearHold && e.kind !== "warden" && Math.hypot(e.pos.x - fearHold.pos.x, e.pos.z - fearHold.pos.z) < fearHold.r + 8) {
+              want = Math.atan2(fearHold.pos.x - e.pos.x, fearHold.pos.z - e.pos.z);
+              turn(4);
               move = 0; // standing at the edge of the light, staring in
               break;
             }
+            if (e.stalk && e.kind !== "warden") {
+              const st = this.stalkStep(e, dt, player, dist, want);
+              want = st.want;
+              turn(st.rate);
+              move = st.move;
+              if (st.attack) {
+                e.state = "windup";
+                e.timer = e.windup;
+                this.onWindup?.(e);
+              }
+              break;
+            }
+            turn(6);
             if (e.kind === "shaman" && !goFire) {
               // kite at mid range, cast when ready
               move = dist > 13 ? e.speed : dist < 8 ? -e.speed * 0.8 : 0;
@@ -423,6 +474,7 @@ export class EnemyManager {
               } else {
                 e.state = "windup";
                 e.timer = e.windup;
+                this.onWindup?.(e);
               }
             } else if (e.kind === "warden" && dist > 14 && Math.random() < dt * 0.4) {
               e.state = "slamUp";
@@ -474,7 +526,15 @@ export class EnemyManager {
           case "recover":
             turn(2);
             move = e.speed * 0.15;
-            if (e.timer <= 0) e.state = "chase";
+            if (e.timer <= 0) {
+              e.state = "chase";
+              if (e.stalk) {
+                // it struck (or was struck): back off and start working up to it again
+                e.committed = false;
+                e.courage = Math.min(e.courage, 0) - Math.random() * 0.3;
+                e.flee = Math.max(e.flee, 0.7);
+              }
+            }
             break;
         }
 
@@ -599,8 +659,73 @@ export class EnemyManager {
         e.barFill.position.x = -0.43 * (1 - f);
       }
     }
+    for (const e of gone) this.remove(e);
     this.list = this.list.filter((e) => e.alive || e.deadFor <= 4);
     this.updateBolts(dt, targets, me, fire);
+  }
+
+  /** One frame of a stalker's chase: hold a ring outside the light (or around
+   *  you), move in bursts, stop and stare, switch sides, and only rush in once
+   *  it has worked itself up to it and nobody else is already attacking. */
+  private stalkStep(e: Enemy, dt: number, player: PlayerLike, dist: number, toward: number) {
+    e.murmurT -= dt;
+    if (e.murmurT <= 0) {
+      e.murmurT = 5 + Math.random() * 7;
+      this.onMurmur?.(e);
+    }
+    if (e.flee > 0) {
+      e.flee -= dt;
+      return { want: toward + Math.PI + (e.strafe * 0.5), move: e.speed * 0.7, rate: 6, attack: false };
+    }
+    const fear = this.fear;
+    const dFire = fear ? Math.hypot(e.pos.x - fear.pos.x, e.pos.z - fear.pos.z) : Infinity;
+    const playerInLight = !!fear && Math.hypot(player.pos.x - fear.pos.x, player.pos.z - fear.pos.z) < fear.r;
+    let look = Math.atan2(e.pos.x - player.pos.x, e.pos.z - player.pos.z) - (player.yaw ?? 0);
+    look = Math.atan2(Math.sin(look), Math.cos(look));
+    const watched = Math.abs(look) < 0.65;
+
+    let rate = 0.12 * this.aggression;
+    if (!watched) rate *= 1.9; // it comes when you aren't looking
+    if (playerInLight && fear) rate *= 1 - 0.75 * fear.k;
+    e.courage += rate * dt;
+
+    if (e.committed) {
+      // and still, right at the fire, it can lose its nerve
+      if (fear && dFire < fear.r * 0.55 && fear.k > 0.55 && Math.random() < dt * 1.2) {
+        e.committed = false;
+        e.courage = -0.2;
+        e.flee = 0.8;
+        return { want: toward + Math.PI, move: e.speed * 0.7, rate: 7, attack: false };
+      }
+      if (dist < e.range) return { want: toward, move: 0, rate: 8, attack: true };
+      return { want: toward, move: e.speed * 1.15, rate: 7, attack: false };
+    }
+    const busy = this.list.filter((o) => o.alive && (o.committed || o.state === "windup" || o.state === "strike")).length;
+    if (e.courage >= 1 && busy < this.maxAttackers) {
+      e.committed = true;
+      e.pausing = false;
+      return { want: toward, move: e.speed * 1.15, rate: 7, attack: false };
+    }
+
+    // circle: the edge of the light if you're in it, else a few metres off you
+    const c = playerInLight && fear ? fear.pos : player.pos;
+    const ringR = playerInLight && fear ? fear.r + 1.5 : 6.5 + (e.id % 3);
+    const dc = Math.hypot(e.pos.x - c.x, e.pos.z - c.z);
+    const radial = dc - ringR;
+    const out = Math.atan2(e.pos.x - c.x, e.pos.z - c.z);
+    let want = out + (e.strafe * Math.PI) / 2;
+    if (radial > 1.5) want = out + Math.PI + e.strafe * 0.35;
+    else if (radial < -1.2) want = out + e.strafe * 0.35;
+
+    e.burstT -= dt;
+    if (e.burstT <= 0) {
+      e.pausing = !e.pausing;
+      e.burstT = e.pausing ? 0.5 + Math.random() * 1.4 : 0.5 + Math.random() * 1.3;
+      if (!e.pausing && Math.random() < 0.3) e.strafe *= -1;
+      if (e.pausing && Math.random() < 0.18 && e.model instanceof Person) void e.model.play("hitHead", 0.45);
+    }
+    if (e.pausing) return { want: toward, move: 0, rate: 3, attack: false }; // stop, and stare
+    return { want, move: e.speed * (Math.abs(radial) > 1.5 ? 0.55 : 0.38), rate: 5, attack: false };
   }
 
   /** Host: compact snapshot of every enemy (incl. the recently dead). */

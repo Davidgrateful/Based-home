@@ -44,6 +44,7 @@ import { faunaUpdate } from "./fauna";
 import { setMemoryCamera } from "./memory";
 import { Person, peopleReady, track, updatePeople } from "./people";
 import { PlaneSet } from "./cinesets";
+import { supplies, survival } from "./survival";
 
 // ------------------------------------------------------------------ hooks
 voice.onLine = (id, radio) => {
@@ -91,8 +92,18 @@ enemies.onSummon = () => {
 enemies.onDeath = (e) => {
   sfx.kill();
   fx.sparks(e.pos.clone().add(new THREE.Vector3(0, 1, 0)), 20, 6);
+  survival.onEnemyDeath(e);
   storyOnDeath(e);
   nightOnDeath(e);
+};
+// the tell before a swing: a sharp breath in (dodge on it)
+enemies.onWindup = (e) => {
+  if (e.pos.distanceTo(player.pos) < 9) sfx.rasp();
+};
+// a stalker under its breath: too low to make out, quieter the further off
+enemies.onMurmur = (e) => {
+  const d = e.pos.distanceTo(player.pos);
+  if (d < 26) sfx.murmur(0.03 + 0.12 * (1 - d / 26));
 };
 
 // ------------------------------------------------------------------ main menu
@@ -539,4 +550,6 @@ tick();
   enterRoom,
   voiceChat,
   regions: { regionsUpdate, historyUpdate },
+  survival,
+  supplies,
 };

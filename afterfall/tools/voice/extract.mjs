@@ -22,7 +22,7 @@ const SPEAKERS = ["RHEA", "YOU", "PILOT", "DEZ", "HOLLOW", "WARDEN", "CHOIR", "E
 
 // Which download each part of the script lives in.
 const PACK = (name) =>
-  /^(COLD_OPEN|WAKE|TAKE_AXE|REVEAL|FIRST_SHARD|BLACK_BOX|SIGN_|FIRE_FOUND|FIRE_LIT|RECORDS_READ|FIRST_HOLLOW)/.test(name) ? "intro"
+  /^(COLD_OPEN|WAKE|TAKE_AXE|REVEAL|FIRST_SHARD|BLACK_BOX|SIGN_|FIRE_FOUND|FIRE_LIT|RECORDS_READ|FIRST_HOLLOW|NIGHT1_|RADIO_|DEEP_NIGHT|GLIMPSE|STORM_|FIRE_OUT|ALARM_|DAWN1|FIRST_NIGHT)/.test(name) ? "intro"
   : /^(AMBUSH|PYLON|WARDEN_|EPILOGUE)/.test(name) ? "story"
   : /^(INES|CHANGED|SETTLEMENT|WRISTBAND|FIRE_TALK|CHOICE|BASIN|CHOIR_|ENDING)/.test(name) ? "late"
   : /^(NIGHT|LOOP|DAWN|FIRE_LOW|MEM_)/.test(name) ? "night"
@@ -52,7 +52,7 @@ const spoken = (id, text) => {
 
 const out = new Map();
 const add = (id, text, o = {}, pack, from) => {
-  if (!SPEAKERS.includes(id) || !text.trim()) return;
+  if (!SPEAKERS.includes(id) || !text.trim() || /^[.…\s]+$/.test(text)) return; // "…" is a held silence
   const radio = o.radio ?? !!RADIO[id];
   const key = `${id}|${radio ? 1 : 0}|${text}`;
   if (out.has(key)) return;

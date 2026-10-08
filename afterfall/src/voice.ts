@@ -95,6 +95,11 @@ export class Voice {
   private playing: AudioBufferSourceNode | null = null;
   private out: GainNode | null = null;
   muted = false;
+  /** 0..1: how badly the radio is breaking up (Chapter One's night). Radio
+   *  lines lose words in the subtitles and drop out in the audio. */
+  static = 0;
+  /** Called when a radio line starts under static (a hiss to go with it). */
+  onStatic?: (amount: number, ms: number) => void;
   /** Substituted for {name} in every line and used as YOUR speaker label. */
   playerName = "Sleeper";
   private voices: SpeechSynthesisVoice[] = [];
@@ -173,7 +178,14 @@ export class Voice {
 
   private speakOne([id, raw, opts]: Line, t: number): Promise<void> {
     const s = SPEAKERS[id];
-    const line = raw.replace(/\{name\}/g, this.playerName);
+    const radioLine = opts?.radio ?? !!s.radio;
+    const noise = radioLine ? this.static : 0;
+    let line = raw.replace(/\{name\}/g, this.playerName);
+    if (noise > 0.05) {
+      // the words that don't make it through
+      const words = line.split(" ");
+      line = words.map((w, i) => (i > 0 && Math.random() < noise * 0.45 ? "–" : w)).join(" ");
+    }
     const pitch = opts?.pitch ?? s.pitch;
     const rate = opts?.rate ?? s.rate;
     this.who.textContent = (opts?.name ?? (id === "YOU" ? this.playerName : s.name)).replace(/\{name\}/g, this.playerName);
@@ -183,6 +195,18 @@ export class Voice {
     this.box.classList.add("show");
     this.onLine?.(id, opts?.radio ?? !!s.radio);
     this.active++;
+
+    // a beat of silence, held on screen ("…"): no sound at all
+    if (/^[.…\s]+$/.test(raw)) {
+      clearInterval(this.typer);
+      this.text.textContent = "…";
+      return new Promise((resolve) =>
+        setTimeout(() => {
+          this.active = Math.max(0, this.active - 1);
+          resolve();
+        }, 2600),
+      );
+    }
 
     // typewriter subtitle
     clearInterval(this.typer);
@@ -225,7 +249,22 @@ export class Voice {
           }
           const src = ctx.createBufferSource();
           src.buffer = buf;
-          src.connect(this.out);
+          if (noise > 0.05) {
+            // drop-outs: the signal fades to almost nothing for a moment, now and then
+            const g = ctx.createGain();
+            const t0 = ctx.currentTime;
+            const n = Math.round(noise * buf.duration * 1.6);
+            for (let i = 0; i < n; i++) {
+              const at = t0 + 0.3 + Math.random() * Math.max(0.1, buf.duration - 0.6);
+              const len = 0.12 + Math.random() * 0.25;
+              g.gain.setValueAtTime(1, at);
+              g.gain.linearRampToValueAtTime(0.06, at + 0.03);
+              g.gain.setValueAtTime(0.06, at + len);
+              g.gain.linearRampToValueAtTime(1, at + len + 0.04);
+            }
+            src.connect(g).connect(this.out);
+            this.onStatic?.(noise, buf.duration * 1000);
+          } else src.connect(this.out);
           src.onended = () => {
             if (this.playing === src) this.playing = null;
             finish();

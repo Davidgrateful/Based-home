@@ -1,5 +1,17 @@
 [
  {
+  "key": "YOU|0|If anything walks into that, I'll hear it.",
+  "id": "YOU",
+  "radio": false,
+  "text": "If anything walks into that, I'll hear it.",
+  "say": "If anything walks into that, I'll hear it.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "ALARM_RIGGED"
+ },
+ {
   "key": "YOU|0|Wristbands. All of them. Meridian.",
   "id": "YOU",
   "radio": false,
@@ -1104,6 +1116,30 @@
   "from": "COLD_OPEN_WATCHERS"
  },
  {
+  "key": "YOU|0|They're going back into the trees.",
+  "id": "YOU",
+  "radio": false,
+  "text": "They're going back into the trees.",
+  "say": "They're going back into the trees.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DAWN1"
+ },
+ {
+  "key": "RHEA|1|Sun's coming up. Or whatever that is. Come back to the fire.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Sun's coming up. Or whatever that is. Come back to the fire.",
+  "say": "Sun's coming up. Or whatever that is. Come back to the fire.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DAWN1"
+ },
+ {
   "key": "RHEA|1|Sun's up. Or whatever that is. You made it, {name}.",
   "id": "RHEA",
   "radio": true,
@@ -1162,6 +1198,42 @@
   "rate": null,
   "pack": "night",
   "from": "DAWN_LINES"
+ },
+ {
+  "key": "RHEA|1|It's gone very quiet where you are.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "It's gone very quiet where you are.",
+  "say": "It's gone very quiet where you are.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DEEP_NIGHT"
+ },
+ {
+  "key": "YOU|0|It isn't quiet. Something keeps walking just past the light.",
+  "id": "YOU",
+  "radio": false,
+  "text": "It isn't quiet. Something keeps walking just past the light.",
+  "say": "It isn't quiet. Something keeps walking just past the light.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DEEP_NIGHT"
+ },
+ {
+  "key": "RHEA|1|Then don't leave the light.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Then don't leave the light.",
+  "say": "Then don't leave the light.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DEEP_NIGHT"
  },
  {
   "key": "ECHO|0|Patient seven. Day one. They said it was a clinical trial. They said I'd be home by spring.",
@@ -1548,6 +1620,18 @@
   "from": "FIRE_LOW"
  },
  {
+  "key": "YOU|0|It's out. I need something that burns.",
+  "id": "YOU",
+  "radio": false,
+  "text": "It's out. I need something that burns.",
+  "say": "It's out. I need something that burns.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "FIRE_OUT"
+ },
+ {
   "key": "TEO|0|Sit. The fire doesn't ask questions.",
   "id": "TEO",
   "radio": false,
@@ -1728,6 +1812,42 @@
   "from": "FIRST_HOLLOW_DOWN"
  },
  {
+  "key": "RHEA|1|You're back.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "You're back.",
+  "say": "You're back.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "FIRST_NIGHT_END"
+ },
+ {
+  "key": "YOU|0|You knew I'd make it.",
+  "id": "YOU",
+  "radio": false,
+  "text": "You knew I'd make it.",
+  "say": "You knew I'd make it.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "FIRST_NIGHT_END"
+ },
+ {
+  "key": "RHEA|1|I knew where you'd come back from.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "I knew where you'd come back from.",
+  "say": "I knew where you'd come back from.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "FIRST_NIGHT_END"
+ },
+ {
   "key": "YOU|0|It's warm. And it's humming.",
   "id": "YOU",
   "radio": false,
@@ -1750,6 +1870,42 @@
   "rate": null,
   "pack": "intro",
   "from": "FIRST_SHARD"
+ },
+ {
+  "key": "YOU|0|Rhea. Someone's standing in the trees.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Rhea. Someone's standing in the trees.",
+  "say": "Rhea. Someone's standing in the trees.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "GLIMPSE"
+ },
+ {
+  "key": "RHEA|1|Say again?",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Say again?",
+  "say": "Say again?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "GLIMPSE"
+ },
+ {
+  "key": "YOU|0|Nothing. They're gone.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Nothing. They're gone.",
+  "say": "Nothing. They're gone.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "GLIMPSE"
  },
  {
   "key": "HOLLOW|0|Visiting hours are over.",
@@ -2436,6 +2592,18 @@
   "from": "NAV"
  },
  {
+  "key": "RHEA|1|Follow the smoke back. The fire's by the ambulance.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Follow the smoke back. The fire's by the ambulance.",
+  "say": "Follow the smoke back. The fire's by the ambulance.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "common",
+  "from": "NAV"
+ },
+ {
   "key": "RHEA|1|Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north.",
   "id": "RHEA",
   "radio": true,
@@ -2482,6 +2650,54 @@
   "rate": null,
   "pack": "common",
   "from": "NAV"
+ },
+ {
+  "key": "RHEA|1|That one won't be the last.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "That one won't be the last.",
+  "say": "That one won't be the last.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "NIGHT1_START"
+ },
+ {
+  "key": "RHEA|1|There's weather coming. I can hear it on the radio, rolling in from the north.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "There's weather coming. I can hear it on the radio, rolling in from the north.",
+  "say": "There's weather coming. I can hear it on the radio, rolling in from the north.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "NIGHT1_START"
+ },
+ {
+  "key": "YOU|0|How long?",
+  "id": "YOU",
+  "radio": false,
+  "text": "How long?",
+  "say": "How long?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "NIGHT1_START"
+ },
+ {
+  "key": "RHEA|1|Long enough to find things that burn. Food. Water. Go.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Long enough to find things that burn. Food. Water. Go.",
+  "say": "Long enough to find things that burn. Food. Water. Go.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "NIGHT1_START"
  },
  {
   "key": "RHEA|1|{name}, the rift went wild when the Warden fell. It's spitting Hollow out of the sky, and I can't reach you before dark.",
@@ -2866,6 +3082,138 @@
   "rate": null,
   "pack": "story",
   "from": "PYLON_TOUCH"
+ },
+ {
+  "key": "RHEA|1|You're breaking up. Your radio's dying.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "You're breaking up. Your radio's dying.",
+  "say": "You're breaking up. Your radio's dying.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_BATTERY"
+ },
+ {
+  "key": "YOU|0|Then I'll find it something to eat.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Then I'll find it something to eat.",
+  "say": "Then I'll find it something to eat.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_BATTERY"
+ },
+ {
+  "key": "RHEA|1|How far are you?",
+  "id": "RHEA",
+  "radio": true,
+  "text": "How far are you?",
+  "say": "How far are you?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FAR"
+ },
+ {
+  "key": "YOU|0|I don't know.",
+  "id": "YOU",
+  "radio": false,
+  "text": "I don't know.",
+  "say": "I don't know.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FAR"
+ },
+ {
+  "key": "RHEA|1|Then you're farther than you should be.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Then you're farther than you should be.",
+  "say": "Then you're farther than you should be.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FAR"
+ },
+ {
+  "key": "RHEA|1|Is the fire still going?",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Is the fire still going?",
+  "say": "Is the fire still going?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FIRE"
+ },
+ {
+  "key": "YOU|0|For now.",
+  "id": "YOU",
+  "radio": false,
+  "text": "For now.",
+  "say": "For now.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FIRE"
+ },
+ {
+  "key": "RHEA|1|Make it longer than for now.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Make it longer than for now.",
+  "say": "Make it longer than for now.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FIRE"
+ },
+ {
+  "key": "RHEA|1|What have you got?",
+  "id": "RHEA",
+  "radio": true,
+  "text": "What have you got?",
+  "say": "What have you got?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FOUND"
+ },
+ {
+  "key": "YOU|0|Tins. Water. Somebody's socks.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Tins. Water. Somebody's socks.",
+  "say": "Tins. Water. Somebody's socks.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FOUND"
+ },
+ {
+  "key": "RHEA|1|Keep the tins.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Keep the tins.",
+  "say": "Keep the tins.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RADIO_FOUND"
  },
  {
   "key": "YOU|0|Rhea. There's a record for me.",
@@ -3322,6 +3670,18 @@
   "rate": 0.75,
   "pack": "intro",
   "from": "SIGN_VOICE"
+ },
+ {
+  "key": "RHEA|1|Here it comes. Stay by the fire, {name}. Whatever you hear out there, it isn't",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Here it comes. Stay by the fire, {name}. Whatever you hear out there, it isn't",
+  "say": "Here it comes. Stay by the fire, sleeper. Whatever you hear out there, it isn't",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "STORM_START"
  },
  {
   "key": "YOU|0|Fire axe. Okay. Okay, I can do fire axe.",

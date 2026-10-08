@@ -194,6 +194,7 @@ export const NAV: Record<string, Line[]> = {
   signs: [["RHEA", "Head back to the ambulance. Keep the dead tree behind you."]],
   fire: [["RHEA", "The fire pit's by the ambulance. Look for the stones."]],
   records: [["RHEA", "The case. It's by the stones, where the fire is."]],
+  night1: [["RHEA", "Follow the smoke back. The fire's by the ambulance."]],
   pylons: [["RHEA", "Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north."]],
   boss: [["RHEA", "Follow the beams north. To the stones."]],
   changed: [["RHEA", "East. Where the trees go black."]],
@@ -277,6 +278,62 @@ export const FIRST_HOLLOW_DOWN: Line[] = [
 ];
 
 export const BLACK_BOX_FIND: Line[] = [["YOU", "Black box. It's still got power. There's a recording."]];
+
+// ---------------------------------------------------------------- THE FIRST NIGHT
+// Chapter One's survival loop: keep the fire, get through to dawn. Rhea is on
+// the radio, less and less of her as the night goes on.
+export const NIGHT1_START: Line[] = [
+  ["RHEA", "That one won't be the last."],
+  ["RHEA", "There's weather coming. I can hear it on the radio, rolling in from the north."],
+  ["YOU", "How long?"],
+  ["RHEA", "Long enough to find things that burn. Food. Water. Go."],
+];
+/** Radio check-ins while you scavenge. Short; never more than she'd say. */
+export const RADIO_FAR: Line[] = [
+  ["RHEA", "How far are you?"],
+  ["YOU", "I don't know."],
+  ["RHEA", "Then you're farther than you should be."],
+];
+export const RADIO_FOUND: Line[] = [
+  ["RHEA", "What have you got?"],
+  ["YOU", "Tins. Water. Somebody's socks."],
+  ["RHEA", "Keep the tins."],
+];
+export const RADIO_FIRE: Line[] = [
+  ["RHEA", "Is the fire still going?"],
+  ["YOU", "For now."],
+  ["RHEA", "Make it longer than for now."],
+];
+export const RADIO_BATTERY: Line[] = [
+  ["RHEA", "You're breaking up. Your radio's dying."],
+  ["YOU", "Then I'll find it something to eat."],
+];
+export const DEEP_NIGHT: Line[] = [
+  ["RHEA", "It's gone very quiet where you are."],
+  ["YOU", "It isn't quiet. Something keeps walking just past the light."],
+  ["RHEA", "Then don't leave the light."],
+];
+export const GLIMPSE: Line[] = [
+  ["YOU", "Rhea. Someone's standing in the trees."],
+  ["RHEA", "Say again?"],
+  ["YOU", "Nothing. They're gone."],
+];
+export const STORM_START: Line[] = [["RHEA", "Here it comes. Stay by the fire, {name}. Whatever you hear out there, it isn't"]];
+export const STORM_LOST: Line[] = [["YOU", "Rhea?"]];
+export const FIRE_OUT: Line[] = [["YOU", "It's out. I need something that burns."]];
+export const ALARM_RIGGED: Line[] = [["YOU", "If anything walks into that, I'll hear it."]];
+export const DAWN1: Line[] = [
+  ["YOU", "They're going back into the trees."],
+  ["RHEA", "Sun's coming up. Or whatever that is. Come back to the fire."],
+];
+/** Back at the fire, after the first night. She says one thing too many. */
+export const FIRST_NIGHT_END: Line[] = [
+  ["RHEA", "You're back."],
+  ["YOU", "You knew I'd make it."],
+  ["RHEA", "…"],
+  ["YOU", "Rhea?"],
+  ["RHEA", "I knew where you'd come back from."],
+];
 
 // ---------------------------------------------------------------- THE THINGS
 // First sighting of a native. Not a patient. Not anybody.

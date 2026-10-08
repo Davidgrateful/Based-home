@@ -219,7 +219,7 @@ export class Player {
     if (!this.frozen && !this.firstPerson && (input.dash || input.tap("KeyC")) && this.stamina >= this.dodgeCost && this.dashT === 0) {
       this.stamina -= this.dodgeCost;
       this.dashT = 0.28;
-      this.invuln = Math.max(this.invuln, 0.32);
+      this.invuln = Math.max(this.invuln, 0.36); // a little forgiving: a dodge on the tell should land
       this.dashDir.copy(moving ? wish : fwd).multiplyScalar(19);
       if (this.model instanceof Person) {
         this.facing = Math.atan2(this.dashDir.x, this.dashDir.z);
