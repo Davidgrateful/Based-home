@@ -124,10 +124,10 @@ export class Signs {
     sg.textAlign = "center";
     sg.strokeText("HUNDRED", 256, 74);
     const word = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.5, 0.28),
+      new THREE.PlaneGeometry(2.0, 0.37),
       new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(scratch), transparent: true, roughness: 0.4, metalness: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
     );
-    word.position.set(1.43, 0.47, -0.3);
+    word.position.set(1.43, 0.5, -0.3);
     word.rotation.y = Math.PI / 2;
     ambulance.add(word);
     this.tally = tally;
