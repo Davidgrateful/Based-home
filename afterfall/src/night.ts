@@ -11,6 +11,7 @@
 // streams it; everyone else mirrors it. Loot is per player.
 
 import * as THREE from "three";
+import { evidenceInteracts } from "./history";
 import {
   $,
   applyMemories,
@@ -562,7 +563,7 @@ export function nightUpdate(dt: number) {
   }
 
   if (!state.dead) {
-    runInteractions(interacts());
+    runInteractions([...interacts(), ...evidenceInteracts()]);
     pickupShards();
   }
 

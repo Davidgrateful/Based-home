@@ -16,6 +16,17 @@ export const SHAPE_POS = new THREE.Vector3(0.5, 0, 27);
 CASE_POS.y = heightAt(CASE_POS.x, CASE_POS.z);
 SHAPE_POS.y = heightAt(SHAPE_POS.x, SHAPE_POS.z);
 
+const BAR = new THREE.BoxGeometry(0.01, 0.26, 0.014);
+const SLASH = new THREE.BoxGeometry(0.012, 0.34, 0.02);
+const BASE_GROUPS = 40;
+/** Where tally group g goes on the flank: 10 to a row, rows from the roof down
+ *  (the loop's extra marks carry on below, then wrap back over the top). */
+function groupAt(g: number): [number, number] {
+  const col = g % 10;
+  const row = Math.floor(g / 10) % 5;
+  return [2.25 - row * 0.32, -2.35 + col * 0.42 + (Math.floor(g / 50) % 2) * 0.2];
+}
+
 /** The track: tree line → around the ambulance → the fire pit → back into the trees. */
 function trackPath(): THREE.Vector3[] {
   const pts: THREE.Vector3[] = [];
@@ -78,31 +89,47 @@ export class Signs {
     prints.receiveShadow = true;
     this.group.add(prints);
 
-    // ---- tally marks gouged through the paint on the right flank
+    // ---- tally marks gouged through the paint on the right flank: hundreds,
+    // in rows from the roofline down, straight across the window
     const gouge = new THREE.MeshStandardMaterial({ color: 0x5d6064, roughness: 0.5, metalness: 0.7 });
-    const bar = new THREE.BoxGeometry(0.012, 0.34, 0.016);
     const tally = new THREE.Group();
-    for (let g = 0; g < 18; g++) {
-      const col = g % 6;
-      const row = Math.floor(g / 6);
-      const ox = -2.2 + col * 0.7;
-      const oy = 2.2 - row * 0.5;
-      const marks = g === 17 ? 3 : 4; // the last group is unfinished
+    for (let g = 0; g < BASE_GROUPS; g++) {
+      const [oy, ox] = groupAt(g);
+      const marks = g === BASE_GROUPS - 1 ? 3 : 4; // the last group is unfinished
       for (let i = 0; i < marks; i++) {
-        const b = new THREE.Mesh(bar, gouge);
-        b.position.set(0, oy + Math.sin(g * 7 + i) * 0.02, ox + i * 0.09);
-        b.rotation.x = (Math.sin(g * 3 + i) * 0.08);
+        const b = new THREE.Mesh(BAR, gouge);
+        b.position.set(0, oy + Math.sin(g * 7 + i) * 0.015, ox + i * 0.065);
+        b.rotation.x = Math.sin(g * 3 + i) * 0.08;
         tally.add(b);
       }
       if (marks === 4) {
-        const s = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.46, 0.025), gouge);
-        s.position.set(0, oy, ox + 0.135);
-        s.rotation.x = 1.0;
-        tally.add(s);
+        const sl = new THREE.Mesh(SLASH, gouge);
+        sl.position.set(0, oy, ox + 0.1);
+        sl.rotation.x = 1.0;
+        tally.add(sl);
       }
     }
     tally.position.set(1.42, 0, 0.3);
     ambulance.add(tally);
+    this.tally = tally;
+    this.gouge = gouge;
+    // and under all of them, below the lettering, one word
+    const scratch = document.createElement("canvas");
+    scratch.width = 512;
+    scratch.height = 96;
+    const sg = scratch.getContext("2d")!;
+    sg.font = '600 70px "IBM Plex Mono", monospace';
+    sg.strokeStyle = "rgba(225,228,230,0.95)";
+    sg.lineWidth = 3;
+    sg.textAlign = "center";
+    sg.strokeText("HUNDRED", 256, 74);
+    const word = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.5, 0.28),
+      new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(scratch), transparent: true, roughness: 0.4, metalness: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
+    );
+    word.position.set(1.43, 0.47, -0.3);
+    word.rotation.y = Math.PI / 2;
+    ambulance.add(word);
     this.tally = tally;
     this.gouge = gouge;
 
@@ -162,14 +189,11 @@ export class Signs {
 
   /** Every loop leaves more marks on the ambulance. Somebody keeps counting. */
   addTally(groups: number) {
-    const bar = new THREE.BoxGeometry(0.012, 0.34, 0.016);
     for (; this.extraMarks < groups; this.extraMarks++) {
-      const g = 18 + this.extraMarks;
-      const col = g % 6;
-      const row = Math.floor(g / 6);
+      const [oy, ox] = groupAt(BASE_GROUPS + this.extraMarks);
       for (let i = 0; i < 5; i++) {
-        const b = new THREE.Mesh(i < 4 ? bar : new THREE.BoxGeometry(0.012, 0.46, 0.016), this.gouge);
-        b.position.set(0, 2.2 - row * 0.5, -2.2 + col * 0.7 + (i < 4 ? i * 0.09 : 0.135));
+        const b = new THREE.Mesh(i < 4 ? BAR : SLASH, this.gouge);
+        b.position.set(0, oy, ox + (i < 4 ? i * 0.065 : 0.1));
         if (i === 4) b.rotation.x = 1.0;
         this.tally.add(b);
       }

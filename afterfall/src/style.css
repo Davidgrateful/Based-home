@@ -223,6 +223,15 @@ body:has(#subtitle.show) #marker { opacity: 0.3; }
 #subtitle.ghost #sub-text { font-style: italic; color: var(--ink-2); }
 #toast { position: fixed; top: 92px; left: 32px; z-index: 41; font: 500 14px var(--ui); color: var(--ink); opacity: 0; transition: opacity 0.3s; pointer-events: none; padding-left: 12px; border-left: 2px solid var(--accent); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
 #toast.show { opacity: 1; }
+/* what you're called, under your name: it changes as you learn */
+#hud-desig { font: 500 11px var(--mono, "IBM Plex Mono", monospace); letter-spacing: 0.18em; color: var(--dim); margin: 2px 0 6px; }
+#hud-desig s { opacity: 0.55; margin-right: 6px; }
+#hud-desig.changed { color: var(--ink); animation: obj 1.4s ease-out; }
+/* something you looked at: a tag, a grave, a log */
+#note { position: fixed; left: 50%; top: 16%; transform: translateX(-50%); width: min(520px, calc(100vw - 32px)); padding: 16px 20px; background: rgba(11, 12, 14, 0.84); border-left: 2px solid rgba(233, 230, 223, 0.35); font: 500 14px/1.55 "IBM Plex Mono", monospace; color: var(--ink); opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 42; }
+#note.show { opacity: 1; }
+#note p { margin: 0 0 4px; }
+body.touch #note { font-size: 12px; top: 12%; }
 
 #pause .facts.keys div { grid-template-columns: 150px 1fr; }
 #pause { cursor: pointer; }
@@ -344,10 +353,24 @@ body.flashback::after { content: "Flight recorder · 03:14:52"; position: fixed;
 @keyframes region { 0% { opacity: 0; transform: translateY(6px); } 14% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ------------------------------------------------------------ field map (map.ts) */
-#map { position: fixed; inset: 0; z-index: 44; display: grid; place-items: center; padding: 16px; background: rgba(8, 9, 11, 0.9); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+#map { position: fixed; inset: 0; z-index: 44; display: grid; place-items: center; padding: 16px; overflow-y: auto; background: rgba(8, 9, 11, 0.9); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
 #map.show { opacity: 1; pointer-events: auto; }
-.map-frame { display: flex; flex-direction: column; gap: 8px; width: min(calc(100dvh - 72px), 100%); }
-#map-canvas { width: 100%; aspect-ratio: 1; max-width: 100%; border: 1px solid var(--line); background: #0d0e10; }
+/* the sheet and, beside it, the notes: surveyed, places, the patient numbers */
+.map-frame { display: grid; grid-template-columns: min(calc(100dvh - 48px), calc(100vw - 280px)) minmax(180px, 230px); gap: 20px; align-items: start; }
+#map-canvas { width: 100%; aspect-ratio: 1; max-width: 100%; border: 1px solid rgba(233, 230, 223, 0.18); background: #151412; box-shadow: 0 0 0 6px rgba(21, 20, 18, 0.9), 0 12px 40px rgba(0, 0, 0, 0.6); }
+.map-notes { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: 500 12px/1.5 var(--mono); color: var(--ink); }
+.mn-h { font: 600 22px var(--display); letter-spacing: 0.14em; text-transform: uppercase; }
+.mn-sub { color: var(--dim); letter-spacing: 0.08em; }
+.mn-sec { margin-top: 14px; padding-bottom: 4px; border-bottom: 1px solid rgba(233, 230, 223, 0.15); font: 600 11px var(--ui); letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+.map-notes ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.map-notes li span { display: inline-block; min-width: 46px; color: var(--dim); }
+.map-notes li.mn-none { color: var(--dim); font-style: italic; }
+.map-notes li.mn-you, .map-notes li.mn-you span { color: #d3664c; }
+.map-notes .map-key { margin-top: 16px; }
+@media (orientation: portrait) {
+  .map-frame { grid-template-columns: 1fr; width: min(100%, calc(100dvh - 300px)); }
+  .map-notes { font-size: 11px; }
+}
 .map-key { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 500 11px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .map-key i { display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: 0; }
 .k-you { background: #e0873e; clip-path: polygon(0 0, 100% 50%, 0 100%); }

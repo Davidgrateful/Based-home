@@ -9,6 +9,7 @@ import { NearField, placeProps, type Placed } from "./props";
 import { buildAmbulance } from "./ambulance";
 import { Fire, updateFires } from "./fire";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import barkUrl from "ez-tree-assets/bark/oak_color_1k.jpg";
 
 /** A few small glowing mushrooms: pale stems, caps that give off light. */
 function mushroomCluster() {
@@ -170,7 +171,13 @@ export const BLACKWOOD_X = -38;
 export const DEAD_TREE = new THREE.Vector3(-30, 0, 64);
 /** The Blue Scar: a patch of ground the rift has damaged, east of the crash. */
 export const SCAR = new THREE.Vector3(30, 0, 34);
-for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST, DEAD_TREE, SCAR]) p.y = heightAt(p.x, p.z);
+/** The Old Camp: survivors lived here once, at the edge of the Blackwood. */
+export const OLD_CAMP = new THREE.Vector3(-58, 0, 4);
+/** Where the evidence lies (offsets from its place), for the props and the inspect prompts. */
+export const OC = { post: [3.6, -2.8], board: [-4.2, -2.4], graves: [0.4, -7.2], cot: [2.9, 2.6], bag: [-1.4, 1.9] } as const;
+export const WATCH = { camera: [-12, 4], desk: [-11, 0.6] } as const;
+export const DEAD_TAG = [2.6, -1.8] as const;
+for (const p of [BEACON, ...PYLONS, ARENA, CAMP, STATION, MAST, DEAD_TREE, SCAR, OLD_CAMP]) p.y = heightAt(p.x, p.z);
 
 export interface Circle {
   x: number;
@@ -568,6 +575,8 @@ export class World {
     this.buildPlane();
     this.buildCrashDebris();
     this.buildLandmarks();
+    this.buildOldCamp();
+    this.buildWatch();
     const bea = this.buildBeacon();
     this.beaconLight = bea.light;
     this.beaconMat = bea.mat;
@@ -772,6 +781,192 @@ export class World {
     at(bl, -8.6, 24.3, 0.04).rotation.set(-Math.PI / 2, 0, 1.1);
   }
 
+  /** The Old Camp, at the edge of the Blackwood: people lived here, for a
+   *  while. Everything in it is something they left. */
+  private buildOldCamp() {
+    const C = OLD_CAMP;
+    const at = (o: THREE.Object3D, dx: number, dz: number, lift = 0) => {
+      const x = C.x + dx;
+      const z = C.z + dz;
+      o.position.set(x, heightAt(x, z) + lift, z);
+      o.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = true), (m.receiveShadow = true))));
+      this.scene.add(o);
+      return o;
+    };
+    const wood = std(0x4a3d32, { roughness: 1 });
+    const darkWood = std(0x2e2620, { roughness: 1 });
+    const canvasMat = std(0x5c5a4a, { roughness: 1, side: THREE.DoubleSide });
+    const stick = (len: number, r = 0.035, mat = wood) => new THREE.Mesh(new THREE.CylinderGeometry(r * 0.8, r, len, 6), mat);
+
+    // the fire they kept: cold for a long time
+    const cold = new Fire({ size: 0.9, logs: true, stones: true });
+    cold.lit = false;
+    at(cold.group, 0, 0);
+    this.colliders.push({ x: C.x, z: C.z, r: 0.9 });
+
+    // bedrolls round it, and a lean-to over two of them
+    const roll = (c: number) => {
+      const g = new THREE.Group();
+      const mat = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.05, 1.9), std(c, { roughness: 1 }));
+      mat.position.y = 0.03;
+      const rolled = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.75, 10), std(c, { roughness: 1 }));
+      rolled.rotation.z = Math.PI / 2;
+      rolled.position.set(0, 0.13, -0.85);
+      g.add(mat, rolled);
+      return g;
+    };
+    for (const [dx, dz, ry, c] of [[-2.6, 2.2, 0.9, 0x3c4a5a], [-3.4, -0.4, 1.5, 0x5a4a3c], [2.4, -1.8, -0.6, 0x4a4f3a]] as const) at(roll(c), dx, dz).rotation.y = ry;
+    const lean = new THREE.Group();
+    const p1 = stick(1.8, 0.05);
+    p1.position.set(-1, 0.9, 0);
+    const p2 = stick(1.8, 0.05);
+    p2.position.set(1, 0.9, 0);
+    const tarp = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.3, 4, 4), canvasMat);
+    tarp.rotation.x = -1.05;
+    tarp.position.set(0, 0.95, 0.75);
+    lean.add(p1, p2, tarp);
+    at(lean, -3.1, 1.2).rotation.y = 1.2;
+    // a cot of lashed branches, a name cut into the frame
+    const cot = new THREE.Group();
+    for (const x of [-0.35, 0.35]) {
+      const rail = stick(1.9, 0.045);
+      rail.rotation.x = Math.PI / 2;
+      rail.position.set(x, 0.32, 0);
+      cot.add(rail);
+      for (const z of [-0.85, 0.85]) {
+        const leg = stick(0.34, 0.04, darkWood);
+        leg.position.set(x, 0.16, z);
+        cot.add(leg);
+      }
+    }
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, 1.8), std(0x6a6450, { roughness: 1 }));
+    bed.position.y = 0.36;
+    const name = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.14), new THREE.MeshStandardMaterial({ map: textTex(["MARA  4012"], 256, 84, "#3a2f26", "#b8ab94"), roughness: 1 }));
+    name.position.set(0, 0.32, 0.951);
+    cot.add(bed, name);
+    at(cot, OC.cot[0], OC.cot[1]).rotation.y = -0.4;
+    // a post with wristbands nailed to it, one above another
+    const post = new THREE.Group();
+    const pole = stick(1.7, 0.07, darkWood);
+    pole.position.y = 0.85;
+    post.add(pole);
+    for (let i = 0; i < 7; i++) {
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.012, 4, 14), std(i % 3 ? 0xc8c2b4 : 0xb8b0a0, { roughness: 0.8 }));
+      band.position.set(0, 0.45 + i * 0.16, 0.07);
+      band.rotation.set(0.2 * Math.sin(i), 0, 0.4 * Math.cos(i * 2));
+      post.add(band);
+    }
+    at(post, OC.post[0], OC.post[1]);
+    this.colliders.push({ x: C.x + OC.post[0], z: C.z + OC.post[1], r: 0.25 });
+    // the tally board: a plank on two stakes, cut with hundreds of marks
+    const board = new THREE.Group();
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.95, 0.05), new THREE.MeshStandardMaterial({ map: tallyTex(), roughness: 1 }));
+    plank.position.y = 0.95;
+    for (const x of [-0.6, 0.6]) {
+      const st = stick(1.4, 0.05, darkWood);
+      st.position.set(x, 0.7, -0.04);
+      board.add(st);
+    }
+    board.add(plank);
+    at(board, OC.board[0], OC.board[1]).rotation.y = 0.7;
+    this.colliders.push({ x: C.x + OC.board[0], z: C.z + OC.board[1], r: 0.6 });
+    // three graves in a row: mounds, stakes, tags. The last tag is blank.
+    ["0217", "0891", ""].forEach((tag, i) => {
+      const g = new THREE.Group();
+      const mound = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), std(0x3a3128, { roughness: 1 }));
+      mound.scale.set(0.5, 0.18, 1.0);
+      const stake = stick(0.9, 0.04, darkWood);
+      stake.position.set(0, 0.45, -1.05);
+      const cross = stick(0.4, 0.03, darkWood);
+      cross.rotation.z = Math.PI / 2;
+      cross.position.set(0, 0.68, -1.05);
+      const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.08), new THREE.MeshStandardMaterial({ map: textTex([tag || " "], 128, 52, "#8c8a84", "#2a2622"), roughness: 0.6, metalness: 0.4 }));
+      plate.position.set(0, 0.55, -1.02);
+      g.add(mound, stake, cross, plate);
+      at(g, OC.graves[0] + (i - 1) * 1.4, OC.graves[1]).rotation.y = Math.PI;
+    });
+    // a medical bag, stencilled with somebody else's number
+    const bag = new THREE.Group();
+    const bb = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.24, 0.26), new THREE.MeshStandardMaterial({ color: 0x6e2a24, roughness: 0.9 }));
+    bb.position.y = 0.12;
+    const sten = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.1), new THREE.MeshStandardMaterial({ map: textTex(["PATIENT 0432"], 256, 76, "rgba(0,0,0,0)", "#d8d2c8"), transparent: true, roughness: 0.9 }));
+    sten.position.set(0, 0.14, 0.131);
+    bag.add(bb, sten);
+    at(bag, OC.bag[0], OC.bag[1]).rotation.y = 0.5;
+    // a hospital gown left drying on a line between two stakes
+    const line = new THREE.Group();
+    for (const x of [-1.3, 1.3]) {
+      const st = stick(1.6, 0.04, darkWood);
+      st.position.set(x, 0.8, 0);
+      line.add(st);
+    }
+    const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 2.6, 4), std(0x8a8270));
+    rope.rotation.z = Math.PI / 2;
+    rope.position.y = 1.5;
+    const gown = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.95, 3, 4), std(0x8fa6b4, { roughness: 1, side: THREE.DoubleSide }));
+    gown.position.set(0.2, 1.02, 0);
+    gown.rotation.y = 0.15;
+    line.add(rope, gown);
+    at(line, 4.6, 2.4).rotation.y = -1.1;
+    // tins and a cup by the fire
+    for (const [dx, dz] of [[0.9, 0.6], [1.1, 0.35], [-0.8, 1.0]] as const) {
+      const tin = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1, 10), std(0x7a7470, { metalness: 0.6, roughness: 0.5 }));
+      at(tin, dx, dz, 0.05);
+    }
+  }
+
+  /** The Watch: Meridian's post at the field station. A camera on a tripod,
+   *  aimed west at the crash, and the desk where somebody kept the log. */
+  private buildWatch() {
+    const S = STATION;
+    const at = (o: THREE.Object3D, d: readonly [number, number], lift = 0) => {
+      const x = S.x + d[0];
+      const z = S.z + d[1];
+      o.position.set(x, heightAt(x, z) + lift, z);
+      o.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = true), (m.receiveShadow = true))));
+      this.scene.add(o);
+      return o;
+    };
+    const metal = std(0x2c2f33, { roughness: 0.5, metalness: 0.7 });
+    const tri = new THREE.Group();
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 1.5, 5), metal);
+      leg.position.set(Math.cos(a) * 0.25, 0.72, Math.sin(a) * 0.25);
+      leg.rotation.set(Math.sin(a) * 0.18, 0, -Math.cos(a) * 0.18);
+      tri.add(leg);
+    }
+    const cam = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.2), metal);
+    cam.position.y = 1.5;
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.16, 12), std(0x111214, { roughness: 0.2, metalness: 0.5 }));
+    lens.rotation.z = Math.PI / 2;
+    lens.position.set(-0.24, 1.5, 0);
+    const rec = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 4), new THREE.MeshBasicMaterial({ color: 0x8a1a14 }));
+    rec.position.set(-0.05, 1.62, 0.08);
+    tri.add(cam, lens, rec);
+    // aimed west, toward where the plane came down
+    at(tri, WATCH.camera).rotation.y = Math.atan2(0, 1) - 0.12;
+    const desk = new THREE.Group();
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.05, 0.7), std(0x55585c, { metalness: 0.4, roughness: 0.6 }));
+    top.position.y = 0.76;
+    desk.add(top);
+    for (const [x, z] of [[-0.6, -0.3], [0.6, -0.3], [-0.6, 0.3], [0.6, 0.3]]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.76, 5), metal);
+      leg.position.set(x, 0.38, z);
+      desk.add(leg);
+    }
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.32, 0.04), std(0x1a1c1f, { roughness: 0.4 }));
+    screen.position.set(-0.25, 0.98, -0.2);
+    const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.28), new THREE.MeshBasicMaterial({ map: textTex(["FEED 03  ·  FALLSITE", "NO SIGNAL"], 256, 156, "#0a0d0e", "#5f7f80") }));
+    glass.position.set(-0.25, 0.98, -0.178);
+    const clip = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.32), new THREE.MeshStandardMaterial({ map: textTex(["OBSERVATION LOG", "", "03:12  TRANSIT", "03:14  ARRIVED", "03:20  KEEP WATCHING"], 192, 256, "#d6d0c2", "#2a2724"), roughness: 1 }));
+    clip.rotation.x = -Math.PI / 2;
+    clip.position.set(0.3, 0.79, 0.05);
+    desk.add(screen, glass, clip);
+    at(desk, WATCH.desk).rotation.y = Math.PI / 2;
+    this.colliders.push({ x: S.x + WATCH.desk[0], z: S.z + WATCH.desk[1], r: 0.8 });
+  }
+
   /** Two places to remember the way by. */
   private buildLandmarks() {
     // ---- the Dead Tree: one enormous trunk, bleached grey, leafless, twisting
@@ -802,15 +997,27 @@ export class World {
     // roots flaring into the ground
     for (let i = 0; i < 5; i++) {
       const a = (i / 5) * Math.PI * 2 + 0.4;
-      limb(new THREE.Vector3(0, 0.6, 0), new THREE.Vector3(Math.cos(a), -0.35, Math.sin(a)).normalize(), 3.2, 0.55, 3);
+      limb(new THREE.Vector3(0, 0.9, 0), new THREE.Vector3(Math.cos(a), -0.75, Math.sin(a)).normalize(), 1.9, 0.7, 3);
     }
-    const geo = mergeGeometries(parts.map((g) => { g.deleteAttribute("uv"); return g; }));
-    const tree = new THREE.Mesh(geo, std(0x9a958c, { roughness: 0.95 }));
+    const geo = mergeGeometries(parts);
+    // real bark, bleached: the oak scan tinted the grey of something long dead
+    const bark = new THREE.TextureLoader().load(barkUrl);
+    bark.colorSpace = THREE.SRGBColorSpace;
+    bark.wrapS = bark.wrapT = THREE.RepeatWrapping;
+    bark.repeat.set(2, 6);
+    const tree = new THREE.Mesh(geo, std(0x8c8984, { roughness: 1, map: bark }));
     tree.position.copy(DEAD_TREE);
     tree.castShadow = true;
     tree.receiveShadow = true;
     this.scene.add(tree);
     this.colliders.push({ x: DEAD_TREE.x, z: DEAD_TREE.z, r: 1.6 });
+    // at its roots, an old Meridian tag on a wire, rusted through: long before tonight
+    const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.09), new THREE.MeshStandardMaterial({ map: textTex(["9843"], 128, 72, "#6b4a32", "#2a1a10"), roughness: 0.9, metalness: 0.3, side: THREE.DoubleSide }));
+    const tx = DEAD_TREE.x + DEAD_TAG[0];
+    const tz = DEAD_TREE.z + DEAD_TAG[1];
+    tag.position.set(tx, heightAt(tx, tz) + 0.04, tz);
+    tag.rotation.set(-Math.PI / 2 + 0.2, 0, 0.6);
+    this.scene.add(tag);
 
     // ---- the Blue Scar: cracked ground, a cold light down in the cracks,
     // stones lifted a hand's width off the earth, turning very slowly
@@ -873,9 +1080,9 @@ export class World {
     const bulbs = new THREE.InstancedMesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), N * 3);
     const BASIN_V = new THREE.Vector3(BASIN_C.x, 0, BASIN_C.z);
     const SETTLE_V = new THREE.Vector3(SETTLEMENT.x, 0, SETTLEMENT.z);
-    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP, DEAD_TREE, SCAR];
+    const avoid = [new THREE.Vector3(-8, 0, 20), BEACON, ...PYLONS, ARENA, STATION, MAST, BASIN_V, SETTLE_V, CAMP, DEAD_TREE, SCAR, OLD_CAMP];
     const clearR = (v: THREE.Vector3) =>
-      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : v === DEAD_TREE ? 12 : v === SCAR ? 11 : 14;
+      v === ARENA ? 32 : v === STATION ? 20 : v === MAST ? 5 : v === BASIN_V ? 84 : v === SETTLE_V ? 26 : v === CAMP ? 9 : v === DEAD_TREE ? 12 : v === SCAR ? 11 : v === OLD_CAMP ? 11 : 14;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
@@ -1752,4 +1959,74 @@ export function glowTexture() {
   g.fillRect(0, 0, 64, 64);
   _glow = new THREE.CanvasTexture(c);
   return _glow;
+}
+
+/** Words on a little canvas (labels, tags, a log page). */
+function textTex(lines: string[], w: number, h: number, bg: string, fg: string) {
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const g = c.getContext("2d")!;
+  g.fillStyle = bg;
+  g.fillRect(0, 0, w, h);
+  const size = Math.min(h / (lines.length + 0.8), w / Math.max(...lines.map((l) => l.length), 1) * 1.6);
+  g.font = `600 ${size}px "IBM Plex Mono", monospace`;
+  g.fillStyle = fg;
+  g.textAlign = lines.length > 1 ? "left" : "center";
+  g.textBaseline = "middle";
+  lines.forEach((l, i) => g.fillText(l, lines.length > 1 ? size * 0.5 : w / 2, (h / (lines.length + 0.4)) * (i + 0.7)));
+  // wear
+  for (let i = 0; i < 60; i++) {
+    g.fillStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
+    g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 8, 1 + Math.random() * 3);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/** A weathered plank cut with hundreds of tally marks; three words at the top. */
+function tallyTex() {
+  const W = 512;
+  const H = 320;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#4b3f33";
+  g.fillRect(0, 0, W, H);
+  for (let y = 0; y < H; y += 3) {
+    g.fillStyle = `rgba(0,0,0,${0.05 + Math.random() * 0.08})`;
+    g.fillRect(0, y, W, 1);
+  }
+  g.strokeStyle = "rgba(215,200,175,0.75)";
+  g.lineWidth = 2;
+  g.font = '600 30px "IBM Plex Mono", monospace';
+  g.fillStyle = "rgba(220,205,180,0.85)";
+  g.fillText("WAIT FOR HUNDRED", 20, 40);
+  let n = 0;
+  for (let row = 0; row < 7; row++)
+    for (let col = 0; col < 13; col++) {
+      if (row === 6 && col > 8) break;
+      const x0 = 18 + col * 37;
+      const y0 = 64 + row * 36;
+      const marks = row === 6 && col === 8 ? 3 : 5; // they stopped counting mid-group
+      for (let i = 0; i < Math.min(4, marks); i++) {
+        g.beginPath();
+        g.moveTo(x0 + i * 6 + Math.random() * 2, y0);
+        g.lineTo(x0 + i * 6 + Math.random() * 2, y0 + 26);
+        g.stroke();
+        n++;
+      }
+      if (marks === 5) {
+        g.beginPath();
+        g.moveTo(x0 - 3, y0 + 22);
+        g.lineTo(x0 + 24, y0 + 4);
+        g.stroke();
+      }
+    }
+  void n;
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }

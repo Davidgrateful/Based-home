@@ -187,6 +187,19 @@ export const REVEAL: Line[] = [
   ["RHEA", "Panic later. The black box has its own battery. If it's still sending, someone might hear. Get to the wreck."],
 ];
 
+/** When you've been wandering a while: Rhea gives directions by what you can
+ *  see, never by a marker. One line per objective. */
+export const NAV: Record<string, Line[]> = {
+  outside: [["RHEA", "The wreck's ahead of you. Follow the smoke."]],
+  signs: [["RHEA", "Head back to the ambulance. Keep the dead tree behind you."]],
+  fire: [["RHEA", "The fire pit's by the ambulance. Look for the stones."]],
+  records: [["RHEA", "The case. It's by the stones, where the fire is."]],
+  pylons: [["RHEA", "Listen for the towers. One's east, past that blue scar. One's west, out by the dead tree. One's north."]],
+  boss: [["RHEA", "Follow the beams north. To the stones."]],
+  changed: [["RHEA", "West. Where the trees go black."]],
+  basin: [["RHEA", "North. Toward the white light."]],
+};
+
 export const FIRST_SHARD: Line[] = [
   ["YOU", "It's warm. And it's humming."],
   ["RHEA", "My scanner just jumped off the chart. Not near me. Near you. Keep it. Keep all of them."],
@@ -219,9 +232,9 @@ export const SIGN_TRACKS: Line[] = [
 export const SIGN_MARKS: Line[] = [
   ["YOU", "Something scratched the side of the ambulance."],
   ["RHEA", "Scratched, or wrote?"],
-  ["YOU", "Wrote. They're tally marks."],
-  ["RHEA", "How many?"],
-  ["YOU", "I stopped counting."],
+  ["YOU", "Tally marks. Hundreds of them."],
+  ["YOU", "And one word under all of them. Hundred."],
+  ["RHEA", "Keep moving."],
 ];
 export const SIGN_BREATH: Line[] = [
   ["RHEA", "{name}, is that you breathing like that?"],

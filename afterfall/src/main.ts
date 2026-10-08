@@ -38,6 +38,8 @@ import { net, randomRoom } from "./net";
 import { LINKS } from "./token";
 import { initMap, mapUpdate } from "./map";
 import { regionsUpdate } from "./regions";
+import * as S from "./script";
+import { historyUpdate, renderDesignation } from "./history";
 import { faunaUpdate } from "./fauna";
 import { setMemoryCamera } from "./memory";
 import { Person, peopleReady, track, updatePeople } from "./people";
@@ -237,6 +239,7 @@ $("btn-reset").addEventListener("click", () => {
   if (confirm("Erase your survivor and all AFTERFALL progress on this browser?")) {
     resetSave();
     applySaved();
+renderDesignation();
     renderMenu();
   }
 });
@@ -352,11 +355,41 @@ story.onComplete = () => {
 
 // ------------------------------------------------------------------ objective marker
 const v = new THREE.Vector3();
+// The story doesn't hang a diamond on every objective: you find your way by
+// the world. The marker shows only close up (to pin the exact thing), or once
+// you've gone a while without getting any nearer; then Rhea gives directions
+// by what you can see, once per objective.
+let navTarget: THREE.Vector3 | null = null;
+let navBest = Infinity;
+let navSince = 0;
+const navSaid = new Set<string>();
 function updateMarker() {
   const t = state.mode === "story" ? storyTarget() : state.mode === "night" ? nightTarget() : null;
   if (!t || cine.active) {
     hud.marker.style.display = "none";
     return;
+  }
+  const dist = Math.hypot(t.x - player.pos.x, t.z - player.pos.z);
+  if (state.mode === "story") {
+    if (t !== navTarget) {
+      navTarget = t;
+      navBest = dist;
+      navSince = state.elapsed;
+    }
+    if (dist < navBest - 3) {
+      navBest = dist;
+      navSince = state.elapsed; // getting closer: not lost
+    }
+    const lost = state.elapsed - navSince > 40;
+    const nav = S.NAV[story.stage];
+    if (lost && nav && !navSaid.has(story.stage) && !voice.busy) {
+      navSaid.add(story.stage);
+      void say(nav);
+    }
+    if (dist > 30 && !lost) {
+      hud.marker.style.display = "none";
+      return;
+    }
   }
   hud.marker.style.display = "block";
   v.set(t.x, t.y + 3, t.z).project(camera);
@@ -437,7 +470,10 @@ function tick(now?: number) {
   fx.update(dt, camera);
   if (state.mode !== "title") {
     mapUpdate(dt, running && state.exited !== false);
-    if (running && state.exited) regionsUpdate(dt, player.pos.x, player.pos.z);
+    if (running && state.exited) {
+      regionsUpdate(dt, player.pos.x, player.pos.z);
+      historyUpdate(dt);
+    }
   }
   // the fire is the one warm sound out here
   if (world.campfire.lit && state.mode !== "title") {

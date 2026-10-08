@@ -40,6 +40,7 @@ import * as S from "./script";
 import { ARENA, BEACON, BLACKWOOD_X, CAMP, CHOIR_C, heightAt, PYLONS, SETTLEMENT } from "./world";
 import { CHOIR_CASE, CHOIR_PIT, inBasin, inChoir, WALL_POS } from "./farlands";
 import { choose } from "./choice";
+import { evidenceInteracts, setDesignation } from "./history";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
@@ -330,6 +331,7 @@ async function signsSequence(step: number) {
     await say(S.SIGN_TRACKS);
   } else if (step === 2) {
     await say(S.SIGN_MARKS);
+    setDesignation(1);
     await wait(1200);
     if (story.stage !== "signs") return;
     sfx.breath(3);
@@ -359,6 +361,7 @@ async function readRecords() {
   player.frozen = true;
   hud.prompt.classList.remove("show");
   await showRecords();
+  setDesignation(2);
   player.frozen = false;
   setObjective("I · THE FALL", "Patient 10001. Active.");
   await say(S.RECORDS_READ);
@@ -934,7 +937,7 @@ export function storyUpdate(dt: number) {
   }
 
   const echo = echoInteract();
-  runInteractions(echo ? [...interacts, echo] : interacts);
+  runInteractions(echo ? [...interacts, ...evidenceInteracts(), echo] : [...interacts, ...evidenceInteracts()]);
 
   if (state.exited)
     pickupShards(() => {
@@ -1037,6 +1040,8 @@ export function storySkip(to: Stage) {
   state.exited = true;
   player.firstPerson = false;
   story.stage = to;
+  // past the registry you know what you are
+  if (!["intro", "wake", "outside", "signs", "fire", "records"].includes(to)) setDesignation(2, true);
   if (to === "outside") player.pos.set(0, 0, 6);
   if (["signs", "fire"].includes(to)) world.setCampfire(false);
   if (to === "signs") {
