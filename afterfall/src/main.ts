@@ -477,6 +477,7 @@ function tick(now?: number) {
   }
   coopUpdate(dt, camera);
   world.update(dt, t, player.pos, camera);
+  survival.visuals(dt);
   updatePeople(dt);
   farlands.update(dt, t, player);
   fx.update(dt, camera);

@@ -2238,5 +2238,215 @@
   "speaker": "HOLLOW",
   "say": "And one. And one.",
   "two_voices": false
+ },
+ {
+  "id": "ALARM-01",
+  "key": "YOU|0|If anything walks into that, I'll hear it.",
+  "speaker": "YOU",
+  "say": "If anything walks into that, I'll hear it.",
+  "two_voices": true
+ },
+ {
+  "id": "DAWN1-01",
+  "key": "YOU|0|They're going back into the trees.",
+  "speaker": "YOU",
+  "say": "They're going back into the trees.",
+  "two_voices": true
+ },
+ {
+  "id": "DAWN1-02",
+  "key": "RHEA|1|Sun's coming up. Or whatever that is. Come back to the fire.",
+  "speaker": "RHEA",
+  "say": "Sun's coming up. Or whatever that is. Come back to the fire.",
+  "two_voices": false
+ },
+ {
+  "id": "DEEP-01",
+  "key": "RHEA|1|It's gone very quiet where you are.",
+  "speaker": "RHEA",
+  "say": "It's gone very quiet where you are.",
+  "two_voices": false
+ },
+ {
+  "id": "DEEP-02",
+  "key": "YOU|0|It isn't quiet. Something keeps walking just past the light.",
+  "speaker": "YOU",
+  "say": "It isn't quiet. Something keeps walking just past the light.",
+  "two_voices": true
+ },
+ {
+  "id": "DEEP-03",
+  "key": "RHEA|1|Then don't leave the light.",
+  "speaker": "RHEA",
+  "say": "Then don't leave the light.",
+  "two_voices": false
+ },
+ {
+  "id": "FIREOUT-01",
+  "key": "YOU|0|It's out. I need something that burns.",
+  "speaker": "YOU",
+  "say": "It's out. I need something that burns.",
+  "two_voices": true
+ },
+ {
+  "id": "HOME-01",
+  "key": "RHEA|1|You're back.",
+  "speaker": "RHEA",
+  "say": "You're back.",
+  "two_voices": false
+ },
+ {
+  "id": "HOME-02",
+  "key": "YOU|0|You knew I'd make it.",
+  "speaker": "YOU",
+  "say": "You knew I'd make it.",
+  "two_voices": true
+ },
+ {
+  "id": "HOME-03",
+  "key": "RHEA|1|I knew where you'd come back from.",
+  "speaker": "RHEA",
+  "say": "I knew where you'd come back from.",
+  "two_voices": false
+ },
+ {
+  "id": "GLIMPSE-01",
+  "key": "YOU|0|Rhea. Someone's standing in the trees.",
+  "speaker": "YOU",
+  "say": "Rhea. Someone's standing in the trees.",
+  "two_voices": true
+ },
+ {
+  "id": "GLIMPSE-02",
+  "key": "RHEA|1|Say again?",
+  "speaker": "RHEA",
+  "say": "Say again?",
+  "two_voices": false
+ },
+ {
+  "id": "GLIMPSE-03",
+  "key": "YOU|0|Nothing. They're gone.",
+  "speaker": "YOU",
+  "say": "Nothing. They're gone.",
+  "two_voices": true
+ },
+ {
+  "id": "NIGHTFALL-01",
+  "key": "RHEA|1|That one won't be the last.",
+  "speaker": "RHEA",
+  "say": "That one won't be the last.",
+  "two_voices": false
+ },
+ {
+  "id": "NIGHTFALL-02",
+  "key": "RHEA|1|There's weather coming. I can hear it on the radio, rolling in from the north.",
+  "speaker": "RHEA",
+  "say": "There's weather coming. I can hear it on the radio, rolling in from the north.",
+  "two_voices": false
+ },
+ {
+  "id": "NIGHTFALL-03",
+  "key": "YOU|0|How long?",
+  "speaker": "YOU",
+  "say": "How long?",
+  "two_voices": true
+ },
+ {
+  "id": "NIGHTFALL-04",
+  "key": "RHEA|1|Long enough to find things that burn. Food. Water. Go.",
+  "speaker": "RHEA",
+  "say": "Long enough to find things that burn. Food. Water. Go.",
+  "two_voices": false
+ },
+ {
+  "id": "RADIO-01",
+  "key": "RHEA|1|You're breaking up. Your radio's dying.",
+  "speaker": "RHEA",
+  "say": "You're breaking up. Your radio's dying.",
+  "two_voices": false
+ },
+ {
+  "id": "RADIO-02",
+  "key": "YOU|0|Then I'll find it something to eat.",
+  "speaker": "YOU",
+  "say": "Then I'll find it something to eat.",
+  "two_voices": true
+ },
+ {
+  "id": "RADIO-03",
+  "key": "RHEA|1|How far are you?",
+  "speaker": "RHEA",
+  "say": "How far are you?",
+  "two_voices": false
+ },
+ {
+  "id": "RADIO-04",
+  "key": "YOU|0|I don't know.",
+  "speaker": "YOU",
+  "say": "I don't know.",
+  "two_voices": true
+ },
+ {
+  "id": "RADIO-05",
+  "key": "RHEA|1|Then you're farther than you should be.",
+  "speaker": "RHEA",
+  "say": "Then you're farther than you should be.",
+  "two_voices": false
+ },
+ {
+  "id": "RADIO-06",
+  "key": "RHEA|1|Is the fire still going?",
+  "speaker": "RHEA",
+  "say": "Is the fire still going?",
+  "two_voices": false
+ },
+ {
+  "id": "RADIO-07",
+  "key": "YOU|0|For now.",
+  "speaker": "YOU",
+  "say": "For now.",
+  "two_voices": true
+ },
+ {
+  "id": "RADIO-08",
+  "key": "RHEA|1|Make it longer than for now.",
+  "speaker": "RHEA",
+  "say": "Make it longer than for now.",
+  "two_voices": false
+ },
+ {
+  "id": "RADIO-09",
+  "key": "RHEA|1|What have you got?",
+  "speaker": "RHEA",
+  "say": "What have you got?",
+  "two_voices": false
+ },
+ {
+  "id": "RADIO-10",
+  "key": "YOU|0|Tins. Water. Somebody's socks.",
+  "speaker": "YOU",
+  "say": "Tins. Water. Somebody's socks.",
+  "two_voices": true
+ },
+ {
+  "id": "RADIO-11",
+  "key": "RHEA|1|Keep the tins.",
+  "speaker": "RHEA",
+  "say": "Keep the tins.",
+  "two_voices": false
+ },
+ {
+  "id": "STORM-01",
+  "key": "RHEA|1|Here it comes. Stay by the fire, {name}. Whatever you hear out there, it isn't",
+  "speaker": "RHEA",
+  "say": "Here it comes. Stay by the fire, sleeper. Whatever you hear out there, it isn't",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-09",
+  "key": "RHEA|1|Follow the smoke back. The fire's by the ambulance.",
+  "speaker": "RHEA",
+  "say": "Follow the smoke back. The fire's by the ambulance.",
+  "two_voices": false
  }
 ]

@@ -587,7 +587,6 @@ class Survival {
       }
     }
 
-    this.updateRain(dt);
     this.renderInv();
     if (this.phase === "off" || cine.active) return;
     this.phaseT += dt;
@@ -683,7 +682,7 @@ class Survival {
     } else if (this.phase === "storm") {
       const st = this.storm;
       st.waveT -= dt;
-      const alive = enemies.list.filter((e) => e.alive && e.stalk).length;
+      const alive = enemies.list.filter((e) => e.alive && e.stalk && !this.leaving.has(e)).length;
       // two come; when they're down (or it's been long enough), two more
       if (st.spawned < 4 && alive < 2 && (st.spawned === 0 ? this.phaseT > 9 : st.waveT <= 0 || alive === 0)) {
         const n = Math.min(2 - alive, 4 - st.spawned);
@@ -753,10 +752,11 @@ class Survival {
     world.scene.add(this.rain);
   }
 
-  private updateRain(dt: number) {
+  /** Every frame, cinematics included (main.ts): the rain. */
+  visuals(dt: number) {
     if (!this.rain || !this.rainMat) return;
     const want = this.phase === "storm" ? 1 : 0;
-    this.rainK += (want - this.rainK) * Math.min(1, dt * 0.35);
+    this.rainK += (want - this.rainK) * Math.min(1, dt * (want ? 0.35 : 0.9));
     this.rain.visible = this.rainK > 0.01;
     if (!this.rain.visible) return;
     this.rainMat.uniforms.uTime.value += dt;

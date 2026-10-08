@@ -307,6 +307,9 @@ body.touch #card-title { font-size: clamp(26px, 6vw, 40px); }
 
 /* short landscape screens (phones) */
 @media (max-height: 520px) {
+  #supplies { font-size: 9.5px; column-gap: 10px; row-gap: 1px; margin-top: 4px; }
+  #hud.sup .who { margin-bottom: 4px; }
+  #hud.sup #firebar { margin-top: 6px; }
   .col { gap: 10px; padding-top: 16px; padding-bottom: 16px; }
   .brand { margin-bottom: 8px; }
   .logo { font-size: 40px; }
