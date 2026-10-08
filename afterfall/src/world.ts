@@ -1101,7 +1101,7 @@ export class World {
     };
     const wood = std(0x4a3d32, { roughness: 1 });
     const darkWood = std(0x2e2620, { roughness: 1 });
-    const canvasMat = std(0x5c5a4a, { roughness: 1, side: THREE.DoubleSide });
+    const canvasMat = std(0x45463a, { roughness: 1, side: THREE.DoubleSide });
     const stick = (len: number, r = 0.035, mat = wood) => new THREE.Mesh(new THREE.CylinderGeometry(r * 0.8, r, len, 6), mat);
 
     // the fire they kept: cold for a long time
