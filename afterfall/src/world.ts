@@ -1607,7 +1607,7 @@ export class World {
     this.near = new NearField(heightAt, (x, z) => {
       const f = floorFx(x, z);
       const drift = smoothstep(-0.35, 0.55, Math.sin(x * 0.045 + Math.sin(z * 0.03) * 2) * Math.cos(z * 0.052 - x * 0.012) + Math.sin(x * 0.17 + z * 0.11) * 0.25);
-      const grow = (1 - f.dirt) * (1 - f.scorch) * (1 - f.choir) * (1 - f.basin * 0.9) * (0.25 + 0.75 * drift) * (Math.hypot(x, z - 20) < WORLD_RADIUS + 10 ? 1 : 0);
+      const grow = (1 - f.dirt) * (1 - f.scorch) * (1 - f.choir) * (1 - f.basin * 0.9) * (0.5 + 0.5 * drift) * (Math.hypot(x, z - 20) < WORLD_RADIUS + 10 ? 1 : 0);
       return { grow, dark: x < BLACKWOOD_X };
     });
     this.scene.add(this.near.group);
