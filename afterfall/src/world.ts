@@ -1137,7 +1137,7 @@ export class World {
     const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 10), new THREE.MeshStandardMaterial({ color: 0x222018, emissive: 0xffe2a8, emissiveIntensity: 0.6 }));
     glass.position.y = 0.02;
     this.lanternGlass = glass.material as THREE.MeshStandardMaterial;
-    this.lanternLight = new THREE.PointLight(0xffe2b0, 2.4, 10, 1.8);
+    this.lanternLight = new THREE.PointLight(0xffe2b0, 3.2, 13, 1.7);
     this.lanternLight.position.y = -0.05;
     lantern.add(body, glass, this.lanternLight);
     at(lantern, -3.1 + Math.cos(1.2) * 0.9, 1.2 - Math.sin(1.2) * 0.9, 1.55);
@@ -2326,7 +2326,7 @@ export class World {
     this.shedLight.intensity = 0.9 * sb;
     // the old camp's lantern: a weak battery, stuttering
     const lk = Math.sin(t * 1.3) > 0.93 ? 0.15 : 0.75 + Math.sin(t * 17) * 0.08;
-    this.lanternLight.intensity = 2.4 * lk;
+    this.lanternLight.intensity = 3.2 * lk;
     this.lanternGlass.emissiveIntensity = 0.6 * lk;
     for (const st of this.scarStones) {
       const h = st.userData.hover as { y: number; ph: number };
