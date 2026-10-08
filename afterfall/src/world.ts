@@ -1485,18 +1485,68 @@ export class World {
       ms.position.set(SCAR.x + dx, heightAt(SCAR.x + dx, SCAR.z + dz) + 0.7, SCAR.z + dz);
       this.scene.add(ms);
     }
-    const crackMat = new THREE.MeshBasicMaterial({ color: 0x5fb8c8, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending });
+    // the cracks: one decal draped over the ground, split from the middle outward,
+    // dark-lipped, with something cold showing down in them
+    const S = 1024;
+    const dark = document.createElement("canvas");
+    const cold = document.createElement("canvas");
+    dark.width = dark.height = cold.width = cold.height = S;
+    const gd = dark.getContext("2d")!;
+    const gc = cold.getContext("2d")!;
+    gc.fillStyle = "#000";
+    gc.fillRect(0, 0, S, S);
     const cr = rng(9);
-    for (let i = 0; i < 44; i++) {
-      const a = cr() * Math.PI * 2;
-      const d = Math.sqrt(cr()) * 8;
-      const x = SCAR.x + Math.cos(a) * d;
-      const z = SCAR.z + Math.sin(a) * d;
-      const c = new THREE.Mesh(new THREE.PlaneGeometry(0.06 + cr() * 0.12, 1 + cr() * 3.2), crackMat);
-      c.rotation.set(-Math.PI / 2, 0, cr() * Math.PI);
-      c.position.set(x, heightAt(x, z) + 0.03, z);
-      this.scene.add(c);
+    const split = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+      const pts: [number, number][] = [[x, y]];
+      for (let t = 0; t < len; t += 9) {
+        a += (cr() - 0.5) * 0.7;
+        x += Math.cos(a) * 9;
+        y += Math.sin(a) * 9;
+        pts.push([x, y]);
+        if (depth < 3 && cr() < 0.06) split(x, y, a + (cr() < 0.5 ? -1 : 1) * (0.5 + cr() * 0.6), len * (0.35 + cr() * 0.3), w * 0.6, depth + 1);
+      }
+      const stroke = (g: CanvasRenderingContext2D, style: string, lw: number) => {
+        g.strokeStyle = style;
+        g.lineWidth = lw;
+        g.lineCap = g.lineJoin = "round";
+        g.beginPath();
+        pts.forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py)));
+        g.stroke();
+      };
+      stroke(gd, "rgba(8,10,12,0.35)", w * 3.2); // the broken lip
+      stroke(gd, "rgba(4,5,6,0.95)", w);
+      stroke(gc, `rgba(120,215,230,${0.5 + 0.2 * (3 - depth) / 3})`, Math.max(1, w * 0.35));
+    };
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2 + cr() * 0.5;
+      split(S / 2 + Math.cos(a) * 20, S / 2 + Math.sin(a) * 20, a, 260 + cr() * 200, 7 + cr() * 4, 0);
     }
+    // the ground at the centre is torn worst
+    const hole = gd.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, 60);
+    hole.addColorStop(0, "rgba(4,5,6,0.9)");
+    hole.addColorStop(1, "rgba(4,5,6,0)");
+    gd.fillStyle = hole;
+    gd.fillRect(0, 0, S, S);
+    const tex = (c: HTMLCanvasElement, srgb: boolean) => {
+      const t = new THREE.CanvasTexture(c);
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 4;
+      return t;
+    };
+    const SZ = 20;
+    const crackGeo = new THREE.PlaneGeometry(SZ, SZ, 40, 40);
+    crackGeo.rotateX(-Math.PI / 2);
+    const cp = crackGeo.attributes.position;
+    for (let i = 0; i < cp.count; i++) cp.setY(i, heightAt(SCAR.x + cp.getX(i), SCAR.z + cp.getZ(i)) + 0.04);
+    crackGeo.computeVertexNormals();
+    const cracks = new THREE.Mesh(
+      crackGeo,
+      new THREE.MeshStandardMaterial({ map: tex(dark, true), emissiveMap: tex(cold, true), emissive: 0xffffff, emissiveIntensity: 1, transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 }),
+    );
+    cracks.position.set(SCAR.x, 0, SCAR.z);
+    cracks.receiveShadow = true;
+    cracks.renderOrder = 2;
+    this.scene.add(cracks);
     const stone = std(0x3c3d42, { roughness: 0.9 });
     for (let i = 0; i < 7; i++) {
       const a = cr() * Math.PI * 2;
