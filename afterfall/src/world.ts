@@ -1726,7 +1726,34 @@ export class World {
    *  in a hurry, and something came in after they did. */
   private buildStation() {
     const S = STATION;
-    const canvas = std(0x7f7c6e, { roughness: 1 }); // weathered canvas, not new white
+    // weathered canvas: mud splashed up the hem, rain streaks, mildew in the folds
+    const grime = document.createElement("canvas");
+    grime.width = grime.height = 256;
+    {
+      const g = grime.getContext("2d")!;
+      g.fillStyle = "#c9c4b0";
+      g.fillRect(0, 0, 256, 256);
+      const hem = g.createLinearGradient(0, 256, 0, 150);
+      hem.addColorStop(0, "rgba(58,44,30,0.85)");
+      hem.addColorStop(1, "rgba(58,44,30,0)");
+      g.fillStyle = hem;
+      g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 70; i++) {
+        g.fillStyle = `rgba(70,66,52,${0.05 + Math.random() * 0.12})`;
+        g.fillRect(Math.random() * 256, 0, 1 + Math.random() * 3, 40 + Math.random() * 200);
+      }
+      for (let i = 0; i < 26; i++) {
+        const x = Math.random() * 256, y = Math.random() * 256, r = 6 + Math.random() * 22;
+        const m = g.createRadialGradient(x, y, 0, x, y, r);
+        m.addColorStop(0, "rgba(60,70,48,0.35)");
+        m.addColorStop(1, "rgba(60,70,48,0)");
+        g.fillStyle = m;
+        g.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+    }
+    const grimeTex = new THREE.CanvasTexture(grime);
+    grimeTex.colorSpace = THREE.SRGBColorSpace;
+    const canvas = new THREE.MeshStandardMaterial({ color: 0x6e6a58, map: grimeTex, roughness: 1 });
     const steel = std(0x8d939a, { metalness: 0.6, roughness: 0.45 });
     const dark = std(0x24262a);
     const red = std(0xc4161c);
@@ -1758,6 +1785,20 @@ export class World {
       const cross = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.5), red);
       cross.position.set(w / 2 + 0.01, collapsed ? 0.35 : 0.9, 0);
       g.add(cross);
+      if (!collapsed) {
+        // guy lines pegged out at the corners
+        const lineMat = std(0x8a8270, { roughness: 1 });
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+          const a = new THREE.Vector3(sx * w * 0.45, 1.9, sz * d * 0.28);
+          const b = new THREE.Vector3(sx * (w / 2 + 0.9), 0, sz * (d / 2 + 1.1));
+          const len = a.distanceTo(b);
+          const ln = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, len, 3), lineMat);
+          ln.position.copy(a).add(b).multiplyScalar(0.5);
+          ln.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+          ln.castShadow = false;
+          g.add(ln);
+        }
+      }
       return g;
     };
     place(tent(false), -7, -4, 0.3, 2.2);
@@ -1766,7 +1807,7 @@ export class World {
 
     // lab cabin, door hanging open, one cold light still alive inside
     const cabin = new THREE.Group();
-    const shell = new THREE.Mesh(new THREE.BoxGeometry(6, 2.6, 3), new THREE.MeshStandardMaterial({ color: 0x8b9095, map: corrugatedTex(), roughness: 0.75, metalness: 0.3 }));
+    const shell = new THREE.Mesh(new THREE.BoxGeometry(6, 2.6, 3), new THREE.MeshStandardMaterial({ color: 0x6a6e70, map: corrugatedTex(), roughness: 0.8, metalness: 0.3 }));
     shell.position.y = 1.5;
     cabin.add(shell);
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(6.02, 0.25, 3.02), red);
