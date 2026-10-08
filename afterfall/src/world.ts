@@ -836,16 +836,21 @@ export class World {
     bark.wrapS = bark.wrapT = THREE.RepeatWrapping;
     bark.repeat.set(1, 2);
     const wood = std(0x6a5c4e, { roughness: 1, map: bark });
-    const raw = std(0xb8a07a, { roughness: 1 }); // fresh broken wood
+    const raw = std(0x8a7458, { roughness: 1 }); // broken wood, weathered a little
     for (const [x, z, h, fall] of [[-33, 24.5, 2.8, 0.3], [-24, 41.5, 3.4, -0.2], [-15, 23, 2.2, 0.5], [-6, 42.5, 3, -0.4], [-28, 23, 1.6, 0.2]] as const) {
       const g = new THREE.Group();
       const stump = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, h, 9), wood);
       stump.position.y = h / 2;
-      const snap = new THREE.Mesh(new THREE.ConeGeometry(0.31, 0.55, 9), raw);
-      snap.position.y = h + 0.2;
-      snap.scale.set(1, 1, 0.5);
-      snap.rotation.z = 0.35;
-      g.add(stump, snap);
+      g.add(stump);
+      // the break: splinters of pale wood at different heights, leaning out
+      for (let k = 0; k < 7; k++) {
+        const a = (k / 7) * Math.PI * 2 + x;
+        const len = 0.25 + ((k * 37 + Math.round(z)) % 10) / 14;
+        const sp = new THREE.Mesh(new THREE.BoxGeometry(0.07, len, 0.05), k % 3 ? raw : wood);
+        sp.position.set(Math.cos(a) * 0.2, h + len / 2 - 0.05, Math.sin(a) * 0.2);
+        sp.rotation.set(Math.sin(a) * 0.35, a, -Math.cos(a) * 0.35);
+        g.add(sp);
+      }
       at(g, x, z);
       const top = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 7, 8), wood);
       top.rotation.set(Math.PI / 2, 0, fall);
