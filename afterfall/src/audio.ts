@@ -26,7 +26,7 @@ export class Sfx {
     if (this.master) this.master.gain.value = m ? 0 : this.volume;
   }
 
-  private noise(dur: number, freq: number, q: number, gain: number, type: BiquadFilterType = "bandpass", when = 0) {
+  private noise(dur: number, freq: number, q: number, gain: number, type: BiquadFilterType = "bandpass", when = 0, pan = 0) {
     const ctx = this.ctx;
     if (!ctx || !this.master || !this.noiseBuf) return;
     const t = ctx.currentTime + when;
@@ -39,7 +39,11 @@ export class Sfx {
     const g = ctx.createGain();
     g.gain.setValueAtTime(gain, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    src.connect(f).connect(g).connect(this.master);
+    if (pan) {
+      const p = ctx.createStereoPanner();
+      p.pan.value = Math.max(-1, Math.min(1, pan));
+      src.connect(f).connect(g).connect(p).connect(this.master);
+    } else src.connect(f).connect(g).connect(this.master);
     src.start(t, Math.random());
     src.stop(t + dur + 0.05);
   }
@@ -113,7 +117,7 @@ export class Sfx {
   slam() { this.noise(0.9, 120, 1, 1.2, "lowpass"); this.tone(55, 0.8, 0.8, "sine", 30); }
   charge() { this.tone(200, 0.6, 0.12, "sawtooth", 600); }
   roar() { this.tone(90, 1.4, 0.5, "sawtooth", 45); this.noise(1.2, 300, 0.7, 0.6, "lowpass"); }
-  heartbeat() { this.tone(60, 0.12, 0.7, "sine", 40); this.tone(55, 0.14, 0.5, "sine", 35, 0.22); }
+  heartbeat(g = 0.7) { this.tone(60, 0.12, g, "sine", 40); this.tone(55, 0.14, g * 0.7, "sine", 35, 0.22); }
   crash() {
     this.noise(2.5, 200, 0.4, 1.5, "lowpass");
     this.noise(1.5, 2000, 0.3, 0.8, "bandpass", 0.1);
@@ -277,6 +281,81 @@ export class Sfx {
     g.gain.linearRampToValueAtTime(level, ctx.currentTime + secs);
   }
   private rainGain?: GainNode;
+  private bed?: GainNode;
+  private leaves?: GainNode;
+  private dread?: GainNode;
+  private tension = 0;
+  private gustT = 0;
+  private bugT = 0;
+  private callT = 20;
+  private creakT = 8;
+  private silenceT = 0;
+  private silenceCd = 0;
+  private pulseT = 0;
+
+  /** The world breathing, every frame. tension 0..1 (how close something is);
+   *  pan -1..1 (where it is); crash: metres from the wreck; out: outdoors. */
+  atmosphere(dt: number, o: { tension: number; pan: number; crash: number; out: boolean; night: boolean }) {
+    const ctx = this.ctx;
+    if (!ctx || !this.bed || !this.leaves || !this.dread) return;
+    const was = this.tension;
+    this.tension += (o.tension - this.tension) * Math.min(1, dt * (o.tension > this.tension ? 1.2 : 0.4));
+    const T = this.tension;
+    const now = ctx.currentTime;
+    // the forest goes quiet when something's close; and once, it stops altogether
+    this.silenceCd -= dt;
+    if (was < 0.7 && T >= 0.7 && this.silenceCd <= 0) {
+      this.silenceT = 2.2 + Math.random() * 1.2;
+      this.silenceCd = 40;
+    }
+    this.silenceT = Math.max(0, this.silenceT - dt);
+    const bed = this.silenceT > 0 ? 0.05 : 1 - T * 0.65;
+    this.bed.gain.setTargetAtTime(o.out ? bed : 0.4, now, this.silenceT > 0 ? 0.08 : 0.6);
+    this.dread.gain.setTargetAtTime(this.silenceT > 0 ? 0 : Math.max(0, T - 0.3) * 0.09, now, 0.8);
+    // gusts through the leaves
+    this.gustT -= dt;
+    if (this.gustT <= 0) {
+      this.gustT = 3 + Math.random() * 6;
+      this.leaves.gain.setTargetAtTime(0.008 + Math.random() * 0.04, now, 1.5);
+    }
+    if (!o.out || this.silenceT > 0) return;
+    // insects, only when nothing's near
+    this.bugT -= dt;
+    if (this.bugT <= 0 && o.night) {
+      this.bugT = 0.7 + Math.random() * 0.9;
+      if (T < 0.35) {
+        const f = 4300 + Math.random() * 900;
+        const pan = (Math.random() - 0.5) * 1.4;
+        for (let i = 0; i < 3 + Math.floor(Math.random() * 3); i++) this.noise(0.025, f, 18, 0.05 * (1 - T * 2.5), "bandpass", i * 0.055, pan);
+      }
+    }
+    // something far off: an owl, a bird that isn't quite a bird
+    this.callT -= dt;
+    if (this.callT <= 0) {
+      this.callT = 25 + Math.random() * 40;
+      if (T < 0.5) {
+        this.tone(340, 0.35, 0.025, "sine", 300);
+        this.tone(330, 0.5, 0.022, "sine", 290, 0.55);
+      }
+    }
+    // the wreck, still settling
+    this.creakT -= dt;
+    if (this.creakT <= 0) {
+      this.creakT = 9 + Math.random() * 16;
+      if (o.crash < 45) {
+        const k = 1 - o.crash / 45;
+        if (Math.random() < 0.5) this.tone(72, 1.3, 0.05 * k, "sawtooth", 56);
+        else for (let i = 0; i < 2; i++) this.tone(2200 + Math.random() * 600, 0.03, 0.04 * k, "triangle", undefined, i * 0.4);
+      }
+    }
+    // close: its movement, from where it is
+    this.pulseT -= dt;
+    if (T > 0.55 && this.pulseT <= 0) {
+      this.pulseT = 1.6 + Math.random() * 2.5;
+      if (Math.random() < 0.6) this.noise(0.12, 520, 0.9, 0.05 + T * 0.08, "lowpass", 0, o.pan);
+      else this.noise(0.05, 2200, 3, 0.04 + T * 0.06, "bandpass", 0, o.pan);
+    }
+  }
   /** One pop of burning wood; call at random intervals near a fire. */
   crackle(gain = 0.2) {
     this.noise(0.03 + Math.random() * 0.04, 1800 + Math.random() * 2400, 1.2, gain, "bandpass");
@@ -307,9 +386,35 @@ export class Sfx {
     lfo.connect(lg).connect(f.frequency);
     const g = ctx.createGain();
     g.gain.value = 0.18;
-    src.connect(f).connect(g).connect(this.master);
+    this.bed = ctx.createGain();
+    this.bed.connect(this.master);
+    src.connect(f).connect(g).connect(this.bed);
     src.start();
     lfo.start();
+    // trees: a rustle under the wind, in gusts
+    const leaves = ctx.createBufferSource();
+    leaves.buffer = this.noiseBuf;
+    leaves.loop = true;
+    const lf = ctx.createBiquadFilter();
+    lf.type = "bandpass";
+    lf.frequency.value = 1700;
+    lf.Q.value = 0.5;
+    this.leaves = ctx.createGain();
+    this.leaves.gain.value = 0.02;
+    leaves.connect(lf).connect(this.leaves).connect(this.bed);
+    leaves.start(0, 0.7);
+    // under everything when it's close: a low pressure, felt more than heard
+    const sub = ctx.createOscillator();
+    sub.frequency.value = 41;
+    const sub2 = ctx.createOscillator();
+    sub2.frequency.value = 61.3;
+    this.dread = ctx.createGain();
+    this.dread.gain.value = 0;
+    sub.connect(this.dread);
+    sub2.connect(this.dread);
+    this.dread.connect(this.master);
+    sub.start();
+    sub2.start();
     // Low drone
     const drone = ctx.createOscillator();
     drone.frequency.value = 43.65;

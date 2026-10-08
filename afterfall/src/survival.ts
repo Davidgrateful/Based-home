@@ -729,6 +729,9 @@ class Survival {
       if (world.colliders.some((k) => Math.hypot(k.x - x, k.z - z) < k.r + 1)) continue;
       const e = enemies.spawn("hollow", new THREE.Vector3(x, 0, z), { rise: false, speedMul: 0.92 });
       e.stalk = true;
+      // the night's later ones come with less watching first
+      e.mind = this.phase === "storm" ? "stalk" : "observe";
+      e.mindT = 4 + Math.random() * 4;
       e.windup = 0.7;
       e.courage = -0.4 - Math.random() * 0.4;
       return e;
@@ -837,6 +840,7 @@ class Survival {
         const e = this.spawnStalker(18, 24);
         if (e) {
           e.bold = 1.4;
+          e.mind = "follow";
           this.deepHunters.add(e);
         }
       }

@@ -111,6 +111,8 @@ export interface Evidence {
   /** where (for the map's margin) */
   where: string;
   at: THREE.Vector3;
+  /** something that happens as you look (a recorder plays) */
+  onRead?: () => void;
 }
 
 const v = (base: THREE.Vector3, d: readonly [number, number]) => {
@@ -242,6 +244,7 @@ export function evidenceInteracts(): Interact[] {
     run: () => {
       const first = !evidenceFound(e.id);
       showNote(e.text);
+      e.onRead?.();
       if (!first) return;
       save.flags["ev:" + e.id] = true;
       persist();

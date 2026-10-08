@@ -13,6 +13,8 @@ import { buildClub, buildGreatAxe, buildHumanoid, buildSpear, buildStaff, buildT
 import { type Circle, glowTexture, heightAt } from "./world";
 
 export type EnemyKind = "hollow" | "runner" | "brute" | "shaman" | "warden" | "thing";
+/** A stalker's mind: watch, hide, follow, stalk, test you, attack, back off, look for you. */
+export type Mind = "observe" | "hide" | "follow" | "stalk" | "test" | "attack" | "retreat" | "search";
 export type State = "spawn" | "chase" | "windup" | "strike" | "recover" | "slamUp" | "dead";
 
 export interface PlayerLike {
@@ -105,6 +107,13 @@ export class Enemy {
   bold = 1;
   /** how far off it likes to keep (0: the usual few metres) */
   keepOff = 0;
+  /** What a stalker is doing (its mind). The first Hollow keeps its own ways
+   *  (classic). */
+  mind: Mind = "observe";
+  mindT = 4;
+  classic = false;
+  tested = false;
+  hiddenT = 0;
 
   constructor(kind: EnemyKind, at: THREE.Vector3, o: SpawnOpts) {
     this.kind = kind;
@@ -191,6 +200,16 @@ export class EnemyManager {
   /** Dawn: the Hollow give up and walk back into the trees. */
   retreat = false;
   onWindup?: (e: Enemy) => void;
+  /** It copies a sound you made (your steps, a twig). */
+  onImitate?: (e: Enemy) => void;
+  /** Where something could stand out of sight: trunks (set by the game). */
+  cover: { x: number; z: number }[] = [];
+  /** Where you were standing, a little while ago (a stalker may be there next). */
+  private crumbs: { x: number; z: number; t: number }[] = [];
+  private crumbT = 0;
+  private clock = 0;
+  private lastP = new THREE.Vector3();
+  private pSpeed = 0;
   onMurmur?: (e: Enemy) => void;
   /** A native has noticed someone (first growl, first sighting line). */
   onNotice?: (e: Enemy) => void;
@@ -259,7 +278,7 @@ export class EnemyManager {
   hit(from: THREE.Vector3, facing: number, reach: number, arc: number, dmg: number, heavy: boolean, apply = true) {
     let n = 0;
     for (const e of this.list) {
-      if (!e.alive || e.state === "spawn") continue;
+      if (!e.alive || e.state === "spawn" || !e.model.root.visible) continue;
       const dx = e.pos.x - from.x;
       const dz = e.pos.z - from.z;
       const dist = Math.hypot(dx, dz) - (e.scale - 1) * 0.8;
@@ -271,6 +290,7 @@ export class EnemyManager {
       e.provoked = true;
       if (e.stalk && apply) {
         // hurt, it backs off: it wants you, but it doesn't want this
+        if (!e.classic) e.mind = "stalk";
         e.committed = false;
         e.courage = Math.min(e.courage, 0.2) - 0.25;
         e.flee = heavy ? 0.9 : 0.55;
@@ -312,6 +332,15 @@ export class EnemyManager {
     const targets = [me, ...this.others].filter((p) => !p.down);
     if (!targets.length) targets.push(me);
     const gone: Enemy[] = [];
+    this.clock += dt;
+    this.pSpeed = dt > 0 ? Math.hypot(me.pos.x - this.lastP.x, me.pos.z - this.lastP.z) / dt : 0;
+    this.lastP.copy(me.pos);
+    this.crumbT -= dt;
+    if (this.crumbT <= 0) {
+      this.crumbT = 3;
+      this.crumbs.push({ x: me.pos.x, z: me.pos.z, t: this.clock });
+      if (this.crumbs.length > 12) this.crumbs.shift();
+    }
     for (const e of this.list) {
       const m = e.model;
       const ground = heightAt(e.pos.x, e.pos.z);
@@ -448,7 +477,7 @@ export class EnemyManager {
               break;
             }
             if (e.stalk && e.kind !== "warden") {
-              const st = this.stalkStep(e, dt, player, dist, want);
+              const st = e.classic ? this.stalkStep(e, dt, player, dist, want) : this.mindStep(e, dt, player, dist, want);
               want = st.want;
               turn(st.rate);
               move = st.move;
@@ -534,6 +563,7 @@ export class EnemyManager {
               e.state = "chase";
               if (e.stalk) {
                 // it struck (or was struck): back off and start working up to it again
+                if (!e.classic) e.mind = "stalk";
                 e.committed = false;
                 e.courage = Math.min(e.courage, 0) - Math.random() * 0.3;
                 e.flee = Math.max(e.flee, 0.7);
@@ -666,6 +696,171 @@ export class EnemyManager {
     for (const e of gone) this.remove(e);
     this.list = this.list.filter((e) => e.alive || e.deadFor <= 4);
     this.updateBolts(dt, targets, me, fire);
+  }
+
+  /** A stalker that used to be a person. It watches from the trees, slips
+   *  away when you come at it, follows when you walk, stands at the edge of
+   *  your light, tests you with a rush that stops short, and only comes in
+   *  properly when it's worked itself up to it. Sometimes, when it's been out
+   *  of sight a while, it's standing where you were a minute ago. */
+  private mindStep(e: Enemy, dt: number, player: PlayerLike, dist: number, toward: number) {
+    const go = (m: Mind, t: number) => {
+      e.mind = m;
+      e.mindT = t;
+      e.committed = m === "attack";
+      if (m !== "stalk") e.pausing = false;
+    };
+    const away = toward + Math.PI;
+    const fear = this.fear;
+    const dFire = fear ? Math.hypot(e.pos.x - fear.pos.x, e.pos.z - fear.pos.z) : Infinity;
+    const playerInLight = !!fear && Math.hypot(player.pos.x - fear.pos.x, player.pos.z - fear.pos.z) < fear.r;
+    let look = Math.atan2(e.pos.x - player.pos.x, e.pos.z - player.pos.z) - (player.yaw ?? 0);
+    look = Math.atan2(Math.sin(look), Math.cos(look));
+    const watched = Math.abs(look) < 0.65;
+    let rate = 0.12 * this.aggression * e.bold;
+    if (!watched) rate *= 1.9;
+    if (playerInLight && fear) rate *= 1 - 0.75 * fear.k;
+    e.murmurT -= dt;
+    if (e.murmurT <= 0 && e.model.root.visible) {
+      e.murmurT = 6 + Math.random() * 8;
+      this.onMurmur?.(e);
+    }
+    e.mindT -= dt;
+
+    // hurt or startled: it backs away first and thinks later
+    if (e.flee > 0) {
+      e.flee -= dt;
+      return { want: away + e.strafe * 0.5, move: e.speed * 0.7, rate: 6, attack: false };
+    }
+    // strong light: it won't stand in it unless it's already coming for you
+    if (fear && fear.k > 0.4 && dFire < fear.r * 0.85 && e.mind !== "attack" && e.mind !== "test") go("retreat", 1.2);
+
+    switch (e.mind) {
+      case "observe": {
+        // standing among the trees, watching. Too close and it's gone.
+        e.courage += rate * 0.5 * dt;
+        if (dist < 9) {
+          go("hide", 2.5);
+          break;
+        }
+        if (e.mindT <= 0) go(e.courage > 0.35 ? "stalk" : Math.random() < 0.5 ? "follow" : "stalk", 6 + Math.random() * 6);
+        if (dist > 24) return { want: toward, move: e.speed * 0.45, rate: 3, attack: false };
+        return { want: toward, move: 0, rate: 2, attack: false };
+      }
+      case "hide": {
+        // away, toward the nearest trunk on the far side from you
+        let want = away;
+        const c = this.coverAway(e, player);
+        if (c) want = Math.atan2(c.x - e.pos.x, c.z - e.pos.z);
+        if (e.mindT <= 0 || (!watched && dist > 13)) {
+          // and then it isn't there
+          e.model.root.visible = false;
+          e.bar.visible = false;
+          e.hiddenT = 6 + Math.random() * 9;
+          go("search", 99);
+        }
+        return { want, move: e.speed * 0.95, rate: 7, attack: false };
+      }
+      case "search": {
+        if (!e.model.root.visible) {
+          e.hiddenT -= dt;
+          if (e.hiddenT > 0) return { want: toward, move: 0, rate: 1, attack: false };
+          // back: where you were standing a while ago, if that's out of your sight
+          const old = this.crumbs.find((c) => this.clock - c.t > 12 && Math.hypot(c.x - player.pos.x, c.z - player.pos.z) > 12 && !(fear && Math.hypot(c.x - fear.pos.x, c.z - fear.pos.z) < fear.r));
+          if (old) e.pos.set(old.x, heightAt(old.x, old.z), old.z);
+          else {
+            const a = (player.yaw ?? 0) + Math.PI + (Math.random() - 0.5);
+            e.pos.set(player.pos.x + Math.sin(a) * 20, 0, player.pos.z + Math.cos(a) * 20);
+            e.pos.y = heightAt(e.pos.x, e.pos.z);
+          }
+          e.yaw = Math.atan2(player.pos.x - e.pos.x, player.pos.z - e.pos.z);
+          e.model.root.visible = true;
+          go("observe", 5 + Math.random() * 4);
+        }
+        return { want: toward, move: 0, rate: 3, attack: false };
+      }
+      case "follow": {
+        // keeping pace a long way back; stops when you stop; copies your steps
+        e.courage += rate * dt;
+        if (dist < 7) {
+          go("hide", 2);
+          break;
+        }
+        if (this.pSpeed > 2 && Math.random() < dt * 0.25) this.onImitate?.(e);
+        if (e.mindT <= 0) go("stalk", 8);
+        const move = dist > 14 ? e.speed * 0.6 * Math.min(1, this.pSpeed / 4 + 0.3) : dist < 10 ? 0 : e.speed * 0.25;
+        return { want: toward, move, rate: 4, attack: false };
+      }
+      case "test": {
+        // a rush that stops short: to see what you do
+        if (dist < 3.4 || e.mindT <= 0) {
+          e.courage = 0.45;
+          go("retreat", 1.1);
+          break;
+        }
+        return { want: toward, move: e.speed * 1.3, rate: 8, attack: false };
+      }
+      case "attack": {
+        if (fear && dFire < fear.r * 0.55 && fear.k > 0.55 && Math.random() < dt * 1.2) {
+          e.courage = -0.2;
+          go("retreat", 1);
+          break;
+        }
+        if (dist < e.range) return { want: toward, move: 0, rate: 8, attack: true };
+        return { want: toward, move: e.speed * 1.15, rate: 7, attack: false };
+      }
+      case "retreat": {
+        if (e.mindT <= 0) go(Math.random() < 0.5 ? "observe" : "stalk", 5);
+        let want = away;
+        if (fear && dFire < fear.r + 2) want = Math.atan2(e.pos.x - fear.pos.x, e.pos.z - fear.pos.z);
+        return { want, move: e.speed * 0.75, rate: 6, attack: false };
+      }
+      default: {
+        // stalk: the ring at the edge of the light (or around you), in bursts
+        e.courage += rate * dt;
+        const busy = this.list.filter((o) => o.alive && (o.committed || o.state === "windup" || o.state === "strike")).length;
+        if (e.courage >= 1 && busy < this.maxAttackers) {
+          if (!e.tested && Math.random() < 0.6) {
+            e.tested = true;
+            go("test", 1.4);
+          } else go("attack", 99);
+          break;
+        }
+        const c = playerInLight && fear ? fear.pos : player.pos;
+        const ringR = Math.max(e.keepOff, playerInLight && fear ? fear.r + 1.5 : 6.5 + (e.id % 3));
+        const dc = Math.hypot(e.pos.x - c.x, e.pos.z - c.z);
+        const radial = dc - ringR;
+        const out = Math.atan2(e.pos.x - c.x, e.pos.z - c.z);
+        let want = out + (e.strafe * Math.PI) / 2;
+        if (radial > 1.5) want = out + Math.PI + e.strafe * 0.35;
+        else if (radial < -1.2) want = out + e.strafe * 0.35;
+        e.burstT -= dt;
+        if (e.burstT <= 0) {
+          e.pausing = !e.pausing;
+          e.burstT = e.pausing ? 0.5 + Math.random() * 1.4 : 0.5 + Math.random() * 1.3;
+          if (!e.pausing && Math.random() < 0.3) e.strafe *= -1;
+          if (e.pausing && Math.random() < 0.15 && e.model instanceof Person) void e.model.play("hitHead", 0.45);
+        }
+        if (e.pausing) return { want: toward, move: 0, rate: 3, attack: false };
+        return { want, move: e.speed * (Math.abs(radial) > 1.5 ? 0.55 : 0.38), rate: 5, attack: false };
+      }
+    }
+    return { want: toward, move: 0, rate: 4, attack: false };
+  }
+
+  /** The nearest trunk on the far side of e from the player. */
+  private coverAway(e: Enemy, player: PlayerLike) {
+    let best: { x: number; z: number } | null = null;
+    let bd = 14;
+    for (const c of this.cover) {
+      const d = Math.hypot(c.x - e.pos.x, c.z - e.pos.z);
+      if (d > bd) continue;
+      const fromP = Math.hypot(c.x - player.pos.x, c.z - player.pos.z);
+      if (fromP < Math.hypot(e.pos.x - player.pos.x, e.pos.z - player.pos.z)) continue;
+      bd = d;
+      best = c;
+    }
+    return best;
   }
 
   /** One frame of a stalker's chase: hold a ring outside the light (or around

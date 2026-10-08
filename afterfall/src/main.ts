@@ -107,6 +107,12 @@ enemies.onDeath = (e) => {
 enemies.onWindup = (e) => {
   if (e.pos.distanceTo(player.pos) < 9) sfx.rasp();
 };
+// it copies you: your steps, a few paces behind, quieter
+enemies.onImitate = (e) => {
+  const d = e.pos.distanceTo(player.pos);
+  if (d < 30) sfx.steps(2 + Math.floor(Math.random() * 2), 0.05 + 0.08 * (1 - d / 30));
+};
+enemies.cover = world.treeSpots;
 // a stalker under its breath: too low to make out, quieter the further off
 enemies.onMurmur = (e) => {
   const d = e.pos.distanceTo(player.pos);
@@ -463,7 +469,7 @@ function tick(now?: number) {
       else player.model.clear();
     }
     wasDead = state.dead;
-    player.danger = enemies.list.some((e) => e.alive && e.kind !== "thing" && e.pos.distanceTo(player.pos) < 14);
+    player.danger = enemies.list.some((e) => e.alive && e.kind !== "thing" && e.model.root.visible && e.pos.distanceTo(player.pos) < 14);
     if (!state.dead && !state.paused) player.update(dt, input, bounds, camera);
     else if (state.dead) camera.position.y += (player.pos.y + 0.6 - camera.position.y) * dt;
     if (running) {
@@ -486,6 +492,24 @@ function tick(now?: number) {
   coopUpdate(dt, camera);
   world.update(dt, t, player.pos, camera);
   survival.visuals(dt);
+  // the world breathing: closer it is, quieter everything else gets
+  if (state.mode !== "title" && !state.paused) {
+    let near = Infinity;
+    let pan = 0;
+    for (const e of enemies.list) {
+      if (!e.alive || e.kind === "thing" || !e.model.root.visible) continue;
+      const d = Math.hypot(e.pos.x - player.pos.x, e.pos.z - player.pos.z);
+      if (d < near) {
+        near = d;
+        // left/right of where you're looking
+        const rel = Math.atan2(e.pos.x - camera.position.x, e.pos.z - camera.position.z) - player.yaw;
+        pan = -Math.sin(rel);
+      }
+    }
+    const phase = survival.phase;
+    const tension = Math.min(1, (near < 7 ? 1 : near < 14 ? 0.75 : near < 26 ? 0.45 : 0) + (phase === "deep" ? 0.15 : phase === "storm" ? 0.25 : 0));
+    sfx.atmosphere(dt, { tension, pan, crash: Math.hypot(player.pos.x + 14, player.pos.z - 30), out: state.exited, night: true });
+  }
   updatePeople(dt);
   farlands.update(dt, t, player);
   fx.update(dt, camera);

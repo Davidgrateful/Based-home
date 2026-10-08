@@ -180,7 +180,8 @@ export class Voice {
   private speakOne([id, raw, opts]: Line, t: number): Promise<void> {
     const s = SPEAKERS[id];
     const radioLine = opts?.radio ?? !!s.radio;
-    const noise = radioLine ? this.static : 0;
+    // the radio is never quite clean: now and then a line breaks up a little anyway
+    const noise = radioLine ? Math.max(this.static, Math.random() < 0.14 ? 0.22 : 0) : 0;
     let line = raw.replace(/\{name\}/g, this.playerName);
     if (noise > 0.05) {
       // the words that don't make it through

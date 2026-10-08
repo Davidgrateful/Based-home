@@ -45,6 +45,7 @@ import { survival } from "./survival";
 import { restock, reward } from "./economy";
 import { tradingPost } from "./trade";
 import { remembers } from "./remembers";
+import { buildDiscoveries } from "./discoveries";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
@@ -74,6 +75,7 @@ const waveTimers: { at: number; n: number; kind: "hollow" | "runner" }[] = [];
 export const signs = new Signs(world.scene, world.ambulance);
 survival.build(signs);
 tradingPost.build(world);
+buildDiscoveries();
 survival.onHome = () => void firstNightEnd();
 survival.onNeedSupplies = () => tradingPost.reveal();
 survival.onLoop = (run) => remembers.onLoop(run);
@@ -395,6 +397,7 @@ async function spawnFirstHollow(cinematic: boolean) {
   // not a monster running at you: someone at the edge of the light who can't
   // decide, until they can
   firstHollow.stalk = true;
+  firstHollow.classic = true; // the first one keeps its own ways
   firstHollow.windup = 0.7;
   firstHollow.courage = -0.2;
   firstHollow.bold = 2.4;
