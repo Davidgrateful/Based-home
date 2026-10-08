@@ -1393,7 +1393,7 @@ export class World {
     look.add(cab, lroof);
     // the window toward the crash: one lamp still flickers behind it
     // its own lamp, dimmer than the station's, stuttering with it
-    this.lookoutWin = this.stationFlicker.clone();
+    this.lookoutWin = new THREE.MeshStandardMaterial({ color: 0x0a0c10, emissive: 0xdfe8ff, emissiveIntensity: 0.5 });
     const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.8), this.lookoutWin);
     win.position.set(-1.71, L + 1.35, 0);
     win.rotation.y = -Math.PI / 2;
