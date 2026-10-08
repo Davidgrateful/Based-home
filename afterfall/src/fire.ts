@@ -180,6 +180,7 @@ export class Fire {
   private seed = Math.random() * 10;
   private puffT = 0;
   private baseLight: number;
+  private logGlow = { value: 1 };
 
   constructor(o: FireOptions) {
     this.o = o;
@@ -280,11 +281,13 @@ export class Fire {
     }
     geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
     const mat = new THREE.MeshStandardMaterial({ map: barkTex, color: 0x6a5a50, vertexColors: true, roughness: 0.95 });
+    // the burning ends glow only while the fire burns (a cold pit is just charcoal)
     mat.onBeforeCompile = (s) => {
+      s.uniforms.uGlow = this.logGlow;
       s.vertexShader = s.vertexShader.replace("#include <common>", "#include <common>\nvarying float vUp;").replace("#include <begin_vertex>", `#include <begin_vertex>\nvUp = position.y / ${(1.0 * S).toFixed(3)} + 0.5;`);
       s.fragmentShader = s.fragmentShader
-        .replace("#include <common>", "#include <common>\nvarying float vUp;")
-        .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(0.8, 0.14, 0.02) * smoothstep(0.86, 1.0, vUp) * 0.35;");
+        .replace("#include <common>", "#include <common>\nvarying float vUp;\nuniform float uGlow;")
+        .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(0.8, 0.14, 0.02) * smoothstep(0.86, 1.0, vUp) * 0.35 * uGlow;");
     };
     const up = new THREE.Vector3(0, 1, 0);
     for (let i = 0; i < 5; i++) {
@@ -319,6 +322,7 @@ export class Fire {
       f.scale.set(0.6 + pw * 0.4, (0.45 + pw * 0.55) * (0.94 + Math.sin(t * (5 + i) + i) * 0.06), 1);
     }
     this.bedMat.emissiveIntensity = on ? (0.35 + pw * 0.35) * flick : 0.0; // a cold pit is just ash
+    this.logGlow.value = on ? Math.min(1, pw * 1.5) : 0;
     if (this.light) {
       this.light.intensity = on ? this.baseLight * (0.3 + 0.7 * pw) * flick : 0;
       this.light.position.x = Math.sin(t * 9.1 + this.seed) * 0.06 * S;
