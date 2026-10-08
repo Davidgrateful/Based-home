@@ -10,6 +10,12 @@ and pack the results for the game:
     KOKORO=/path/to/dir-with-kokoro-v1.0.onnx-and-voices-v1.0.bin python3 tools/voice/render.py
 
 Re-running only renders lines whose text or treatment changed (cache by hash).
+
+Recorded voices: put actors' takes in tools/voice/recorded/ named by the line
+IDs in cast.json (the voice script's IDs), e.g. WAKE-02.wav; the player's lines
+come in two voices, WAKE-01-A.wav and WAKE-01-B.wav. A recorded take replaces
+the TTS for that line and gets the same treatment (radio, tape, echo...); any
+line without one keeps its TTS voice.
 """
 import hashlib, json, os, subprocess, sys, tempfile, time
 
@@ -90,8 +96,39 @@ def lang(v):
     return "en-gb" if v[0] == "b" else "en-us"
 
 
+REC = os.path.join(HERE, "recorded")
+IDS = {c["key"]: c["id"] for c in json.load(open(os.path.join(HERE, "cast.json")))}
+
+
+def recorded(l, alt):
+    """The actor's take for this line, if there is one."""
+    rid = IDS.get(l["key"])
+    if not rid:
+        return None
+    name = f"{rid}-{alt.upper()}" if l["id"] == "YOU" else rid
+    for ext in (".wav", ".flac", ".mp3"):
+        f = os.path.join(REC, name + ext)
+        if os.path.exists(f):
+            return f
+    return None
+
+
 def render(l, alt):
     voices, fx = cast(l, alt)
+    take = recorded(l, alt)
+    if take:
+        # an actor's take: same treatment as the TTS line it replaces, minus
+        # the Choir's layering (a recorded Choir is layered in the session)
+        st = os.stat(take)
+        h = hashlib.sha1(json.dumps([take, st.st_size, st.st_mtime, FX[fx]]).encode()).hexdigest()[:16]
+        mp3 = os.path.join(CACHE, "rec-" + h + ".mp3")
+        if not os.path.exists(mp3):
+            chain = f"[0:a]aformat=channel_layouts=mono,aresample=24000,{FX[fx]},apad=pad_dur=0.12,loudnorm=I=-17:TP=-1.5:LRA=9[o]"
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", take, "-filter_complex", chain, "-map", "[o]",
+                            "-ar", "24000", "-ac", "1", "-c:a", "libmp3lame", "-b:a", "48k", mp3], check=True)
+        ms = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp3],
+                                  capture_output=True, text=True).stdout) * 1000
+        return mp3, round(ms)
     sig = json.dumps([l["say"], voices, FX[fx]])
     h = hashlib.sha1(sig.encode()).hexdigest()[:16]
     mp3 = os.path.join(CACHE, h + ".mp3")

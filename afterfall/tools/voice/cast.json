@@ -1,0 +1,2242 @@
+[
+ {
+  "id": "OPEN-01",
+  "key": "PILOT|1|Meridian Control, Medevac Two Six. Level three one zero. Cargo's asleep. Crew's awake. Mostly.",
+  "speaker": "PILOT",
+  "say": "Meridian Control, Medevac Two Six. Level three one zero. Cargo's asleep. Crew's awake. Mostly.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-02",
+  "key": "DEZ|0|Mostly?",
+  "speaker": "DEZ",
+  "say": "Mostly?",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-03",
+  "key": "PILOT|0|You've checked that fuel gauge nine times, Reyes.",
+  "speaker": "PILOT",
+  "say": "You've checked that fuel gauge nine times, Reyes.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-04",
+  "key": "DEZ|0|It's my first black-site run, Captain. I'm allowed nine.",
+  "speaker": "DEZ",
+  "say": "It's my first black-site run, Captain. I'm allowed nine.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-05",
+  "key": "PILOT|0|It's a hospital transfer.",
+  "speaker": "PILOT",
+  "say": "It's a hospital transfer.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-06",
+  "key": "DEZ|0|Hospitals don't pay triple. And they don't make you sign an NDA in the parking lot.",
+  "speaker": "DEZ",
+  "say": "Hospitals don't pay triple. And they don't make you sign an NDA in the parking lot.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-07",
+  "key": "PILOT|0|Fair.",
+  "speaker": "PILOT",
+  "say": "Fair.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-08",
+  "key": "RHEA|1|Cabin to cockpit. Are you two done gossiping? My patient's trying to sleep.",
+  "speaker": "RHEA",
+  "say": "Cabin to cockpit. Are you two done gossiping? My patient's trying to sleep.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-09",
+  "key": "PILOT|1|Your patient's sedated, Vance.",
+  "speaker": "PILOT",
+  "say": "Your patient's sedated, Vance.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-10",
+  "key": "RHEA|0|Mm. Then explain why their heart rate just jumped to one forty.",
+  "speaker": "RHEA",
+  "say": "Mm. Then explain why their heart rate just jumped to one forty.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-11",
+  "key": "DEZ|0|Is that bad? That sounds bad.",
+  "speaker": "DEZ",
+  "say": "Is that bad? That sounds bad.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-12",
+  "key": "RHEA|1|In someone this sedated? It means they're having one hell of a dream.",
+  "speaker": "RHEA",
+  "say": "In someone this sedated? It means they're having one hell of a dream.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-13",
+  "key": "RHEA|0|Hey, sleeper. It's Rhea again. Whatever you're dreaming about, you can let it go.",
+  "speaker": "RHEA",
+  "say": "Hey, sleeper. It's Rhea again. Whatever you're dreaming about, you can let it go.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-14",
+  "key": "RHEA|0|I've got you. Nobody's going anywhere tonight.",
+  "speaker": "RHEA",
+  "say": "I've got you. Nobody's going anywhere tonight.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-15",
+  "key": "DEZ|0|Captain. Twelve o'clock. Is that a storm?",
+  "speaker": "DEZ",
+  "say": "Captain. Twelve o'clock. Is that a storm?",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-16",
+  "key": "PILOT|0|Storms don't glow like that.",
+  "speaker": "PILOT",
+  "say": "Storms don't glow like that.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-17",
+  "key": "DEZ|0|It's opening. Why is it opening?",
+  "speaker": "DEZ",
+  "say": "It's opening. Why is it opening?",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-18",
+  "key": "PILOT|0|Autopilot off. Hard left, now.",
+  "speaker": "PILOT",
+  "say": "Autopilot off. Hard left, now.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-19",
+  "key": "DEZ|0|She's not answering! Everything's dead, the controls are dead!",
+  "speaker": "DEZ",
+  "say": "She's not answering! Everything's dead, the controls are dead!",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-20",
+  "key": "RHEA|0|Captain, talk to me!",
+  "speaker": "RHEA",
+  "say": "Captain, talk to me!",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-21",
+  "key": "PILOT|1|Vance, strap in. Strap the patient in!",
+  "speaker": "PILOT",
+  "say": "Vance, strap in. Strap the patient in!",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-22",
+  "key": "RHEA|0|Already done. Sleeper, hold on to me. Hold on.",
+  "speaker": "RHEA",
+  "say": "Already done. Sleeper, hold on to me. Hold on.",
+  "two_voices": false
+ },
+ {
+  "id": "OPEN-23",
+  "key": "PILOT|0|Mayday, mayday, Medevac Two Six. We're going in. God help whoever's down there.",
+  "speaker": "PILOT",
+  "say": "Mayday, mayday, Medevac Two Six. We're going in. God help whoever's down there.",
+  "two_voices": false
+ },
+ {
+  "id": "WATCH-01",
+  "key": "HOLLOW|0|Count it.",
+  "speaker": "HOLLOW",
+  "say": "Count it.",
+  "two_voices": false
+ },
+ {
+  "id": "WATCH-02",
+  "key": "HOLLOW|0|Ten thousand.",
+  "speaker": "HOLLOW",
+  "say": "Ten thousand.",
+  "two_voices": false
+ },
+ {
+  "id": "WATCH-03",
+  "key": "HOLLOW|0|No. Count again.",
+  "speaker": "HOLLOW",
+  "say": "No. Count again.",
+  "two_voices": false
+ },
+ {
+  "id": "WATCH-04",
+  "key": "HOLLOW|0|Ten thousand. And one.",
+  "speaker": "HOLLOW",
+  "say": "Ten thousand. And one.",
+  "two_voices": false
+ },
+ {
+  "id": "WAKE-01",
+  "key": "YOU|0|Rhea?",
+  "speaker": "YOU",
+  "say": "Rhea?",
+  "two_voices": true
+ },
+ {
+  "id": "WAKE-02",
+  "key": "RHEA|1|Sleeper? Oh, thank God. Tap the radio if you can hear me. Anything.",
+  "speaker": "RHEA",
+  "say": "Sleeper? Oh, thank God. Tap the radio if you can hear me. Anything.",
+  "two_voices": false
+ },
+ {
+  "id": "WAKE-03",
+  "key": "YOU|0|I'm here. I think. Where's here?",
+  "speaker": "YOU",
+  "say": "I'm here. I think. Where's here?",
+  "two_voices": true
+ },
+ {
+  "id": "WAKE-04",
+  "key": "RHEA|1|{name}. That's what your wristband says. Hi, {name}. I'm Rhea. I've been talking to you for six hours and you never once talked back.",
+  "speaker": "RHEA",
+  "say": "That's what your wristband says. Hi. I'm Rhea. I've been talking to you for six hours and you never once talked back.",
+  "two_voices": false
+ },
+ {
+  "id": "WAKE-05",
+  "key": "YOU|0|Sorry. I was unconscious.",
+  "speaker": "YOU",
+  "say": "Sorry. I was unconscious.",
+  "two_voices": true
+ },
+ {
+  "id": "WAKE-06",
+  "key": "RHEA|1|Excuses. And stop picking at the wristband. You always pick at it.",
+  "speaker": "RHEA",
+  "say": "Excuses. And stop picking at the wristband. You always pick at it.",
+  "two_voices": false
+ },
+ {
+  "id": "WAKE-07",
+  "key": "YOU|0|Always?",
+  "speaker": "YOU",
+  "say": "Always?",
+  "two_voices": true
+ },
+ {
+  "id": "WAKE-08",
+  "key": "RHEA|1|You picked at it the whole flight. Listen. I got thrown clear. My leg's fine. ...It's not fine. I'm moving.",
+  "speaker": "RHEA",
+  "say": "You picked at it the whole flight. Listen. I got thrown clear. My leg's fine. ...It's not fine. I'm moving.",
+  "two_voices": false
+ },
+ {
+  "id": "WAKE-09",
+  "key": "RHEA|1|That smell is fuel. Find something heavy and get out of that box before it decides to become a fireball.",
+  "speaker": "RHEA",
+  "say": "That smell is fuel. Find something heavy and get out of that box before it decides to become a fireball.",
+  "two_voices": false
+ },
+ {
+  "id": "AXE-01",
+  "key": "YOU|0|Fire axe. Okay. Okay, I can do fire axe.",
+  "speaker": "YOU",
+  "say": "Fire axe. Okay. Okay, I can do fire axe.",
+  "two_voices": true
+ },
+ {
+  "id": "AXE-02",
+  "key": "RHEA|1|Good. Now the doors. Kick them like they owe you money.",
+  "speaker": "RHEA",
+  "say": "Good. Now the doors. Kick them like they owe you money.",
+  "two_voices": false
+ },
+ {
+  "id": "MOONS-01",
+  "key": "YOU|0|Rhea.",
+  "speaker": "YOU",
+  "say": "Rhea.",
+  "two_voices": true
+ },
+ {
+  "id": "MOONS-02",
+  "key": "RHEA|1|What? What's wrong?",
+  "speaker": "RHEA",
+  "say": "What? What's wrong?",
+  "two_voices": false
+ },
+ {
+  "id": "MOONS-03",
+  "key": "YOU|0|Look up.",
+  "speaker": "YOU",
+  "say": "Look up.",
+  "two_voices": true
+ },
+ {
+  "id": "MOONS-04",
+  "key": "RHEA|1|Okay. That's two moons.",
+  "speaker": "RHEA",
+  "say": "Okay. That's two moons.",
+  "two_voices": false
+ },
+ {
+  "id": "MOONS-05",
+  "key": "YOU|0|Two moons.",
+  "speaker": "YOU",
+  "say": "Two moons.",
+  "two_voices": true
+ },
+ {
+  "id": "MOONS-06",
+  "key": "RHEA|1|I counted. Three times. Still two.",
+  "speaker": "RHEA",
+  "say": "I counted. Three times. Still two.",
+  "two_voices": false
+ },
+ {
+  "id": "MOONS-07",
+  "key": "RHEA|1|Panic later. The black box has its own battery. If it's still sending, someone might hear. Get to the wreck.",
+  "speaker": "RHEA",
+  "say": "Panic later. The black box has its own battery. If it's still sending, someone might hear. Get to the wreck.",
+  "two_voices": false
+ },
+ {
+  "id": "SHARD-01",
+  "key": "YOU|0|It's warm. And it's humming.",
+  "speaker": "YOU",
+  "say": "It's warm. And it's humming.",
+  "two_voices": true
+ },
+ {
+  "id": "SHARD-02",
+  "key": "RHEA|1|My scanner just jumped off the chart. Not near me. Near you. Keep it. Keep all of them.",
+  "speaker": "RHEA",
+  "say": "My scanner just jumped off the chart. Not near me. Near you. Keep it. Keep all of them.",
+  "two_voices": false
+ },
+ {
+  "id": "BOXFIND-01",
+  "key": "YOU|0|Black box. It's still got power. There's a recording.",
+  "speaker": "YOU",
+  "say": "Black box. It's still got power. There's a recording.",
+  "two_voices": true
+ },
+ {
+  "id": "LOG-01",
+  "key": "PILOT|1|This is Captain Daniel Okafor. Final log. If you're hearing this, we didn't make it.",
+  "speaker": "PILOT",
+  "say": "This is Captain Daniel Okafor. Final log. If you're hearing this, we didn't make it.",
+  "two_voices": false
+ },
+ {
+  "id": "LOG-02",
+  "key": "PILOT|1|Meridian lied to us. That light opened the second our patient's heart rate spiked.",
+  "speaker": "PILOT",
+  "say": "Meridian lied to us. That light opened the second our patient's heart rate spiked.",
+  "two_voices": false
+ },
+ {
+  "id": "LOG-03",
+  "key": "PILOT|1|Reyes is gone. I looked away for one second and his seat was empty.",
+  "speaker": "PILOT",
+  "say": "Reyes is gone. I looked away for one second and his seat was empty.",
+  "two_voices": false
+ },
+ {
+  "id": "LOG-04",
+  "key": "PILOT|1|Vance is in the back with the patient. If anyone finds this, keep them away from the towers. Please.",
+  "speaker": "PILOT",
+  "say": "Vance is in the back with the patient. If anyone finds this, keep them away from the towers. Please.",
+  "two_voices": false
+ },
+ {
+  "id": "BOX-01",
+  "key": "YOU|0|Rhea. Did you know?",
+  "speaker": "YOU",
+  "say": "Rhea. Did you know?",
+  "two_voices": true
+ },
+ {
+  "id": "BOX-02",
+  "key": "RHEA|1|Not all of it.",
+  "speaker": "RHEA",
+  "say": "Not all of it.",
+  "two_voices": false
+ },
+ {
+  "id": "BOX-03",
+  "key": "YOU|0|How much of it?",
+  "speaker": "YOU",
+  "say": "How much of it?",
+  "two_voices": true
+ },
+ {
+  "id": "BOX-04",
+  "key": "RHEA|1|Later. I swear, later.",
+  "speaker": "RHEA",
+  "say": "Later. I swear, later.",
+  "two_voices": false
+ },
+ {
+  "id": "BOX-05",
+  "key": "RHEA|1|Go back to the ambulance. There's a medkit in the side locker, and I want you near something with walls.",
+  "speaker": "RHEA",
+  "say": "Go back to the ambulance. There's a medkit in the side locker, and I want you near something with walls.",
+  "two_voices": false
+ },
+ {
+  "id": "TRACKS-01",
+  "key": "YOU|0|Footprints. Bare feet.",
+  "speaker": "YOU",
+  "say": "Footprints. Bare feet.",
+  "two_voices": true
+ },
+ {
+  "id": "TRACKS-02",
+  "key": "RHEA|1|Ours?",
+  "speaker": "RHEA",
+  "say": "Ours?",
+  "two_voices": false
+ },
+ {
+  "id": "TRACKS-03",
+  "key": "YOU|0|Nobody on that plane walked out barefoot.",
+  "speaker": "YOU",
+  "say": "Nobody on that plane walked out barefoot.",
+  "two_voices": true
+ },
+ {
+  "id": "TRACKS-04",
+  "key": "YOU|0|They go around the ambulance. All the way around. Like someone was checking on me.",
+  "speaker": "YOU",
+  "say": "They go around the ambulance. All the way around. Like someone was checking on me.",
+  "two_voices": true
+ },
+ {
+  "id": "MARKS-01",
+  "key": "YOU|0|Something scratched the side of the ambulance.",
+  "speaker": "YOU",
+  "say": "Something scratched the side of the ambulance.",
+  "two_voices": true
+ },
+ {
+  "id": "MARKS-02",
+  "key": "RHEA|1|Scratched, or wrote?",
+  "speaker": "RHEA",
+  "say": "Scratched, or wrote?",
+  "two_voices": false
+ },
+ {
+  "id": "MARKS-03",
+  "key": "YOU|0|Tally marks. Hundreds of them.",
+  "speaker": "YOU",
+  "say": "Tally marks. Hundreds of them.",
+  "two_voices": true
+ },
+ {
+  "id": "MARKS-04",
+  "key": "YOU|0|And one word under all of them. Hundred.",
+  "speaker": "YOU",
+  "say": "And one word under all of them. Hundred.",
+  "two_voices": true
+ },
+ {
+  "id": "MARKS-05",
+  "key": "RHEA|1|Keep moving.",
+  "speaker": "RHEA",
+  "say": "Keep moving.",
+  "two_voices": false
+ },
+ {
+  "id": "BREATH-01",
+  "key": "RHEA|1|{name}, is that you breathing like that?",
+  "speaker": "RHEA",
+  "say": "Sleeper, is that you breathing like that?",
+  "two_voices": false
+ },
+ {
+  "id": "BREATH-02",
+  "key": "YOU|0|Like what?",
+  "speaker": "YOU",
+  "say": "Like what?",
+  "two_voices": true
+ },
+ {
+  "id": "BREATH-03",
+  "key": "RHEA|1|Nothing. It's the static. Must be the static.",
+  "speaker": "RHEA",
+  "say": "Nothing. It's the static. Must be the static.",
+  "two_voices": false
+ },
+ {
+  "id": "SHAPE-01",
+  "key": "YOU|0|Rhea. There's someone standing by the wreck.",
+  "speaker": "YOU",
+  "say": "Rhea. There's someone standing by the wreck.",
+  "two_voices": true
+ },
+ {
+  "id": "SHAPE-02",
+  "key": "RHEA|1|A survivor? Wave at them.",
+  "speaker": "RHEA",
+  "say": "A survivor? Wave at them.",
+  "two_voices": false
+ },
+ {
+  "id": "SHAPE-03",
+  "key": "YOU|0|They're gone.",
+  "speaker": "YOU",
+  "say": "They're gone.",
+  "two_voices": true
+ },
+ {
+  "id": "NURSE-01",
+  "key": "HOLLOW|0|Nurse?",
+  "speaker": "HOLLOW",
+  "say": "Nurse?",
+  "two_voices": false
+ },
+ {
+  "id": "FIREPIT-01",
+  "key": "YOU|0|Someone built a fire pit. Stones, kindling, dry wood. Right next to where I woke up.",
+  "speaker": "YOU",
+  "say": "Someone built a fire pit. Stones, kindling, dry wood. Right next to where I woke up.",
+  "two_voices": true
+ },
+ {
+  "id": "FIREPIT-02",
+  "key": "RHEA|1|Then light it. Whatever's out there, I'd rather it saw you from far away than up close.",
+  "speaker": "RHEA",
+  "say": "Then light it. Whatever's out there, I'd rather it saw you from far away than up close.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRELIT-01",
+  "key": "RHEA|1|Better. I can see your smoke from here.",
+  "speaker": "RHEA",
+  "say": "Better. I can see your smoke from here.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRELIT-02",
+  "key": "YOU|0|There's a case by the stones. Meridian. Somebody carried it here from the wreck.",
+  "speaker": "YOU",
+  "say": "There's a case by the stones. Meridian. Somebody carried it here from the wreck.",
+  "two_voices": true
+ },
+ {
+  "id": "FIRELIT-03",
+  "key": "RHEA|1|Don't open that. {name}, those files aren't for",
+  "speaker": "RHEA",
+  "say": "Don't open that. Sleeper, those files aren't for",
+  "two_voices": false
+ },
+ {
+  "id": "FIRELIT-04",
+  "key": "YOU|0|It's already open.",
+  "speaker": "YOU",
+  "say": "It's already open.",
+  "two_voices": true
+ },
+ {
+  "id": "RECORDS-01",
+  "key": "YOU|0|Rhea. There's a record for me.",
+  "speaker": "YOU",
+  "say": "Rhea. There's a record for me.",
+  "two_voices": true
+ },
+ {
+  "id": "RECORDS-02",
+  "key": "RHEA|1|That's not possible. They don't assign a number until",
+  "speaker": "RHEA",
+  "say": "That's not possible. They don't assign a number until",
+  "two_voices": false
+ },
+ {
+  "id": "RECORDS-03",
+  "key": "YOU|0|Ten thousand and one. Active. Dated three days before we took off.",
+  "speaker": "YOU",
+  "say": "Ten thousand and one. Active. Dated three days before we took off.",
+  "two_voices": true
+ },
+ {
+  "id": "RECORDS-05",
+  "key": "RHEA|1|I'm here. I signed off on ten thousand myself. There was no one after.",
+  "speaker": "RHEA",
+  "say": "I'm here. I signed off on ten thousand myself. There was no one after.",
+  "two_voices": false
+ },
+ {
+  "id": "RECORDS-06",
+  "key": "YOU|0|Then who wrote me in?",
+  "speaker": "YOU",
+  "say": "Then who wrote me in?",
+  "two_voices": true
+ },
+ {
+  "id": "RECORDS-07",
+  "key": "RHEA|1|It's handwritten. Isn't it.",
+  "speaker": "RHEA",
+  "say": "It's handwritten. Isn't it.",
+  "two_voices": false
+ },
+ {
+  "id": "RECORDS-08",
+  "key": "YOU|0|How did you know that?",
+  "speaker": "YOU",
+  "say": "How did you know that?",
+  "two_voices": true
+ },
+ {
+  "id": "RECORDS-09",
+  "key": "RHEA|1|Stay by the fire. Please. Just stay by the fire.",
+  "speaker": "RHEA",
+  "say": "Stay by the fire. Please. Just stay by the fire.",
+  "two_voices": false
+ },
+ {
+  "id": "HOLLOW1-01",
+  "key": "HOLLOW|0|Room four. Don't close it. Don't close the door.",
+  "speaker": "HOLLOW",
+  "say": "Room four. Don't close it. Don't close the door.",
+  "two_voices": false
+ },
+ {
+  "id": "HOLLOW1D-01",
+  "key": "YOU|0|It's wearing a wristband. Twenty two ninety one.",
+  "speaker": "YOU",
+  "say": "It's wearing a wristband. Twenty two ninety one.",
+  "two_voices": true
+ },
+ {
+  "id": "HOLLOW1D-02",
+  "key": "RHEA|1|That one says terminated.",
+  "speaker": "RHEA",
+  "say": "That one says terminated.",
+  "two_voices": false
+ },
+ {
+  "id": "HOLLOW1D-03",
+  "key": "YOU|0|Then why was it walking?",
+  "speaker": "YOU",
+  "say": "Then why was it walking?",
+  "two_voices": true
+ },
+ {
+  "id": "THING-01",
+  "key": "YOU|0|Rhea. Something's watching me. It's not one of them.",
+  "speaker": "YOU",
+  "say": "Rhea. Something's watching me. It's not one of them.",
+  "two_voices": true
+ },
+ {
+  "id": "THING-02",
+  "key": "RHEA|1|Not a Hollow?",
+  "speaker": "RHEA",
+  "say": "Not a Hollow?",
+  "two_voices": false
+ },
+ {
+  "id": "THING-03",
+  "key": "YOU|0|No mask. No wristband. No face, really.",
+  "speaker": "YOU",
+  "say": "No mask. No wristband. No face, really.",
+  "two_voices": true
+ },
+ {
+  "id": "THING-04",
+  "key": "RHEA|1|Then it was here before any of us. Back away slow. Find a fire if you can.",
+  "speaker": "RHEA",
+  "say": "Then it was here before any of us. Back away slow. Find a fire if you can.",
+  "two_voices": false
+ },
+ {
+  "id": "AMBUSH-01",
+  "key": "HOLLOW|0|Fall. Forget. Belong.",
+  "speaker": "HOLLOW",
+  "say": "Fall. Forget. Belong.",
+  "two_voices": false
+ },
+ {
+  "id": "AMBUSH-02",
+  "key": "HOLLOW|0|Ten thousand and one! The one has come home!",
+  "speaker": "HOLLOW",
+  "say": "Ten thousand and one! The one has come home!",
+  "two_voices": false
+ },
+ {
+  "id": "AFTER-01",
+  "key": "YOU|0|Wristbands. All of them. Meridian.",
+  "speaker": "YOU",
+  "say": "Wristbands. All of them. Meridian.",
+  "two_voices": true
+ },
+ {
+  "id": "AFTER-02",
+  "key": "RHEA|1|Same as yours.",
+  "speaker": "RHEA",
+  "say": "Same as yours.",
+  "two_voices": false
+ },
+ {
+  "id": "AFTER-03",
+  "key": "YOU|0|Ten thousand people, Rhea.",
+  "speaker": "YOU",
+  "say": "Ten thousand people, Rhea.",
+  "two_voices": true
+ },
+ {
+  "id": "AFTER-04",
+  "key": "RHEA|1|Not all of them are out here. Some went missing. Some were transferred.",
+  "speaker": "RHEA",
+  "say": "Not all of them are out here. Some went missing. Some were transferred.",
+  "two_voices": false
+ },
+ {
+  "id": "AFTER-05",
+  "key": "YOU|0|Transferred where?",
+  "speaker": "YOU",
+  "say": "Transferred where?",
+  "two_voices": true
+ },
+ {
+  "id": "AFTER-06",
+  "key": "RHEA|1|That was the word they used. I never asked.",
+  "speaker": "RHEA",
+  "say": "That was the word they used. I never asked.",
+  "two_voices": false
+ },
+ {
+  "id": "AFTER-07",
+  "key": "YOU|0|You never asked.",
+  "speaker": "YOU",
+  "say": "You never asked.",
+  "two_voices": true
+ },
+ {
+  "id": "AFTER-08",
+  "key": "RHEA|1|I know how that sounds.",
+  "speaker": "RHEA",
+  "say": "I know how that sounds.",
+  "two_voices": false
+ },
+ {
+  "id": "AFTER-09",
+  "key": "RHEA|1|Okafor said stay away from the towers. They're also the only thing that can carry a signal. So. Something stupid.",
+  "speaker": "RHEA",
+  "say": "Okafor said stay away from the towers. They're also the only thing that can carry a signal. So. Something stupid.",
+  "two_voices": false
+ },
+ {
+  "id": "AFTER-10",
+  "key": "YOU|0|Light the towers.",
+  "speaker": "YOU",
+  "say": "Light the towers.",
+  "two_voices": true
+ },
+ {
+  "id": "AFTER-11",
+  "key": "RHEA|1|Light the towers.",
+  "speaker": "RHEA",
+  "say": "Light the towers.",
+  "two_voices": false
+ },
+ {
+  "id": "TOUCH-01",
+  "key": "HOLLOW|0|No! No, the towers wake him!",
+  "speaker": "HOLLOW",
+  "say": "No! No, the towers wake him!",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-01",
+  "key": "RHEA|1|It worked, the signal jumped! And there's something riding underneath it. Voices.",
+  "speaker": "RHEA",
+  "say": "It worked, the signal jumped! And there's something riding underneath it. Voices.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-02",
+  "key": "CHOIR|0|Ten thousand and one.",
+  "speaker": "CHOIR",
+  "say": "Ten thousand and one.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-03",
+  "key": "YOU|0|Tell me you heard that.",
+  "speaker": "YOU",
+  "say": "Tell me you heard that.",
+  "two_voices": true
+ },
+ {
+  "id": "TOWERS-04",
+  "key": "RHEA|1|I heard it. I really wish I hadn't. Keep going.",
+  "speaker": "RHEA",
+  "say": "I heard it. I really wish I hadn't. Keep going.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-06",
+  "key": "YOU|0|Rhea, are you there?",
+  "speaker": "YOU",
+  "say": "Rhea, are you there?",
+  "two_voices": true
+ },
+ {
+  "id": "TOWERS-07",
+  "key": "RHEA|1|...I'm here.",
+  "speaker": "RHEA",
+  "say": "...I'm here.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-08",
+  "key": "YOU|0|Where?",
+  "speaker": "YOU",
+  "say": "Where?",
+  "two_voices": true
+ },
+ {
+  "id": "TOWERS-09",
+  "key": "RHEA|1|{name}, I need to tell you something before I lose my nerve.",
+  "speaker": "RHEA",
+  "say": "Sleeper, I need to tell you something before I lose my nerve.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-10",
+  "key": "YOU|0|That's never a good start.",
+  "speaker": "YOU",
+  "say": "That's never a good start.",
+  "two_voices": true
+ },
+ {
+  "id": "TOWERS-11",
+  "key": "RHEA|1|My orders weren't to keep you alive. They were to keep you asleep. Until we landed.",
+  "speaker": "RHEA",
+  "say": "My orders weren't to keep you alive. They were to keep you asleep. Until we landed.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-12",
+  "key": "YOU|0|Landed where?",
+  "speaker": "YOU",
+  "say": "Landed where?",
+  "two_voices": true
+ },
+ {
+  "id": "TOWERS-13",
+  "key": "RHEA|1|I think they meant here.",
+  "speaker": "RHEA",
+  "say": "I think they meant here.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-14",
+  "key": "WARDEN|0|Who rings my towers?",
+  "speaker": "WARDEN",
+  "say": "Who rings my towers?",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-15",
+  "key": "RHEA|1|All three beams point north. To that stone circle.",
+  "speaker": "RHEA",
+  "say": "All three beams point north. To that stone circle.",
+  "two_voices": false
+ },
+ {
+  "id": "TOWERS-16",
+  "key": "YOU|0|Something's waiting there.",
+  "speaker": "YOU",
+  "say": "Something's waiting there.",
+  "two_voices": true
+ },
+ {
+  "id": "TOWERS-17",
+  "key": "RHEA|1|Something's been waiting there a very long time.",
+  "speaker": "RHEA",
+  "say": "Something's been waiting there a very long time.",
+  "two_voices": false
+ },
+ {
+  "id": "WARDEN-01",
+  "key": "WARDEN|0|Ten thousand.",
+  "speaker": "WARDEN",
+  "say": "Ten thousand.",
+  "two_voices": false
+ },
+ {
+  "id": "WARDEN-02",
+  "key": "WARDEN|0|No.",
+  "speaker": "WARDEN",
+  "say": "No.",
+  "two_voices": false
+ },
+ {
+  "id": "WARDEN-03",
+  "key": "WARDEN|0|Ten thousand. And one?",
+  "speaker": "WARDEN",
+  "say": "Ten thousand. And one?",
+  "two_voices": false
+ },
+ {
+  "id": "WARDEN-04",
+  "key": "WARDEN|0|You're not the one I was expecting.",
+  "speaker": "WARDEN",
+  "say": "You're not the one I was expecting.",
+  "two_voices": false
+ },
+ {
+  "id": "WARDEN-05",
+  "key": "YOU|0|Who were you expecting?",
+  "speaker": "YOU",
+  "say": "Who were you expecting?",
+  "two_voices": true
+ },
+ {
+  "id": "WARDEN-06",
+  "key": "WARDEN|0|The last one. They promised me the last one. I was the first. I have counted every one of them down.",
+  "speaker": "WARDEN",
+  "say": "The last one. They promised me the last one. I was the first. I have counted every one of them down.",
+  "two_voices": false
+ },
+ {
+  "id": "WARDEN-07",
+  "key": "WARDEN|0|There is no one after the last. So what are you?",
+  "speaker": "WARDEN",
+  "say": "There is no one after the last. So what are you?",
+  "two_voices": false
+ },
+ {
+  "id": "WARDEN-08",
+  "key": "RHEA|1|{name}, the red ring! When it glows, jump or run!",
+  "speaker": "RHEA",
+  "say": "Sleeper, the red ring! When it glows, jump or run!",
+  "two_voices": false
+ },
+ {
+  "id": "SUMMON-01",
+  "key": "WARDEN|0|Children! Hold the one I didn't count!",
+  "speaker": "WARDEN",
+  "say": "Children! Hold the one I didn't count!",
+  "two_voices": false
+ },
+ {
+  "id": "HALF-01",
+  "key": "WARDEN|0|You think the sky saved you? The sky ate you!",
+  "speaker": "WARDEN",
+  "say": "You think the sky saved you? The sky ate you!",
+  "two_voices": false
+ },
+ {
+  "id": "LOW-01",
+  "key": "WARDEN|0|I remember rain. Real rain. Cold, on my face.",
+  "speaker": "WARDEN",
+  "say": "I remember rain. Real rain. Cold, on my face.",
+  "two_voices": false
+ },
+ {
+  "id": "DEATH-01",
+  "key": "WARDEN|0|Patient One. Discharged.",
+  "speaker": "WARDEN",
+  "say": "Patient One. Discharged.",
+  "two_voices": false
+ },
+ {
+  "id": "EPILOGUE-01",
+  "key": "RHEA|1|{name}, the signal's through! But it's not going home. Something on the other side is pulling it.",
+  "speaker": "RHEA",
+  "say": "Sleeper, the signal's through! But it's not going home. Something on the other side is pulling it.",
+  "two_voices": false
+ },
+ {
+  "id": "EPILOGUE-02",
+  "key": "CHOIR|0|Ten thousand and one. We counted every fall. You are the one we did not count.",
+  "speaker": "CHOIR",
+  "say": "Ten thousand and one. We counted every fall. You are the one we did not count.",
+  "two_voices": false
+ },
+ {
+  "id": "EPILOGUE-03",
+  "key": "YOU|0|Who are you?",
+  "speaker": "YOU",
+  "say": "Who are you?",
+  "two_voices": true
+ },
+ {
+  "id": "EPILOGUE-04",
+  "key": "CHOIR|0|Come and see.",
+  "speaker": "CHOIR",
+  "say": "Come and see.",
+  "two_voices": false
+ },
+ {
+  "id": "EPILOGUE-05",
+  "key": "RHEA|1|Don't you dare go anywhere without me.",
+  "speaker": "RHEA",
+  "say": "Don't you dare go anywhere without me.",
+  "two_voices": false
+ },
+ {
+  "id": "INES-01",
+  "key": "INES|0|Don't swing. I'm not one of them.",
+  "speaker": "INES",
+  "say": "Don't swing. I'm not one of them.",
+  "two_voices": false
+ },
+ {
+  "id": "INES-02",
+  "key": "YOU|0|You've got a wristband.",
+  "speaker": "YOU",
+  "say": "You've got a wristband.",
+  "two_voices": true
+ },
+ {
+  "id": "INES-03",
+  "key": "INES|0|Forty three eighty two. They wrote me down as missing. I wasn't missing. I was busy.",
+  "speaker": "INES",
+  "say": "Forty three eighty two. They wrote me down as missing. I wasn't missing. I was busy.",
+  "two_voices": false
+ },
+ {
+  "id": "INES-04",
+  "key": "INES|0|You put the Warden down. Do you know what that means?",
+  "speaker": "INES",
+  "say": "You put the Warden down. Do you know what that means?",
+  "two_voices": false
+ },
+ {
+  "id": "INES-05",
+  "key": "YOU|0|That he stops trying to kill me?",
+  "speaker": "YOU",
+  "say": "That he stops trying to kill me?",
+  "two_voices": true
+ },
+ {
+  "id": "INES-06",
+  "key": "INES|0|It means nobody's standing in the door. Everything out here is going to come and look.",
+  "speaker": "INES",
+  "say": "It means nobody's standing in the door. Everything out here is going to come and look.",
+  "two_voices": false
+ },
+ {
+  "id": "INES-07",
+  "key": "RHEA|1|{name}, I've got two signals on you. One of them's wrong. It's too bright.",
+  "speaker": "RHEA",
+  "say": "Sleeper, I've got two signals on you. One of them's wrong. It's too bright.",
+  "two_voices": false
+ },
+ {
+  "id": "INES-08",
+  "key": "INES|0|Tell her Ines says hello. She'll remember me. She's the one who dropped me off.",
+  "speaker": "INES",
+  "say": "Tell her Ines says hello. She'll remember me. She's the one who dropped me off.",
+  "two_voices": false
+ },
+ {
+  "id": "INES-09",
+  "key": "RHEA|1|Ines?",
+  "speaker": "RHEA",
+  "say": "Ines?",
+  "two_voices": false
+ },
+ {
+  "id": "INES-10",
+  "key": "INES|0|There are people in the deep woods. Living ones. Keep the red light on your right and walk until the trees go black. I'll have the fire going.",
+  "speaker": "INES",
+  "say": "There are people in the deep woods. Living ones. Keep the red light on your right and walk until the trees go black. I'll have the fire going.",
+  "two_voices": false
+ },
+ {
+  "id": "WALK-01",
+  "key": "RHEA|1|{name}. About Ines.",
+  "speaker": "RHEA",
+  "say": "Sleeper. About Ines.",
+  "two_voices": false
+ },
+ {
+  "id": "WALK-02",
+  "key": "YOU|0|She said you dropped her off.",
+  "speaker": "YOU",
+  "say": "She said you dropped her off.",
+  "two_voices": true
+ },
+ {
+  "id": "WALK-03",
+  "key": "RHEA|1|I've flown forty transfers. I talked every one of them down. I told myself they were going somewhere better.",
+  "speaker": "RHEA",
+  "say": "I've flown forty transfers. I talked every one of them down. I told myself they were going somewhere better.",
+  "two_voices": false
+ },
+ {
+  "id": "WALK-04",
+  "key": "YOU|0|Were they?",
+  "speaker": "YOU",
+  "say": "Were they?",
+  "two_voices": true
+ },
+ {
+  "id": "WALK-05",
+  "key": "RHEA|1|I never asked. That was the job. Not asking.",
+  "speaker": "RHEA",
+  "say": "I never asked. That was the job. Not asking.",
+  "two_voices": false
+ },
+ {
+  "id": "ARRIVE-01",
+  "key": "TEO|0|Another one walking in on their own feet. That's twice this year.",
+  "speaker": "TEO",
+  "say": "Another one walking in on their own feet. That's twice this year.",
+  "two_voices": false
+ },
+ {
+  "id": "ARRIVE-02",
+  "key": "INES|0|Teo, this is ten thousand and one.",
+  "speaker": "INES",
+  "say": "Teo, this is ten thousand and one.",
+  "two_voices": false
+ },
+ {
+  "id": "ARRIVE-03",
+  "key": "TEO|0|No. There's no such number.",
+  "speaker": "TEO",
+  "say": "No. There's no such number.",
+  "two_voices": false
+ },
+ {
+  "id": "ARRIVE-04",
+  "key": "YOU|0|That's what everyone keeps telling me.",
+  "speaker": "YOU",
+  "say": "That's what everyone keeps telling me.",
+  "two_voices": true
+ },
+ {
+  "id": "WALL-01",
+  "key": "YOU|0|Wristbands. Hundreds of them, nailed up in rows.",
+  "speaker": "YOU",
+  "say": "Wristbands. Hundreds of them, nailed up in rows.",
+  "two_voices": true
+ },
+ {
+  "id": "WALL-02",
+  "key": "INES|0|Everyone who makes it here leaves theirs. It's how we stop being numbers.",
+  "speaker": "INES",
+  "say": "Everyone who makes it here leaves theirs. It's how we stop being numbers.",
+  "two_voices": false
+ },
+ {
+  "id": "WALL-03",
+  "key": "YOU|0|There's one here with my number on it.",
+  "speaker": "YOU",
+  "say": "There's one here with my number on it.",
+  "two_voices": true
+ },
+ {
+  "id": "WALL-04",
+  "key": "INES|0|That's not possible.",
+  "speaker": "INES",
+  "say": "That's not possible.",
+  "two_voices": false
+ },
+ {
+  "id": "WALL-05",
+  "key": "YOU|0|The plastic's gone yellow. It's been here for years.",
+  "speaker": "YOU",
+  "say": "The plastic's gone yellow. It's been here for years.",
+  "two_voices": true
+ },
+ {
+  "id": "WALL-06",
+  "key": "INES|0|Teo's going to want to see that.",
+  "speaker": "INES",
+  "say": "Teo's going to want to see that.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-01",
+  "key": "TEO|0|Sit. The fire doesn't ask questions.",
+  "speaker": "TEO",
+  "say": "Sit. The fire doesn't ask questions.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-02",
+  "key": "TEO|0|Meridian thinks it's a door. It isn't. It's a mouth. And it's always hungry.",
+  "speaker": "TEO",
+  "say": "Meridian thinks it's a door. It isn't. It's a mouth. And it's always hungry.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-03",
+  "key": "INES|0|And sometimes it spits us back out. Changed. Alive. It's a door, Teo. Doors go both ways.",
+  "speaker": "INES",
+  "say": "And sometimes it spits us back out. Changed. Alive. It's a door, Teo. Doors go both ways.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-04",
+  "key": "TEO|0|Everyone who wants to go home walks north into the Basin. Nobody walks back.",
+  "speaker": "TEO",
+  "say": "Everyone who wants to go home walks north into the Basin. Nobody walks back.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-05",
+  "key": "INES|0|Because nobody's tried it with a key.",
+  "speaker": "INES",
+  "say": "Because nobody's tried it with a key.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-06",
+  "key": "RHEA|1|{name}, listen to me. Meridian has a pickup at the heart of the Basin. That's what the towers were for. I can get you out. I just need you there.",
+  "speaker": "RHEA",
+  "say": "Sleeper, listen to me. Meridian has a pickup at the heart of the Basin. That's what the towers were for. I can get you out. I just need you there.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-07",
+  "key": "TEO|0|Your radio woman. Ask her what happens to the ones she picks up.",
+  "speaker": "TEO",
+  "say": "Your radio woman. Ask her what happens to the ones she picks up.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-09",
+  "key": "RHEA|1|I don't know. I never asked.",
+  "speaker": "RHEA",
+  "say": "I don't know. I never asked.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-10",
+  "key": "TEO|0|Leave your band on the wall. Stay. Be a person here instead of a number out there.",
+  "speaker": "TEO",
+  "say": "Leave your band on the wall. Stay. Be a person here instead of a number out there.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRETALK-11",
+  "key": "INES|0|Or keep it, walk north, and find out what the number's for.",
+  "speaker": "INES",
+  "say": "Or keep it, walk north, and find out what the number's for.",
+  "two_voices": false
+ },
+ {
+  "id": "LEFT-01",
+  "key": "YOU|0|{name}. Not ten thousand and one. Just {name}.",
+  "speaker": "YOU",
+  "say": "My name. Not ten thousand and one. Just my name.",
+  "two_voices": true
+ },
+ {
+  "id": "LEFT-02",
+  "key": "TEO|0|Then the fire's yours, whenever you want it.",
+  "speaker": "TEO",
+  "say": "Then the fire's yours, whenever you want it.",
+  "two_voices": false
+ },
+ {
+  "id": "LEFT-03",
+  "key": "INES|0|You're still going north.",
+  "speaker": "INES",
+  "say": "You're still going north.",
+  "two_voices": false
+ },
+ {
+  "id": "LEFT-04",
+  "key": "YOU|0|I'm still going north.",
+  "speaker": "YOU",
+  "say": "I'm still going north.",
+  "two_voices": true
+ },
+ {
+  "id": "KEPT-01",
+  "key": "YOU|0|I'm keeping it. If it's a key, I want to know what it opens.",
+  "speaker": "YOU",
+  "say": "I'm keeping it. If it's a key, I want to know what it opens.",
+  "two_voices": true
+ },
+ {
+  "id": "KEPT-02",
+  "key": "TEO|0|Everyone says that.",
+  "speaker": "TEO",
+  "say": "Everyone says that.",
+  "two_voices": false
+ },
+ {
+  "id": "KEPT-03",
+  "key": "INES|0|Not everyone gets to be right.",
+  "speaker": "INES",
+  "say": "Not everyone gets to be right.",
+  "two_voices": false
+ },
+ {
+  "id": "BASIN-01",
+  "key": "RHEA|1|The signal's so strong here I can hear my own heartbeat in it.",
+  "speaker": "RHEA",
+  "say": "The signal's so strong here I can hear my own heartbeat in it.",
+  "two_voices": false
+ },
+ {
+  "id": "BASIN-02",
+  "key": "YOU|0|Rhea, the rocks are floating.",
+  "speaker": "YOU",
+  "say": "Rhea, the rocks are floating.",
+  "two_voices": true
+ },
+ {
+  "id": "BASIN-03",
+  "key": "RHEA|1|Of course they are. Why wouldn't they be.",
+  "speaker": "RHEA",
+  "say": "Of course they are. Why wouldn't they be.",
+  "two_voices": false
+ },
+ {
+  "id": "SELF-01",
+  "key": "YOU|0|Someone's following me. It's me. A few seconds behind.",
+  "speaker": "YOU",
+  "say": "Someone's following me. It's me. A few seconds behind.",
+  "two_voices": true
+ },
+ {
+  "id": "SELF-02",
+  "key": "RHEA|1|Don't look at it too long.",
+  "speaker": "RHEA",
+  "say": "Don't look at it too long.",
+  "two_voices": false
+ },
+ {
+  "id": "STOP-01",
+  "key": "HOLLOW|0|The one walks north! Stop the one!",
+  "speaker": "HOLLOW",
+  "say": "The one walks north! Stop the one!",
+  "two_voices": false
+ },
+ {
+  "id": "LIGHT-01",
+  "key": "RHEA|1|{name}, there's a light ahead of you. White. My whole screen's just white.",
+  "speaker": "RHEA",
+  "say": "Sleeper, there's a light ahead of you. White. My whole screen's just white.",
+  "two_voices": false
+ },
+ {
+  "id": "LIGHT-02",
+  "key": "YOU|0|I'm walking into it.",
+  "speaker": "YOU",
+  "say": "I'm walking into it.",
+  "two_voices": true
+ },
+ {
+  "id": "LIGHT-03",
+  "key": "RHEA|1|I know. I think I've always known you would.",
+  "speaker": "RHEA",
+  "say": "I know. I think I've always known you would.",
+  "two_voices": false
+ },
+ {
+  "id": "GREETL-01",
+  "key": "CHOIR|0|{name}. You came with a name. You are the first who did.",
+  "speaker": "CHOIR",
+  "say": "You came with a name. You are the first who did.",
+  "two_voices": false
+ },
+ {
+  "id": "TRUTH-01",
+  "key": "CHOIR|0|Meridian opened the door ten thousand times. The ten thousand and first time, the door opened itself.",
+  "speaker": "CHOIR",
+  "say": "Meridian opened the door ten thousand times. The ten thousand and first time, the door opened itself.",
+  "two_voices": false
+ },
+ {
+  "id": "TRUTH-02",
+  "key": "YOU|0|Why?",
+  "speaker": "YOU",
+  "say": "Why?",
+  "two_voices": true
+ },
+ {
+  "id": "TRUTH-03",
+  "key": "CHOIR|0|Because you were already on this side.",
+  "speaker": "CHOIR",
+  "say": "Because you were already on this side.",
+  "two_voices": false
+ },
+ {
+  "id": "TRUTH-05",
+  "key": "CHOIR|0|The ones who didn't forget. Every one of us walked in here. Every one of us was you.",
+  "speaker": "CHOIR",
+  "say": "The ones who didn't forget. Every one of us walked in here. Every one of us was you.",
+  "two_voices": false
+ },
+ {
+  "id": "TRUTH-06",
+  "key": "YOU|0|Then what happens now?",
+  "speaker": "YOU",
+  "say": "Then what happens now?",
+  "two_voices": true
+ },
+ {
+  "id": "TRUTH-07",
+  "key": "CHOIR|0|Someone has to be waiting when you fall. Someone has to build the fire. Someone has to write it down.",
+  "speaker": "CHOIR",
+  "say": "Someone has to be waiting when you fall. Someone has to build the fire. Someone has to write it down.",
+  "two_voices": false
+ },
+ {
+  "id": "BUILD-01",
+  "key": "YOU|0|Stones. Kindling. Dry wood.",
+  "speaker": "YOU",
+  "say": "Stones. Kindling. Dry wood.",
+  "two_voices": true
+ },
+ {
+  "id": "BUILD-02",
+  "key": "YOU|0|Right next to where I woke up.",
+  "speaker": "YOU",
+  "say": "Right next to where I woke up.",
+  "two_voices": true
+ },
+ {
+  "id": "WRITTEN-01",
+  "key": "YOU|0|Ten thousand and one. Active. Flight, the fourteenth of March.",
+  "speaker": "YOU",
+  "say": "Ten thousand and one. Active. Flight, the fourteenth of March.",
+  "two_voices": true
+ },
+ {
+  "id": "WRITTEN-02",
+  "key": "YOU|0|It was my handwriting. The whole time.",
+  "speaker": "YOU",
+  "say": "It was my handwriting. The whole time.",
+  "two_voices": true
+ },
+ {
+  "id": "WRITTEN-03",
+  "key": "RHEA|1|{name}? I can't see you anymore. Everything's gone white.",
+  "speaker": "RHEA",
+  "say": "Sleeper? I can't see you anymore. Everything's gone white.",
+  "two_voices": false
+ },
+ {
+  "id": "WRITTEN-04",
+  "key": "YOU|0|Rhea. You told me nobody was going anywhere tonight.",
+  "speaker": "YOU",
+  "say": "Rhea. You told me nobody was going anywhere tonight.",
+  "two_voices": true
+ },
+ {
+  "id": "WRITTEN-05",
+  "key": "RHEA|1|When did I say that?",
+  "speaker": "RHEA",
+  "say": "When did I say that?",
+  "two_voices": false
+ },
+ {
+  "id": "WRITTEN-06",
+  "key": "YOU|0|You will.",
+  "speaker": "YOU",
+  "say": "You will.",
+  "two_voices": true
+ },
+ {
+  "id": "WRITTEN-07",
+  "key": "RHEA|1|Then come back to me.",
+  "speaker": "RHEA",
+  "say": "Then come back to me.",
+  "two_voices": false
+ },
+ {
+  "id": "WRITTEN-08",
+  "key": "YOU|0|Every time.",
+  "speaker": "YOU",
+  "say": "Every time.",
+  "two_voices": true
+ },
+ {
+  "id": "AGAINK-01",
+  "key": "CHOIR|0|Ten thousand and one. Again.",
+  "speaker": "CHOIR",
+  "say": "Ten thousand and one. Again.",
+  "two_voices": false
+ },
+ {
+  "id": "AGAINL-01",
+  "key": "CHOIR|0|{name}. Again.",
+  "speaker": "CHOIR",
+  "say": "You. Again.",
+  "two_voices": false
+ },
+ {
+  "id": "PLANE-01",
+  "key": "RHEA|1|Hey, sleeper. It's Rhea again. Whatever you're dreaming about, you can let it go.",
+  "speaker": "RHEA",
+  "say": "Hey, sleeper. It's Rhea again. Whatever you're dreaming about, you can let it go.",
+  "two_voices": false
+ },
+ {
+  "id": "PLANE-02",
+  "key": "RHEA|1|I've got you. Nobody's going anywhere tonight.",
+  "speaker": "RHEA",
+  "say": "I've got you. Nobody's going anywhere tonight.",
+  "two_voices": false
+ },
+ {
+  "id": "WHISPER-01",
+  "key": "YOU|0|I know.",
+  "speaker": "YOU",
+  "say": "I know.",
+  "two_voices": true
+ },
+ {
+  "id": "WHISPER-02",
+  "key": "RHEA|1|Sleeper?",
+  "speaker": "RHEA",
+  "say": "Sleeper?",
+  "two_voices": false
+ },
+ {
+  "id": "NIGHT0-01",
+  "key": "RHEA|1|{name}, the rift went wild when the Warden fell. It's spitting Hollow out of the sky, and I can't reach you before dark.",
+  "speaker": "RHEA",
+  "say": "Sleeper, the rift went wild when the Warden fell. It's spitting Hollow out of the sky, and I can't reach you before dark.",
+  "two_voices": false
+ },
+ {
+  "id": "NIGHT0-02",
+  "key": "RHEA|1|The fire pit by the ambulance. Somebody built it for you. Light it. Stay in the light.",
+  "speaker": "RHEA",
+  "say": "The fire pit by the ambulance. Somebody built it for you. Light it. Stay in the light.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-01",
+  "key": "RHEA|1|First night out here. Keep the fire burning. Whatever comes out of the dark, it hates the light.",
+  "speaker": "RHEA",
+  "say": "First night out here. Keep the fire burning. Whatever comes out of the dark, it hates the light.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-02",
+  "key": "RHEA|1|I found tracks by the river. Bare feet. Dozens of them. Heading your way.",
+  "speaker": "RHEA",
+  "say": "I found tracks by the river. Bare feet. Dozens of them. Heading your way.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-03",
+  "key": "RHEA|1|I keep hearing my name in the static. In my own voice. That's normal, right?",
+  "speaker": "RHEA",
+  "say": "I keep hearing my name in the static. In my own voice. That's normal, right?",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-04",
+  "key": "YOU|0|Totally normal.",
+  "speaker": "YOU",
+  "say": "Totally normal.",
+  "two_voices": true
+ },
+ {
+  "id": "OPENER-05",
+  "key": "RHEA|1|You're a terrible liar.",
+  "speaker": "RHEA",
+  "say": "You're a terrible liar.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-06",
+  "key": "RHEA|1|The second moon looks bigger tonight. Tell me I'm wrong.",
+  "speaker": "RHEA",
+  "say": "The second moon looks bigger tonight. Tell me I'm wrong.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-07",
+  "key": "YOU|0|You're wrong.",
+  "speaker": "YOU",
+  "say": "You're wrong.",
+  "two_voices": true
+ },
+ {
+  "id": "OPENER-08",
+  "key": "RHEA|1|Liar.",
+  "speaker": "RHEA",
+  "say": "Liar.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-09",
+  "key": "RHEA|1|Something big is walking toward your fire. Something that used to be the Warden.",
+  "speaker": "RHEA",
+  "say": "Something big is walking toward your fire. Something that used to be the Warden.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-10",
+  "key": "RHEA|1|I tried to walk to you today. Six hours. I ended up right where I started.",
+  "speaker": "RHEA",
+  "say": "I tried to walk to you today. Six hours. I ended up right where I started.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-11",
+  "key": "RHEA|1|If I stop answering, keep the fire lit anyway. Promise me.",
+  "speaker": "RHEA",
+  "say": "If I stop answering, keep the fire lit anyway. Promise me.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-12",
+  "key": "YOU|0|Promise.",
+  "speaker": "YOU",
+  "say": "Promise.",
+  "two_voices": true
+ },
+ {
+  "id": "OPENER-13",
+  "key": "RHEA|1|The Hollow are learning. They watched you fight last night.",
+  "speaker": "RHEA",
+  "say": "The Hollow are learning. They watched you fight last night.",
+  "two_voices": false
+ },
+ {
+  "id": "OPENER-14",
+  "key": "CHOIR|0|Ten thousand and one. Stop counting the nights. We stopped long ago.",
+  "speaker": "CHOIR",
+  "say": "Ten thousand and one. Stop counting the nights. We stopped long ago.",
+  "two_voices": false
+ },
+ {
+  "id": "LOOP-01",
+  "key": "YOU|0|Rhea. I died. I felt it.",
+  "speaker": "YOU",
+  "say": "Rhea. I died. I felt it.",
+  "two_voices": true
+ },
+ {
+  "id": "LOOP-02",
+  "key": "RHEA|1|What? You're right here, {name}. You never left the fire.",
+  "speaker": "RHEA",
+  "say": "What? You're right here, sleeper. You never left the fire.",
+  "two_voices": false
+ },
+ {
+  "id": "LOOP-03",
+  "key": "YOU|0|Then why do I remember the dark?",
+  "speaker": "YOU",
+  "say": "Then why do I remember the dark?",
+  "two_voices": true
+ },
+ {
+  "id": "LOOP-04",
+  "key": "YOU|0|Same moons. Same smoke. Same fire.",
+  "speaker": "YOU",
+  "say": "Same moons. Same smoke. Same fire.",
+  "two_voices": true
+ },
+ {
+  "id": "LOOP-05",
+  "key": "RHEA|1|{name}, you're scaring me.",
+  "speaker": "RHEA",
+  "say": "Sleeper, you're scaring me.",
+  "two_voices": false
+ },
+ {
+  "id": "LOOP-06",
+  "key": "YOU|0|Good. Stay scared. It keeps you alive.",
+  "speaker": "YOU",
+  "say": "Good. Stay scared. It keeps you alive.",
+  "two_voices": true
+ },
+ {
+  "id": "LOOP-07",
+  "key": "RHEA|1|Sleeper? Tap the radio if you can hear me. Anything.",
+  "speaker": "RHEA",
+  "say": "Sleeper? Tap the radio if you can hear me. Anything.",
+  "two_voices": false
+ },
+ {
+  "id": "LOOP-08",
+  "key": "YOU|0|I know. I always know what you're going to say.",
+  "speaker": "YOU",
+  "say": "I know. I always know what you're going to say.",
+  "two_voices": true
+ },
+ {
+  "id": "LOOP-09",
+  "key": "RHEA|1|Then tell me how tonight ends.",
+  "speaker": "RHEA",
+  "say": "Then tell me how tonight ends.",
+  "two_voices": false
+ },
+ {
+  "id": "LOOP-10",
+  "key": "YOU|0|Differently.",
+  "speaker": "YOU",
+  "say": "Differently.",
+  "two_voices": true
+ },
+ {
+  "id": "LOOP-11",
+  "key": "YOU|0|Again. The shards remember. So do I.",
+  "speaker": "YOU",
+  "say": "Again. The shards remember. So do I.",
+  "two_voices": true
+ },
+ {
+  "id": "DAWN-01",
+  "key": "RHEA|1|Sun's up. Or whatever that is. You made it, {name}.",
+  "speaker": "RHEA",
+  "say": "Sun's up. Or whatever that is. You made it, sleeper.",
+  "two_voices": false
+ },
+ {
+  "id": "DAWN-02",
+  "key": "RHEA|1|Dawn. I could hear you fighting from here. Rest.",
+  "speaker": "RHEA",
+  "say": "Dawn. I could hear you fighting from here. Rest.",
+  "two_voices": false
+ },
+ {
+  "id": "DAWN-03",
+  "key": "YOU|0|Still here.",
+  "speaker": "YOU",
+  "say": "Still here.",
+  "two_voices": true
+ },
+ {
+  "id": "DAWN-04",
+  "key": "RHEA|1|Still here.",
+  "speaker": "RHEA",
+  "say": "Still here.",
+  "two_voices": false
+ },
+ {
+  "id": "DAWN-05",
+  "key": "RHEA|1|That's another night. I'm marking them on my arm.",
+  "speaker": "RHEA",
+  "say": "That's another night. I'm marking them on my arm.",
+  "two_voices": false
+ },
+ {
+  "id": "FIRELOW-01",
+  "key": "RHEA|1|The fire's dying! Get back to it!",
+  "speaker": "RHEA",
+  "say": "The fire's dying! Get back to it!",
+  "two_voices": false
+ },
+ {
+  "id": "CAIRN-01",
+  "key": "YOU|0|That cairn wasn't here last time.",
+  "speaker": "YOU",
+  "say": "That cairn wasn't here last time.",
+  "two_voices": true
+ },
+ {
+  "id": "CAIRN-02",
+  "key": "RHEA|1|Last time?",
+  "speaker": "RHEA",
+  "say": "Last time?",
+  "two_voices": false
+ },
+ {
+  "id": "CAIRN-03",
+  "key": "YOU|0|Never mind.",
+  "speaker": "YOU",
+  "say": "Never mind.",
+  "two_voices": true
+ },
+ {
+  "id": "TREE-01",
+  "key": "YOU|0|That tree was standing yesterday. Or whenever yesterday was.",
+  "speaker": "YOU",
+  "say": "That tree was standing yesterday. Or whenever yesterday was.",
+  "two_voices": true
+ },
+ {
+  "id": "MAST-01",
+  "key": "RHEA|1|{name}, the mast light's out. I can't find you without it.",
+  "speaker": "RHEA",
+  "say": "Sleeper, the mast light's out. I can't find you without it.",
+  "two_voices": false
+ },
+ {
+  "id": "MAST-02",
+  "key": "YOU|0|Then I'll find you.",
+  "speaker": "YOU",
+  "say": "Then I'll find you.",
+  "two_voices": true
+ },
+ {
+  "id": "BANDS-01",
+  "key": "YOU|0|Wristbands on the stones by the fire. Mine. More of them every time.",
+  "speaker": "YOU",
+  "say": "Wristbands on the stones by the fire. Mine. More of them every time.",
+  "two_voices": true
+ },
+ {
+  "id": "MSHAPE-01",
+  "key": "YOU|0|Someone at the edge of the light again.",
+  "speaker": "YOU",
+  "say": "Someone at the edge of the light again.",
+  "two_voices": true
+ },
+ {
+  "id": "MSHAPE-02",
+  "key": "RHEA|1|Same one?",
+  "speaker": "RHEA",
+  "say": "Same one?",
+  "two_voices": false
+ },
+ {
+  "id": "MSHAPE-03",
+  "key": "YOU|0|I think it's always the same one.",
+  "speaker": "YOU",
+  "say": "I think it's always the same one.",
+  "two_voices": true
+ },
+ {
+  "id": "MVOICE-01",
+  "key": "RHEA|0|Sleeper? Over here.",
+  "speaker": "RHEA",
+  "say": "Sleeper? Over here.",
+  "two_voices": false
+ },
+ {
+  "id": "MVOICE-02",
+  "key": "RHEA|1|{name}, that wasn't me. I didn't say anything. I swear I didn't say anything.",
+  "speaker": "RHEA",
+  "say": "Sleeper, that wasn't me. I didn't say anything. I swear I didn't say anything.",
+  "two_voices": false
+ },
+ {
+  "id": "PAGE-01",
+  "key": "YOU|0|There's a page by the fire. The registry. My line.",
+  "speaker": "YOU",
+  "say": "There's a page by the fire. The registry. My line.",
+  "two_voices": true
+ },
+ {
+  "id": "PAGE-02",
+  "key": "RHEA|1|Is the ink",
+  "speaker": "RHEA",
+  "say": "Is the ink",
+  "two_voices": false
+ },
+ {
+  "id": "PAGE-03",
+  "key": "YOU|0|Still wet.",
+  "speaker": "YOU",
+  "say": "Still wet.",
+  "two_voices": true
+ },
+ {
+  "id": "STANDOFF-01",
+  "key": "RHEA|1|They've stopped at the edge of the light. Why have they stopped?",
+  "speaker": "RHEA",
+  "say": "They've stopped at the edge of the light. Why have they stopped?",
+  "two_voices": false
+ },
+ {
+  "id": "STANDOFF-02",
+  "key": "YOU|0|They're waiting to see if I remember.",
+  "speaker": "YOU",
+  "say": "They're waiting to see if I remember.",
+  "two_voices": true
+ },
+ {
+  "id": "TEAR-01",
+  "key": "CHOIR|0|Again.",
+  "speaker": "CHOIR",
+  "say": "Again.",
+  "two_voices": false
+ },
+ {
+  "id": "UNDERSTAND-01",
+  "key": "YOU|0|I understand it now. It isn't punishing me. It's waiting for me to build the fire.",
+  "speaker": "YOU",
+  "say": "I understand it now. It isn't punishing me. It's waiting for me to build the fire.",
+  "two_voices": true
+ },
+ {
+  "id": "UNDERSTAND-02",
+  "key": "RHEA|1|Then build it. I'll be on the radio. I'm always on the radio.",
+  "speaker": "RHEA",
+  "say": "Then build it. I'll be on the radio. I'm always on the radio.",
+  "two_voices": false
+ },
+ {
+  "id": "FIGHT-01",
+  "key": "WARDEN|0|I was the first. I will be the last thing you see. Again.",
+  "speaker": "WARDEN",
+  "say": "I was the first. I will be the last thing you see. Again.",
+  "two_voices": false
+ },
+ {
+  "id": "FIGHT-02",
+  "key": "RHEA|1|{name}! Stay down, breathe. I'm talking you back up.",
+  "speaker": "RHEA",
+  "say": "Sleeper! Stay down, breathe. I'm talking you back up.",
+  "two_voices": false
+ },
+ {
+  "id": "FIGHT-03",
+  "key": "WARDEN|0|Patient One. Discharged. Again.",
+  "speaker": "WARDEN",
+  "say": "Patient One. Discharged. Again.",
+  "two_voices": false
+ },
+ {
+  "id": "FIGHT-04",
+  "key": "RHEA|1|Here they come. Stay near the fire!",
+  "speaker": "RHEA",
+  "say": "Here they come. Stay near the fire!",
+  "two_voices": false
+ },
+ {
+  "id": "FIGHT-05",
+  "key": "RHEA|1|Rift's opening. Hold the light, {name}!",
+  "speaker": "RHEA",
+  "say": "Rift's opening. Hold the light, sleeper!",
+  "two_voices": false
+ },
+ {
+  "id": "FIGHT-06",
+  "key": "RHEA|1|I can hear them from here. Fire. Now.",
+  "speaker": "RHEA",
+  "say": "I can hear them from here. Fire. Now.",
+  "two_voices": false
+ },
+ {
+  "id": "DIR-01",
+  "key": "YOU|0|They came from the wreck last time. They'll come from the wreck again.",
+  "speaker": "YOU",
+  "say": "They came from the wreck last time. They'll come from the wreck again.",
+  "two_voices": true
+ },
+ {
+  "id": "DIR-02",
+  "key": "YOU|0|They came from the Blackwood last time. They'll come from the Blackwood again.",
+  "speaker": "YOU",
+  "say": "They came from the Blackwood last time. They'll come from the Blackwood again.",
+  "two_voices": true
+ },
+ {
+  "id": "DIR-03",
+  "key": "YOU|0|They came from the mast last time. They'll come from the mast again.",
+  "speaker": "YOU",
+  "say": "They came from the mast last time. They'll come from the mast again.",
+  "two_voices": true
+ },
+ {
+  "id": "DIR-04",
+  "key": "YOU|0|They came from the field station last time. They'll come from the field station again.",
+  "speaker": "YOU",
+  "say": "They came from the field station last time. They'll come from the field station again.",
+  "two_voices": true
+ },
+ {
+  "id": "DIR-05",
+  "key": "YOU|0|They came from the stone circle last time. They'll come from the stone circle again.",
+  "speaker": "YOU",
+  "say": "They came from the stone circle last time. They'll come from the stone circle again.",
+  "two_voices": true
+ },
+ {
+  "id": "ECHO0-01",
+  "key": "RHEA|1|{name}? Your signal just doubled. Like there are two of you standing there.",
+  "speaker": "RHEA",
+  "say": "Sleeper? Your signal just doubled. Like there are two of you standing there.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-01",
+  "key": "ECHO|0|Patient seven. Day one. They said it was a clinical trial. They said I'd be home by spring.",
+  "speaker": "ECHO",
+  "say": "Patient seven. Day one. They said it was a clinical trial. They said I'd be home by spring.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-02",
+  "key": "ECHO|0|Four twelve. The shards sing when you're close to the towers. Don't sing back.",
+  "speaker": "ECHO",
+  "say": "Four twelve. The shards sing when you're close to the towers. Don't sing back.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-03",
+  "key": "ECHO|0|Eleven twenty three. I forgot my daughter's name today. I wrote it on my arm. Now I can't read my own handwriting.",
+  "speaker": "ECHO",
+  "say": "Eleven twenty three. I forgot my daughter's name today. I wrote it on my arm. Now I can't read my own handwriting.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-04",
+  "key": "ECHO|0|Twenty thirty one. The masks aren't for war. They're so we don't have to see who we used to be.",
+  "speaker": "ECHO",
+  "say": "Twenty thirty one. The masks aren't for war. They're so we don't have to see who we used to be.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-05",
+  "key": "ECHO|0|Thirty three forty four. Meridian sends one of us through every few days. Like feeding something.",
+  "speaker": "ECHO",
+  "say": "Thirty three forty four. Meridian sends one of us through every few days. Like feeding something.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-06",
+  "key": "ECHO|0|Forty three eighty two. They'll list me as missing. I'm not missing. The Warden was kind once. He taught me how to make fire.",
+  "speaker": "ECHO",
+  "say": "Forty three eighty two. They'll list me as missing. I'm not missing. The Warden was kind once. He taught me how to make fire.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-07",
+  "key": "ECHO|0|Fifty sixty three. There's a voice on the radio every time one of us falls. Warm. Funny. Calls herself Rhea.",
+  "speaker": "ECHO",
+  "say": "Fifty sixty three. There's a voice on the radio every time one of us falls. Warm. Funny. Calls herself Rhea.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-08",
+  "key": "ECHO|0|Sixty seventy one. Fall. Forget. Belong. It isn't a prayer. It's a set of instructions.",
+  "speaker": "ECHO",
+  "say": "Sixty seventy one. Fall. Forget. Belong. It isn't a prayer. It's a set of instructions.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-09",
+  "key": "ECHO|0|Seventy two ninety one. Transferred, they'll say. The second moon is closer every night. I measured it with my thumb.",
+  "speaker": "ECHO",
+  "say": "Seventy two ninety one. Transferred, they'll say. The second moon is closer every night. I measured it with my thumb.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-10",
+  "key": "ECHO|0|Ninety eight forty three. If you're the last one, listen. The door doesn't lead home. Home is what it eats.",
+  "speaker": "ECHO",
+  "say": "Ninety eight forty three. If you're the last one, listen. The door doesn't lead home. Home is what it eats.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-11",
+  "key": "ECHO|0|Ten thousand. There was a fire pit by the wreck when I landed. Already built. Like somebody knew. I kept it lit. Whoever you are, keep it lit.",
+  "speaker": "ECHO",
+  "say": "Ten thousand. There was a fire pit by the wreck when I landed. Already built. Like somebody knew. I kept it lit. Whoever you are, keep it lit.",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-12",
+  "key": "YOU|0|Ten thousand and one. {name}. If you're hearing this, it's already happened. I've done this before. Many times.",
+  "speaker": "YOU",
+  "say": "Ten thousand and one. If you're hearing this, it's already happened. I've done this before. Many times.",
+  "two_voices": true
+ },
+ {
+  "id": "ECHO-13",
+  "key": "YOU|0|I built the fire. I carried the case to it. I wrote us into the book, so you'd know you were expected.",
+  "speaker": "YOU",
+  "say": "I built the fire. I carried the case to it. I wrote us into the book, so you'd know you were expected.",
+  "two_voices": true
+ },
+ {
+  "id": "ECHO-14",
+  "key": "YOU|0|Stop counting the nights. Start counting the people. Find Rhea.",
+  "speaker": "YOU",
+  "say": "Stop counting the nights. Start counting the people. Find Rhea.",
+  "two_voices": true
+ },
+ {
+  "id": "ECHO-15",
+  "key": "RHEA|1|{name}? Who were you talking to?",
+  "speaker": "RHEA",
+  "say": "Sleeper? Who were you talking to?",
+  "two_voices": false
+ },
+ {
+  "id": "ECHO-16",
+  "key": "YOU|0|Me.",
+  "speaker": "YOU",
+  "say": "Me.",
+  "two_voices": true
+ },
+ {
+  "id": "NAV-01",
+  "key": "RHEA|1|The wreck's ahead of you. Follow the smoke.",
+  "speaker": "RHEA",
+  "say": "The wreck's ahead of you. Follow the smoke.",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-02",
+  "key": "RHEA|1|Head back to the ambulance. Keep the dead tree behind you.",
+  "speaker": "RHEA",
+  "say": "Head back to the ambulance. Keep the dead tree behind you.",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-03",
+  "key": "RHEA|1|The fire pit's by the ambulance. Look for the stones.",
+  "speaker": "RHEA",
+  "say": "The fire pit's by the ambulance. Look for the stones.",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-04",
+  "key": "RHEA|1|The case. It's by the stones, where the fire is.",
+  "speaker": "RHEA",
+  "say": "The case. It's by the stones, where the fire is.",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-05",
+  "key": "RHEA|1|Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north.",
+  "speaker": "RHEA",
+  "say": "Listen for the towers. One's west, past that blue scar. One's east, out by the dead tree. One's north.",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-06",
+  "key": "RHEA|1|Follow the beams north. To the stones.",
+  "speaker": "RHEA",
+  "say": "Follow the beams north. To the stones.",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-07",
+  "key": "RHEA|1|East. Where the trees go black.",
+  "speaker": "RHEA",
+  "say": "East. Where the trees go black.",
+  "two_voices": false
+ },
+ {
+  "id": "NAV-08",
+  "key": "RHEA|1|North. Toward the white light.",
+  "speaker": "RHEA",
+  "say": "North. Toward the white light.",
+  "two_voices": false
+ },
+ {
+  "id": "RESPAWN-01",
+  "key": "RHEA|1|{name}! Get up. Don't you dare quit on me.",
+  "speaker": "RHEA",
+  "say": "Sleeper! Get up. Don't you dare quit on me.",
+  "two_voices": false
+ },
+ {
+  "id": "RESPAWN-02",
+  "key": "RHEA|1|Breathe. In. Out. You're not done, and I'm not done with you.",
+  "speaker": "RHEA",
+  "say": "Breathe. In. Out. You're not done, and I'm not done with you.",
+  "two_voices": false
+ },
+ {
+  "id": "RESPAWN-03",
+  "key": "RHEA|1|Up! You can bleed later. That's a medical opinion.",
+  "speaker": "RHEA",
+  "say": "Up! You can bleed later. That's a medical opinion.",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-01",
+  "key": "HOLLOW|0|Visiting hours are over.",
+  "speaker": "HOLLOW",
+  "say": "Visiting hours are over.",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-02",
+  "key": "HOLLOW|0|Is it Tuesday? It feels like Tuesday.",
+  "speaker": "HOLLOW",
+  "say": "Is it Tuesday? It feels like Tuesday.",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-03",
+  "key": "HOLLOW|0|Take your medicine.",
+  "speaker": "HOLLOW",
+  "say": "Take your medicine.",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-05",
+  "key": "HOLLOW|0|I had a name. I had a name!",
+  "speaker": "HOLLOW",
+  "say": "I had a name. I had a name!",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-06",
+  "key": "HOLLOW|0|Don't look at the moons.",
+  "speaker": "HOLLOW",
+  "say": "Don't look at the moons.",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-07",
+  "key": "HOLLOW|0|Count it! Ten thousand!",
+  "speaker": "HOLLOW",
+  "say": "Count it! Ten thousand!",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-08",
+  "key": "HOLLOW|0|Lights out. Lights out!",
+  "speaker": "HOLLOW",
+  "say": "Lights out. Lights out!",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-09",
+  "key": "HOLLOW|0|Nurse? Nurse!",
+  "speaker": "HOLLOW",
+  "say": "Nurse? Nurse!",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-10",
+  "key": "HOLLOW|0|Room four. Room four.",
+  "speaker": "HOLLOW",
+  "say": "Room four. Room four.",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-11",
+  "key": "HOLLOW|0|Mom?",
+  "speaker": "HOLLOW",
+  "say": "Mom?",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-12",
+  "key": "HOLLOW|0|Don't close it!",
+  "speaker": "HOLLOW",
+  "say": "Don't close it!",
+  "two_voices": false
+ },
+ {
+  "id": "BARK-13",
+  "key": "HOLLOW|0|And one. And one.",
+  "speaker": "HOLLOW",
+  "say": "And one. And one.",
+  "two_voices": false
+ }
+]
