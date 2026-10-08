@@ -44,6 +44,7 @@ import { evidenceInteracts, setDesignation } from "./history";
 import { survival } from "./survival";
 import { restock, reward } from "./economy";
 import { tradingPost } from "./trade";
+import { remembers } from "./remembers";
 const SHAPE_X = SHAPE_POS.x;
 const SHAPE_Z = SHAPE_POS.z;
 
@@ -74,6 +75,8 @@ export const signs = new Signs(world.scene, world.ambulance);
 survival.build(signs);
 tradingPost.build(world);
 survival.onHome = () => void firstNightEnd();
+survival.onNeedSupplies = () => tradingPost.reveal();
+survival.onLoop = (run) => remembers.onLoop(run);
 let signStep = 0;
 let seenFor = 0;
 let fireFoundSaid = false;
@@ -456,6 +459,13 @@ async function firstNightEnd() {
   sfx.staticBurst(1.2, 0.08);
   await card("END OF CHAPTER I", "THE FALL", "", 4200);
   await fade(1, 1400);
+  // on black, one line, held: the question Chapter Two begins with
+  const q = $("question");
+  q.textContent = S.CHAPTER_ONE_QUESTION;
+  q.classList.add("show");
+  await wait(4600);
+  q.classList.remove("show");
+  await wait(900);
   survival.end();
   reward("firstNight");
   restock(); // whoever keeps the table came by in the night
@@ -923,6 +933,26 @@ export function storyOnDeath(e: Enemy) {
 export async function storyPlayerDown() {
   state.dead = true;
   voice.interrupt();
+  survival.onPlayerDeath(); // what you carried stays where you fell (half of it)
+  if (story.stage === "night1") {
+    // the night doesn't end. It begins again.
+    await fade(1, 1600);
+    enemies.clear();
+    player.pos.copy(CAMP).add(new THREE.Vector3(-1.6, 0, -2.6));
+    player.pos.y = bounds.groundAt(player.pos.x, player.pos.z);
+    player.yaw = Math.random() * 6.28;
+    player.hp = player.maxHp;
+    player.medkits = Math.max(player.medkits, 1);
+    player.invuln = 3;
+    survival.loopNight();
+    state.dead = false;
+    $("blur").classList.remove("waking");
+    void $("blur").offsetWidth;
+    $("blur").classList.add("waking");
+    await wait(900);
+    void fade(0, 2600);
+    return;
+  }
   $("dead").classList.add("show");
   await wait(1200);
   say(S.RESPAWN[respawns++ % S.RESPAWN.length]);
@@ -934,13 +964,7 @@ export async function storyPlayerDown() {
   player.medkits = Math.max(player.medkits, 1);
   player.invuln = 2;
   if (story.stage === "first") spawnFirstHollow(false);
-  if (story.stage === "night1") {
-    survival.onRespawn();
-    if (!world.campfire.lit) {
-      world.campfire.lit = true; // you come to beside embers someone blew back up
-      world.campfire.hp = world.campfire.maxHp * 0.3;
-    }
-  }
+
   if (story.stage === "basin" && late.fightDone && checkpoint.z >= 240) late.fightDone = false; // the fight comes again
   if (story.stage === "ambush") startAmbush();
   if (story.stage === "pylons" && activePylon >= 0) {
@@ -1011,9 +1035,10 @@ export function storyUpdate(dt: number) {
   }
 
   const echo = echoInteract();
-  const sv = [...survival.interacts(story.stage), tradingPost.interact()];
+  const sv = [...survival.interacts(story.stage), ...tradingPost.interacts()];
   runInteractions(echo ? [...interacts, ...sv, ...evidenceInteracts(), echo] : [...interacts, ...sv, ...evidenceInteracts()]);
   survival.update(dt, story.stage);
+  if (story.stage === "night1") remembers.update(dt);
   tradingPost.update(dt);
 
   if (state.exited)
@@ -1134,6 +1159,8 @@ export function storySkip(to: Stage) {
     world.setCampfire(true);
     player.pos.set(CAMP.x - 1, 0, CAMP.z - 2);
   }
+  if (!["intro", "wake", "outside", "signs", "fire", "records", "first", "night1"].includes(to)) tradingPost.reveal(true);
+  remembers.restore();
   if (to === "night1") {
     world.setCampfire(true);
     player.pos.copy(CAMP).add(new THREE.Vector3(-2, 0, -2.5));

@@ -9,10 +9,13 @@
 
 import * as THREE from "three";
 import { $, cine, enemies, type Interact, input, LOW, persist, player, say, sfx, state, voice } from "./ctx";
-import { CATALOG, inStock, purchase, quote } from "./economy";
+import { CATALOG, inStock, priceAt, purchase, quote, STATIONS, type StationId } from "./economy";
+import { buildChanged } from "./models";
+import { Person } from "./people";
+import { canLearn, KNOW, knows, learn } from "./progress";
 import { save } from "./save";
 import * as S from "./script";
-import { heightAt, TRADE, type World } from "./world";
+import { heightAt, STATION, TRADE, type World } from "./world";
 
 const mat = (color: number, rough = 0.9, metal = 0, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, ...extra });
@@ -180,28 +183,113 @@ export function buildTradingPost(world: World) {
   stake.position.set(0, -0.6, -0.04);
   board.add(stake);
   add(board, -1.9, 1.4, -0.4, 0.5);
+  // the trader: a woman in a blanket on a crate behind her table, who has
+  // been out here long enough not to get up for anybody
+  const seat = add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.42, 0.4), wood), 0, 0.21, 0.78);
+  void seat;
+  const trader = buildChanged({ cloth: 0x5a4a3a, skin: 0x8a6a52, pants: 0x2a2520, hair: 0x8a857c, wrap: 0x4a3f36, sex: "f" });
+  trader.root.position.set(0, 0, 0.7);
+  trader.root.rotation.y = Math.PI; // facing the path, across the table
+  if (trader instanceof Person) trader.setBase("sit", 1, 0);
+  g.add(trader.root);
   g.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = !LOW), (m.receiveShadow = true))));
   world.scene.add(g);
-  world.colliders.push({ x: P.x, z: P.z, r: 1.15 });
+  g.visible = false; // not there until you need it (see reveal)
   const crates = new THREE.Vector3(1.48, 0, 0.1).applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.35).add(P);
-  world.colliders.push({ x: crates.x, z: crates.z, r: 0.45 });
-  return { glass, light };
+  const colliders = [
+    { x: P.x, z: P.z, r: 1.15 },
+    { x: crates.x, z: crates.z, r: 0.45 },
+  ];
+  return { group: g, glass, light, colliders, trader };
 }
 
-// ------------------------------------------------------------------ the post in play
+// ------------------------------------------------------------------ Meridian surplus (the Watch)
+/** Three Meridian cases stacked under a tarp at the Watch, prices chalked on
+ *  the lids and a tin wired to the top one. Nobody's there. It's honoured. */
+export const SURPLUS = new THREE.Vector3(STATION.x - 1, 0, STATION.z - 12);
+SURPLUS.y = heightAt(SURPLUS.x, SURPLUS.z);
+function buildSurplus(world: World) {
+  const g = new THREE.Group();
+  g.position.copy(SURPLUS);
+  g.rotation.y = -0.4;
+  for (const [x, y, z, ry] of [[0, 0.35, 0, 0], [0.05, 1.05, 0.02, 0.06], [1.05, 0.35, 0.05, -0.1]] as const) {
+    const c = new THREE.Mesh(new THREE.BoxGeometry(1, 0.7, 0.8), mat(0x4a5258, 0.6, 0.2));
+    c.position.set(x, y, z);
+    c.rotation.y = ry;
+    g.add(c);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(1.01, 0.04, 0.81), mat(0x9c3a24, 0.8));
+    band.position.set(x, y + 0.25, z);
+    band.rotation.y = ry;
+    g.add(band);
+  }
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.62), new THREE.MeshStandardMaterial({ map: surplusBoard(), roughness: 1 }));
+  board.position.set(0.05, 1.12, 0.43);
+  g.add(board);
+  const tin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 12), mat(0x8a7a5a, 0.5, 0.6));
+  tin.position.set(0.4, 1.46, 0.1);
+  g.add(tin);
+  const tarp = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.6, 4, 3), mat(0x3d4a44, 1, 0, { side: THREE.DoubleSide }));
+  tarp.rotation.x = -Math.PI / 2 + 0.5;
+  tarp.position.set(0.5, 1.9, -0.2);
+  g.add(tarp);
+  g.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = !LOW), (m.receiveShadow = true))));
+  world.scene.add(g);
+  world.colliders.push({ x: SURPLUS.x, z: SURPLUS.z, r: 0.9 });
+}
+function surplusBoard() {
+  const c = document.createElement("canvas");
+  c.width = 384;
+  c.height = 264;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#3a4046";
+  g.fillRect(0, 0, 384, 264);
+  g.fillStyle = "rgba(236,230,214,0.9)";
+  g.font = '600 30px "Barlow Condensed", sans-serif';
+  g.fillText("SURPLUS · PAY THE TIN", 18, 40);
+  g.font = '500 26px "Barlow Condensed", sans-serif';
+  STATIONS.watch.items.forEach((id, i) => {
+    const it = CATALOG.find((x) => x.id === id)!;
+    g.fillText(it.name.toUpperCase(), 22, 84 + i * 36);
+    g.textAlign = "right";
+    g.fillText(String(priceAt(it, "watch")), 360, 84 + i * 36);
+    g.textAlign = "left";
+  });
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// ------------------------------------------------------------------ trading, in play
+const STATION_TEXT: Record<StationId, { kick: string; title: string; sub: string }> = {
+  post: { kick: "The trading post", title: "Take what you need", sub: "Pay for what you touch. Prices in shards, chalked on the board." },
+  watch: { kick: "The Watch", title: "Meridian surplus", sub: "Nobody here. Prices on the lids; a tin wired to the top case." },
+};
+
 class TradingPost {
   open = false;
+  station: StationId = "post";
   private built: ReturnType<typeof buildTradingPost> | null = null;
   private pending = "";
   private pendingT = 0;
   private hissT = 2;
+  private talkT = 0;
+  private buys = 0;
   /** Where to stand: in front of the table, on the path side. */
   private spot = new THREE.Vector3();
+  private surplusSpot = new THREE.Vector3();
+
+  /** Out on the path: only once you've noticed you need it. */
+  revealed = false;
+  private world: World | null = null;
 
   build(world: World) {
     if (this.built) return;
+    this.world = world;
     this.built = buildTradingPost(world);
+    buildSurplus(world);
+    if (save.flags.tradeRevealed) this.reveal(true);
     this.spot.set(0, 0, -1.1).applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.35).add(TRADE);
+    this.surplusSpot.set(0.4, 0, 1.3).applyAxisAngle(new THREE.Vector3(0, 1, 0), -0.4).add(SURPLUS);
     $("tr-close").addEventListener("click", () => this.close());
     addEventListener("keydown", (e) => {
       if (!this.open) return;
@@ -212,23 +300,65 @@ class TradingPost {
     });
   }
 
-  private threat() {
-    return enemies.list.some((e) => e.alive && e.kind !== "thing" && Math.hypot(e.pos.x - TRADE.x, e.pos.z - TRADE.z) < 16);
+  /** Somebody's lantern on the path. */
+  reveal(quiet = false) {
+    if (this.revealed || !this.built || !this.world) return;
+    this.revealed = true;
+    this.built.group.visible = true;
+    this.world.colliders.push(...this.built.colliders);
+    if (!save.flags.tradeRevealed) {
+      save.flags.tradeRevealed = true;
+      persist();
+    }
+    void quiet;
   }
 
-  interact(): Interact {
-    return {
-      pos: () => this.spot,
-      r: 2.4,
-      label: () => `Trade <span class="dim">${save.bank} shards</span>`,
-      when: () => state.exited && !cine.active && !this.threat(),
-      run: () => this.show(),
-    };
+  private threat(at: THREE.Vector3) {
+    return enemies.list.some((e) => e.alive && e.kind !== "thing" && Math.hypot(e.pos.x - at.x, e.pos.z - at.z) < 16);
   }
 
-  /** Per frame (story): the radio mutters, and the first time you come near, you say so. */
+  interacts(): Interact[] {
+    return [
+      {
+        pos: () => this.spot,
+        r: 2.4,
+        label: () => `Trade <span class="dim">${save.bank} shards</span>`,
+        when: () => this.revealed && state.exited && !cine.active && !this.threat(TRADE),
+        run: () => this.show("post"),
+      },
+      {
+        pos: () => this.surplusSpot,
+        r: 2.2,
+        label: () => `Look at the surplus <span class="dim">${save.bank} shards</span>`,
+        when: () => state.exited && !cine.active && !this.threat(SURPLUS),
+        run: () => this.show("watch"),
+      },
+    ];
+  }
+
+  /** The trader moves when she talks (main.ts voice hook). */
+  onLine(id: string) {
+    if (id !== "TRADER" || !this.built) return;
+    const t = this.built.trader;
+    if (t instanceof Person) t.setBase("sitTalk", 1, 0.3);
+    this.talkT = 3;
+  }
+
+  /** Per frame (story): the radio mutters; the first time you come near, she speaks. */
   update(dt: number) {
-    if (!this.built) return;
+    if (this.talkT > 0) {
+      this.talkT -= dt;
+      const t = this.built?.trader;
+      if (this.talkT <= 0 && t instanceof Person) t.setBase("sit", 1, 0.4);
+    }
+    if (this.pendingT > 0) {
+      this.pendingT -= dt;
+      if (this.pendingT <= 0) {
+        this.pending = "";
+        if (this.open) this.render();
+      }
+    }
+    if (!this.built || !this.revealed) return;
     const d = Math.hypot(player.pos.x - TRADE.x, player.pos.z - TRADE.z);
     this.built.light.intensity = (LOW ? 2.2 : 2.8) * (0.9 + Math.sin(performance.now() * 0.009) * 0.05 + Math.random() * 0.05);
     if (d < 12) {
@@ -243,22 +373,24 @@ class TradingPost {
       persist();
       void say(S.TRADE_FIRST);
     }
-    if (this.pendingT > 0) {
-      this.pendingT -= dt;
-      if (this.pendingT <= 0) {
-        this.pending = "";
-        if (this.open) this.render();
-      }
-    }
   }
 
-  show() {
+  show(station: StationId) {
+    this.station = station;
     this.open = true;
     state.paused = true;
     document.exitPointerLock?.();
+    const tx = STATION_TEXT[station];
+    $("tr-kick").textContent = tx.kick;
+    $("tr-title").textContent = tx.title;
+    $("tr-sub").textContent = tx.sub;
     $("trade").classList.add("show");
     $("tr-msg").textContent = "";
     sfx.rummage();
+    if (station === "watch" && !save.flags.surplusSeen) {
+      save.flags.surplusSeen = true;
+      void say(S.SURPLUS_FIRST);
+    }
     this.render();
   }
 
@@ -272,34 +404,49 @@ class TradingPost {
     input.lock();
   }
 
+  private row(name: string, desc: string, note: string, price: string, unit: string, ok: boolean, reason: string | undefined, key: string, verb: string) {
+    const li = document.createElement("li");
+    li.className = "tr-item" + (ok ? "" : " off");
+    li.innerHTML = `
+      <div class="tr-info"><b>${name}</b><span>${desc}</span><em>${note}</em></div>
+      <div class="tr-price">${price}<small>${unit}</small></div>`;
+    const btn = document.createElement("button");
+    const confirming = this.pending === key;
+    btn.className = "btn" + (confirming ? " primary" : "");
+    btn.textContent = confirming ? "Confirm" : verb;
+    btn.disabled = !ok;
+    btn.title = reason ?? "";
+    btn.onclick = () => (key.startsWith("learn:") ? this.pressLearn(key.slice(6)) : this.press(key));
+    li.appendChild(btn);
+    return li;
+  }
+
   private render() {
     $("tr-bank").textContent = String(save.bank);
     const list = $("tr-list");
     list.innerHTML = "";
-    for (const it of CATALOG) {
-      const q = quote(it.id)!;
-      const left = inStock(it.id);
-      const li = document.createElement("li");
-      li.className = "tr-item" + (q.ok ? "" : " off");
-      li.innerHTML = `
-        <div class="tr-info"><b>${it.name}</b><span>${it.desc}</span>
-          <em>You have ${it.owned()} · ${left > 0 ? `${left} on the table` : "none left"}</em></div>
-        <div class="tr-price">${q.price}<small>shards</small></div>`;
-      const btn = document.createElement("button");
-      const confirming = this.pending === it.id;
-      btn.className = "btn" + (confirming ? " primary" : "");
-      btn.textContent = confirming ? "Confirm" : "Buy";
-      btn.disabled = !q.ok;
-      btn.title = q.reason ?? "";
-      btn.onclick = () => this.press(it.id);
-      li.appendChild(btn);
-      list.appendChild(li);
+    for (const id of STATIONS[this.station].items) {
+      const it = CATALOG.find((x) => x.id === id)!;
+      const q = quote(id, "shards", this.station)!;
+      const left = inStock(id, this.station);
+      list.appendChild(this.row(it.name, it.desc, `You have ${it.owned()} · ${left > 0 ? `${left} left` : "none left"}`, String(q.price), "shards", q.ok, q.reason, id, "Buy"));
+    }
+    if (this.station !== "post") return;
+    const h = document.createElement("li");
+    h.className = "tr-sec";
+    h.textContent = "She can show you";
+    list.appendChild(h);
+    for (const k of KNOW) {
+      const can = canLearn(k.id);
+      const known = knows(k.id);
+      const note = known ? "You know this." : can.ok ? "She'll show you once." : can.reason ?? "";
+      list.appendChild(this.row(k.name, k.desc, note, String(k.shards), k.scrap ? `shards · ${k.scrap} scrap` : "shards", can.ok, can.reason, "learn:" + k.id, known ? "Known" : "Learn"));
     }
   }
 
   /** BUY → CONFIRM → done. */
   private async press(id: string) {
-    const q = quote(id);
+    const q = quote(id, "shards", this.station);
     if (!q) return;
     if (!q.ok) {
       $("tr-msg").textContent = q.reason ?? "";
@@ -313,13 +460,38 @@ class TradingPost {
       return;
     }
     this.pending = "";
-    const r = await purchase(id);
+    const r = await purchase(id, "shards", this.station);
     if (r.ok) {
       sfx.coin();
       window.setTimeout(() => sfx.pickup(), 120);
-      $("tr-msg").textContent = `You leave ${q.price} shards in the tin and take the ${q.item.name.toLowerCase()}.`;
+      $("tr-msg").textContent =
+        this.station === "post" ? `She counts ${q.price} shards into her hand and pushes the ${q.item.name.toLowerCase()} across.` : `You drop ${q.price} shards in the tin and take the ${q.item.name.toLowerCase()}.`;
+      if (this.station === "post" && this.buys++ % 3 === 0 && !voice.busy) void say([S.TRADER_THANKS[Math.floor(Math.random() * S.TRADER_THANKS.length)]]);
     } else {
       $("tr-msg").textContent = r.reason ?? "";
+    }
+    this.render();
+  }
+
+  private pressLearn(id: string) {
+    const k = KNOW.find((x) => x.id === id);
+    const c = canLearn(id);
+    if (!k || !c.ok) {
+      $("tr-msg").textContent = c.reason ?? "";
+      return;
+    }
+    const key = "learn:" + id;
+    if (this.pending !== key) {
+      this.pending = key;
+      this.pendingT = 3.5;
+      $("tr-msg").textContent = `${k.name} for ${k.shards} shards${k.scrap ? ` and ${k.scrap} scrap` : ""}. Press again to confirm.`;
+      this.render();
+      return;
+    }
+    this.pending = "";
+    if (learn(id)) {
+      $("tr-msg").textContent = `She shows you. Once. ${k.desc}`;
+      if (!voice.busy) void say(S.TRADER_TEACH);
     }
     this.render();
   }

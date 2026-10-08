@@ -18,11 +18,11 @@ const S = await import("data:text/javascript;base64," + Buffer.from(js).toString
 
 // Speakers who are on the radio unless a line says otherwise (voice.ts).
 const RADIO = { RHEA: true, PILOT: true };
-const SPEAKERS = ["RHEA", "YOU", "PILOT", "DEZ", "HOLLOW", "WARDEN", "CHOIR", "ECHO", "INES", "TEO"];
+const SPEAKERS = ["RHEA", "YOU", "PILOT", "DEZ", "HOLLOW", "WARDEN", "CHOIR", "ECHO", "INES", "TEO", "TRADER"];
 
 // Which download each part of the script lives in.
 const PACK = (name) =>
-  /^(COLD_OPEN|WAKE|TAKE_AXE|REVEAL|FIRST_SHARD|BLACK_BOX|SIGN_|FIRE_FOUND|FIRE_LIT|RECORDS_READ|FIRST_HOLLOW|NIGHT1_|RADIO_|DEEP_NIGHT|GLIMPSE|STORM_|FIRE_OUT|ALARM_|DAWN1|FIRST_NIGHT|TRADE_)/.test(name) ? "intro"
+  /^(COLD_OPEN|WAKE|TAKE_AXE|REVEAL|FIRST_SHARD|BLACK_BOX|SIGN_|FIRE_FOUND|FIRE_LIT|RECORDS_READ|FIRST_HOLLOW|NIGHT1_|RADIO_|DEEP_NIGHT|GLIMPSE|STORM_|FIRE_OUT|ALARM_|DAWN1|FIRST_NIGHT|TRADE_|SUPPLY_|PACK_|DEEP_WARN|RARE_|WHO_THERE|MARKED_|OLD_FIRE|WATCHER|STORM_WAKE|NIGHT_AGAIN|TRADER_|SURPLUS_)/.test(name) ? "intro"
   : /^(AMBUSH|PYLON|WARDEN_|EPILOGUE)/.test(name) ? "story"
   : /^(INES|CHANGED|SETTLEMENT|WRISTBAND|FIRE_TALK|CHOICE|BASIN|CHOIR_|ENDING)/.test(name) ? "late"
   : /^(NIGHT|LOOP|DAWN|FIRE_LOW|MEM_)/.test(name) ? "night"
@@ -73,7 +73,7 @@ for (const [name, v] of Object.entries(S)) {
 for (const f of fs.readdirSync(path.join(ROOT, "src"))) {
   if (!f.endsWith(".ts") || f === "script.ts") continue;
   const code = fs.readFileSync(path.join(ROOT, "src", f), "utf8");
-  for (const m of code.matchAll(/\["(RHEA|YOU|PILOT|DEZ|HOLLOW|WARDEN|CHOIR|ECHO|INES|TEO)",\s*"((?:[^"\\]|\\.)*)"/g)) add(m[1], m[2], {}, "night", f);
+  for (const m of code.matchAll(/\["(RHEA|YOU|PILOT|DEZ|HOLLOW|WARDEN|CHOIR|ECHO|INES|TEO|TRADER)",\s*"((?:[^"\\]|\\.)*)"/g)) add(m[1], m[2], {}, "night", f);
   // Rhea's storm warnings come from a pick() list
   for (const m of code.matchAll(/\["RHEA", pick\(\[([^\]]*)\]\)\]/g))
     for (const t of m[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)) add("RHEA", t[1], {}, "night", f);

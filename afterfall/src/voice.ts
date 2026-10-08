@@ -7,7 +7,7 @@
 
 import type { Line } from "./script";
 
-export type SpeakerId = "RHEA" | "YOU" | "PILOT" | "DEZ" | "HOLLOW" | "WARDEN" | "CHOIR" | "ECHO" | "INES" | "TEO";
+export type SpeakerId = "RHEA" | "YOU" | "PILOT" | "DEZ" | "HOLLOW" | "WARDEN" | "CHOIR" | "ECHO" | "INES" | "TEO" | "TRADER";
 
 interface Speaker {
   name: string;
@@ -33,6 +33,7 @@ const SPEAKERS: Record<SpeakerId, Speaker> = {
   ECHO: { name: "Echo", color: "#a9d6de", pitch: 1.0, rate: 0.9, prefer: [...FEMALE, ...MALE], ghost: true },
   // the Changed: patients who stayed long enough to be rewritten
   INES: { name: "Ines", color: "#7fd3e0", pitch: 0.92, rate: 1.06, prefer: ["moira", "tessa", "fiona", ...FEMALE] },
+  TRADER: { name: "The trader", color: "#c9a77e", pitch: 0.85, rate: 0.95, prefer: ["moira", "fiona", ...FEMALE] },
   TEO: { name: "Teo", color: "#c9b48e", pitch: 0.62, rate: 0.86, prefer: ["fred", "thomas", ...MALE] },
 };
 
@@ -191,7 +192,7 @@ export class Voice {
     this.who.textContent = (opts?.name ?? (id === "YOU" ? this.playerName : s.name)).replace(/\{name\}/g, this.playerName);
     this.who.style.color = s.color;
     this.box.classList.toggle("radio", opts?.radio ?? !!s.radio);
-    this.box.classList.toggle("ghost", !!s.ghost);
+    this.box.classList.toggle("ghost", !!s.ghost || opts?.fx === "far");
     this.box.classList.add("show");
     this.onLine?.(id, opts?.radio ?? !!s.radio);
     this.active++;
@@ -249,7 +250,21 @@ export class Voice {
           }
           const src = ctx.createBufferSource();
           src.buffer = buf;
-          if (noise > 0.05) {
+          if (opts?.fx === "far") {
+            // the same voice, from out in the dark: muffled, quieter, trailing
+            const lp = ctx.createBiquadFilter();
+            lp.type = "lowpass";
+            lp.frequency.value = 1300;
+            const g = ctx.createGain();
+            g.gain.value = 0.42;
+            const d = ctx.createDelay(1);
+            d.delayTime.value = 0.21;
+            const fb = ctx.createGain();
+            fb.gain.value = 0.38;
+            src.connect(lp).connect(g).connect(this.out);
+            g.connect(d).connect(fb).connect(d);
+            fb.connect(this.out);
+          } else if (noise > 0.05) {
             // drop-outs: the signal fades to almost nothing for a moment, now and then
             const g = ctx.createGain();
             const t0 = ctx.currentTime;

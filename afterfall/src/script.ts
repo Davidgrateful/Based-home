@@ -48,7 +48,7 @@
 
 import type { SpeakerId } from "./voice";
 
-export type Line = [SpeakerId, string, { name?: string; pitch?: number; rate?: number; radio?: boolean }?];
+export type Line = [SpeakerId, string, { name?: string; pitch?: number; rate?: number; radio?: boolean; fx?: "far" }?];
 
 /** A cinematic beat: a camera shot, what happens in it, and who speaks. */
 export interface Beat {
@@ -328,11 +328,87 @@ export const DAWN1: Line[] = [
 ];
 /** The trading post, the first time you come up to it. */
 export const TRADE_FIRST: Line[] = [
-  ["YOU", "Somebody's set up a table out here. Medkits. Fuel. Prices, in shards."],
-  ["RHEA", "People out there trade in those?"],
-  ["YOU", "There's a tin for the money. And a note. Take what you need. Leave what it's worth."],
-  ["RHEA", "Then leave what it's worth."],
+  ["YOU", "There's someone at that table."],
+  ["TRADER", "Sit if you want. Pay for what you touch."],
+  ["YOU", "Pay with what?"],
+  ["TRADER", "Shards. Same as everyone."],
+  ["RHEA", "Who's that with you?"],
+  ["YOU", "Somebody selling medkits."],
+  ["RHEA", "Then buy one."],
 ];
+/** What she says, now and then, when you buy. */
+export const TRADER_THANKS: Line[] = [
+  ["TRADER", "Fair."],
+  ["TRADER", "That'll keep you a while."],
+  ["TRADER", "Spend it before it spends you."],
+];
+export const TRADER_TEACH: Line[] = [["TRADER", "Watch my hands. I'll only do it once."]];
+/** The Watch's surplus, the first time you look. */
+export const SURPLUS_FIRST: Line[] = [["YOU", "Meridian surplus. Somebody's chalked prices on the lids."]];
+/** Early in the night, with not much found: you need more than the wreck has. */
+export const SUPPLY_NEED: Line[] = [
+  ["YOU", "I need more than what's lying around. Fuel. Medicine."],
+  ["RHEA", "There's a light on the path toward the old camp. A lantern. It isn't mine."],
+  ["YOU", "Somebody else is out here?"],
+];
+
+// ---------------------------------------------------------------- THE LONG NIGHT (Chapter One)
+// Die in the first night and the night begins again. You keep what you've
+// learned; the world keeps a little more each time. Nobody explains it.
+/** Your own pack, where you went down. */
+export const PACK_FOUND: Line[] = [
+  ["YOU", "That's my pack."],
+  ["YOU", "I don't remember putting it down."],
+];
+/** Into the deep woods: better finds, more of them, less light. */
+export const DEEP_WARN: Line[] = [
+  ["RHEA", "You're in the dark part of the woods. Your signal's going."],
+  ["YOU", "There's something out here worth finding."],
+  ["RHEA", "There's always something out there. Be quick."],
+];
+export const RARE_FOUND: Line[] = [["YOU", "A Meridian crate. Somebody dropped this out here on purpose."]];
+/** A sound in the dark, and your own voice answering it, late. */
+export const WHO_THERE: Line[] = [["YOU", "Who's there?"]];
+export const WHO_THERE_BACK: Line[] = [["YOU", "Who's there?", { fx: "far" }]];
+export const MARKED_TREE: Line[] = [
+  ["YOU", "Somebody's cut a mark into this tree."],
+  ["YOU", "It's fresh."],
+];
+export const OLD_FIRE: Line[] = [
+  ["YOU", "Their fire's lit."],
+  ["RHEA", "Is that another survivor?"],
+  ["YOU", "There's nobody here."],
+];
+export const WATCHER: Line[] = [["HOLLOW", "And one."]];
+/** From the fifth night on: the night starts when you do. */
+export const STORM_WAKE: Line[] = [
+  ["RHEA", "The storm's coming in again. It only ever starts when you wake up."],
+  ["YOU", "When I wake up?"],
+  ["RHEA", "That isn't what I meant."],
+];
+export const NIGHT_AGAIN: Line[] = [
+  ["RHEA", "That one won't be the last."],
+  ["YOU", "You always say that."],
+  ["RHEA", "Do I?"],
+];
+/** Shown when an Echo is found: one sentence, held, then gone. */
+export const ECHO_FRAGMENTS = [
+  "Home by spring.",
+  "Don't sing back.",
+  "Her name was on my arm.",
+  "So we don't have to see.",
+  "Like feeding something.",
+  "Don't let him see the fire.",
+  "She calls herself Rhea.",
+  "It's a set of instructions.",
+  "Closer every night.",
+  "Home is what it eats.",
+  "Keep it lit.",
+  "Find Rhea.",
+];
+/** Held on black at the end of Chapter One. */
+export const CHAPTER_ONE_QUESTION = "Why does the world need Patient 10001?";
+
 /** Back at the fire, after the first night. She says one thing too many. */
 export const FIRST_NIGHT_END: Line[] = [
   ["RHEA", "You're back."],

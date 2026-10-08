@@ -200,10 +200,15 @@ export function applyMemories() {
   const m = save.mem;
   player.maxHp = 100 + m.skin * 15;
   player.hp = player.maxHp;
-  player.dmgMul = 1 + m.muscle * 0.15;
+  player.dmgMul = (1 + m.muscle * 0.15) * (save.flags.axeHoned ? 1.12 : 1);
   player.regenMul = 1 + m.wind * 0.3;
   player.dodgeCost = 25 - m.wind * 4;
   player.pickupBonus = m.sense * 1.2;
+  // survival knowledge (progress.ts): small, and it stays learned
+  const up = (k: string) => !!save.flags["up:" + k];
+  if (up("breath")) player.regenMul *= 1.25;
+  if (up("feet")) player.dodgeCost -= 5;
+  player.healAmount = up("medic") ? 60 : 45;
 }
 
 export function collectShard(value = 1) {

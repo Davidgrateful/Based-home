@@ -334,6 +334,10 @@ export class World {
   otherFires: THREE.Vector3[] = [];
   /** 0..1: extra fog while inside the Blackwood. */
   fogBoost = 0;
+  /** More fog on top (the deep woods). */
+  fogExtra = 0;
+  /** The Old Camp's cold pit (the world, remembering, sometimes lights it). */
+  oldCampFire: Fire | null = null;
   private fogBoostNow = 0;
   private mastLight!: THREE.SpriteMaterial;
   private mist: { s: THREE.Sprite; base: THREE.Vector3; ph: number }[] = [];
@@ -1111,6 +1115,7 @@ export class World {
     // the fire they kept: cold for a long time
     const cold = new Fire({ size: 0.9, logs: true, stones: true });
     cold.lit = false;
+    this.oldCampFire = cold; // cold for a long time; unless one night it isn't
     at(cold.group, 0, 0);
     this.colliders.push({ x: C.x, z: C.z, r: 0.9 });
 
@@ -2339,7 +2344,7 @@ export class World {
     const tintV = this.skyMat.uniforms.uTint.value as THREE.Vector3;
     (this.skyMat.uniforms.uHaze.value as THREE.Color).setRGB(this.moodFog.r / tintV.x, this.moodFog.g / tintV.y, this.moodFog.b / tintV.z);
     this.moodDensity += (mood.density - this.moodDensity) * k;
-    this.fogBoostNow += (this.fogBoost - this.fogBoostNow) * Math.min(1, dt * 0.5);
+    this.fogBoostNow += (this.fogBoost + this.fogExtra - this.fogBoostNow) * Math.min(1, dt * 0.5);
     fog.density = this.moodDensity + this.fogBoostNow * 0.014;
     // inside the aircraft the night outside barely reaches: its own lamps light it
     const outdoor = this.indoor ? 0.22 : 1;

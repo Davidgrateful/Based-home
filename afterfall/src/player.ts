@@ -107,6 +107,8 @@ export class Player {
   regenMul = 1;
   dodgeCost = 25;
   pickupBonus = 0;
+  /** what a medkit gives back (Field medic raises it) */
+  healAmount = 45;
   dashT = 0;
   dashDir = new THREE.Vector3();
   walk = 0;
@@ -173,7 +175,7 @@ export class Player {
   heal() {
     if (this.medkits <= 0 || this.hp >= this.maxHp) return false;
     this.medkits--;
-    this.hp = Math.min(this.maxHp, this.hp + 45);
+    this.hp = Math.min(this.maxHp, this.hp + this.healAmount);
     return true;
   }
 

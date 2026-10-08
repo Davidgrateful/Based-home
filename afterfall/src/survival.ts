@@ -20,6 +20,7 @@ import type { Enemy } from "./enemies";
 import type { Signs } from "./signs";
 import * as S from "./script";
 import { CAMP, heightAt, MICRO, OLD_CAMP, STATION } from "./world";
+import { save } from "./save";
 
 export type Res = "food" | "water" | "fuel" | "scrap" | "batteries";
 type Give = Partial<Record<Res | "med" | "shards", number>>;
@@ -27,6 +28,11 @@ type Phase = "off" | "early" | "deep" | "storm" | "dawn" | "home";
 
 /** What you're carrying. Medkits live on the player (Q / Heal uses one). */
 export const supplies: Record<Res, number> = { food: 0, water: 0, fuel: 0, scrap: 0, batteries: 0 };
+const up = (k: string) => !!save.flags["up:" + k];
+/** How much of each supply you can carry (Field training raises it). */
+export const carryCap = () => (up("field") ? 8 : 5);
+/** Seconds to search something (Steady hand halves it). */
+const searchTime = () => (up("hand") ? 0.4 : 0.85);
 
 const NAMES: Record<Res | "med" | "shards", [string, string]> = {
   shards: ["Shard", "Shards"],
@@ -49,6 +55,10 @@ const HINT: Record<Res | "med" | "shards", string> = {
 
 interface Spot {
   id: string;
+  /** what a full one holds; each night's contents vary around it */
+  base: Give;
+  /** a minor cache: where it lies changes from night to night */
+  minor?: boolean;
   x: number;
   z: number;
   r: number;
@@ -100,6 +110,100 @@ function seatLog() {
   return g;
 }
 
+// ---------------------------------------------------------------- minor caches
+/** Places a minor cache could plausibly lie: path edges, under trees, by rocks.
+ *  Each night a different handful of them hold something. */
+const MINOR_SPOTS: [number, number][] = [
+  [-4, 16], [12, -6], [24, 10], [-14, -4], [-30, 18], [-36, 38], [-20, 46], [4, 40], [18, 36], [32, 22], [40, 8],
+  [-2, -12], [-44, 14], [-30, -8], [26, 46], [10, 58], [-12, 58], [48, 34], [-48, -6], [30, -10], [-6, 48], [56, 14],
+];
+const small = (w: number, h: number, d: number, color: number, rough = 0.85, metal = 0) => {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, rough, metal));
+  m.position.y = h / 2;
+  return m;
+};
+function rucksack() {
+  const g = new THREE.Group();
+  const b = small(0.38, 0.46, 0.22, 0x3a4234);
+  b.rotation.x = -1.2;
+  b.position.set(0, 0.13, 0);
+  const flap = small(0.36, 0.06, 0.18, 0x2e352a);
+  flap.position.set(0, 0.27, -0.12);
+  g.add(b, flap);
+  return g;
+}
+function tin() {
+  const g = new THREE.Group();
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.14, 12), mat(0x8a8d84, 0.45, 0.7));
+  t.position.y = 0.07;
+  const t2 = t.clone();
+  t2.position.set(0.17, 0.07, 0.05);
+  g.add(t, t2);
+  return g;
+}
+function pouch(color: number) {
+  const g = new THREE.Group();
+  const p = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), mat(color, 1));
+  p.scale.set(1.2, 0.6, 0.9);
+  p.position.y = 0.07;
+  g.add(p);
+  return g;
+}
+function medPouch() {
+  const g = new THREE.Group();
+  g.add(small(0.28, 0.1, 0.18, 0xc8c2b4, 0.8));
+  const c = small(0.08, 0.002, 0.025, 0xa02a22);
+  c.position.y = 0.101;
+  g.add(c, c.clone().rotateY(Math.PI / 2));
+  return g;
+}
+function bottle() {
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.3, 10), mat(0x7a2418, 0.55, 0.3));
+  b.rotation.z = Math.PI / 2 - 0.1;
+  b.position.y = 0.07;
+  g.add(b);
+  return g;
+}
+function crate(color = 0x4a4f3a, size = 0.55) {
+  const g = new THREE.Group();
+  g.add(small(size, size * 0.65, size * 0.75, color, 0.9));
+  return g;
+}
+/** A Meridian drop crate: heavy, stencilled, half sunk in the leaf litter. */
+function rareCrate() {
+  const g = new THREE.Group();
+  const c = small(1.1, 0.6, 0.75, 0x3a4248, 0.6, 0.3);
+  c.position.y = 0.18;
+  c.rotation.z = 0.12;
+  g.add(c);
+  const band = small(1.12, 0.06, 0.77, 0x9c3a24, 0.7);
+  band.position.y = 0.42;
+  band.rotation.z = 0.12;
+  g.add(band);
+  return g;
+}
+/** Yours: the pack you were carrying when you went down. */
+function myPack() {
+  const g = rucksack();
+  g.scale.setScalar(1.15);
+  return g;
+}
+const MINOR_KINDS: { label: string; give: Give; prop: () => THREE.Object3D }[] = [
+  { label: "Search the rucksack", give: { food: 1, water: 1, batteries: 1 }, prop: rucksack },
+  { label: "Open the ration tins", give: { food: 2 }, prop: tin },
+  { label: "Search the medical pouch", give: { med: 1 }, prop: medPouch },
+  { label: "Take the fuel bottle", give: { fuel: 1 }, prop: bottle },
+  { label: "Take the battery box", give: { batteries: 2 }, prop: () => crate(0x2e3236, 0.32) },
+  { label: "Open the cloth pouch", give: { shards: 4 }, prop: () => pouch(0x4a3d32) },
+  { label: "Search the supply crate", give: { food: 1, water: 1, scrap: 1, shards: 2 }, prop: () => crate() },
+];
+
+/** The deep woods: deep in the Blackwood, where nothing grows light. Better
+ *  finds; more of them come; you can barely see. Nobody makes you go. */
+export const DEEP = { x: -86, z: 34, r: 26 };
+const DEEP_DROPS: [number, number][] = [[-94, 44], [-80, 20], [-100, 28]];
+
 // ---------------------------------------------------------------- the radio
 /** 1 = fresh batteries. It runs down over the night. */
 const radio = { charge: 1, warned: false };
@@ -134,6 +238,29 @@ class Survival {
   private seat = new THREE.Vector3(CAMP.x - 2.4, 0, CAMP.z + 1.3);
   private stake = new THREE.Vector3(CAMP.x - 2.6, 0, CAMP.z - 2.4);
   private signs: Signs | null = null;
+  private addSpot: (id: string, x: number, z: number, label: string, give: Give, prop?: THREE.Object3D, ry?: number, r?: number) => void = () => {};
+  /** Seat log (a later night may find it somewhere else). */
+  seatLog: THREE.Object3D | null = null;
+  /** Where you went down last, and what you were carrying. */
+  private dropped: Give | null = null;
+  /** Deep woods: the stalkers it has sent after you. */
+  private deepHunters = new Set<Enemy>();
+  private deepT = 0;
+  private deepWarned = false;
+  private deepIn = false;
+  private needSaid = false;
+  /** Story hooks: you've realised you need more (the trading post shows itself);
+   *  a new night of the loop has begun. */
+  onNeedSupplies: () => void = () => {};
+  onLoop: (run: number) => void = () => {};
+  /** The deep night's first visitor (a later night may send a different one). */
+  onProwler: (e: Enemy) => void = () => {};
+  /** What Rhea says as the storm hits (a later night may change it). */
+  stormLine: () => import("./script").Line[] = () => S.STORM_START;
+  /** Seconds into the current phase. */
+  get t() {
+    return this.phaseT;
+  }
   /** The player is home at dawn: the story takes it from here. */
   onHome: () => void = () => {};
 
@@ -157,8 +284,9 @@ class Survival {
         prop.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = !LOW), (m.receiveShadow = true))));
         world.scene.add(prop);
       }
-      this.spots.push({ id, x, z, r, label, give, prop, taken: false });
+      this.spots.push({ id, x, z, r, label, give: { ...give }, base: { ...give }, prop, taken: false });
     };
+    this.addSpot = add;
     // the crash
     add("lug-a", -15.2, 23.8, "Search the luggage", { food: 1, water: 1 });
     add("lug-b", -6.8, 30.5, "Search the luggage", { food: 1 });
@@ -189,12 +317,14 @@ class Survival {
     log.position.set(this.seat.x, heightAt(this.seat.x, this.seat.z), this.seat.z);
     log.rotation.y = 0.9;
     world.scene.add(log);
+    this.seatLog = log;
     // and a stake where an alarm line would start
     const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.9, 6), mat(0x4a3d32, 1));
     st.position.set(this.stake.x, heightAt(this.stake.x, this.stake.z) + 0.45, this.stake.z);
     st.rotation.z = 0.12;
     world.scene.add(st);
 
+    this.roll();
     voice.onStatic = (k, ms) => {
       sfx.staticBurst(0.35 + k * 0.4, 0.12 + k * 0.2);
       if (k > 0.4) window.setTimeout(() => sfx.staticBurst(0.25, 0.1 + k * 0.15), ms * 0.5);
@@ -219,12 +349,104 @@ class Survival {
     }
     radio.charge = 1;
     radio.warned = false;
+    this.dropped = null;
+    this.roll();
     this.renderInv(true);
   }
 
+  // -------------------------------------------------------------- what's out there tonight
+  /** Every night is a little different: what the fixed places hold varies,
+   *  and the minor caches lie somewhere else. The landmarks never move. */
+  roll() {
+    const vary = (g: Give): Give => {
+      const out: Give = {};
+      const keys = Object.keys(g) as (keyof Give)[];
+      if (Math.random() < 0.15) {
+        // picked over: one thing left
+        const k = keys[Math.floor(Math.random() * keys.length)];
+        out[k] = 1;
+        return out;
+      }
+      for (const k of keys) {
+        const n = (g[k] ?? 0) + (k === "shards" ? Math.round((Math.random() - 0.4) * 3) : Math.random() < 0.3 ? (Math.random() < 0.5 ? -1 : 1) : 0);
+        if (n > 0) out[k] = n;
+      }
+      if (!Object.keys(out).length) out[keys[0]] = 1;
+      return out;
+    };
+    // take the old minor caches off the ground
+    for (const sp of this.spots.filter((q) => q.minor)) if (sp.prop) world.scene.remove(sp.prop);
+    this.spots = this.spots.filter((q) => !q.minor);
+    for (const sp of this.spots) {
+      sp.taken = false;
+      if (sp.prop) sp.prop.visible = true;
+      sp.give = vary(sp.base);
+    }
+    // the minor caches: a handful, from places they could plausibly be
+    const pool = MINOR_SPOTS.slice().sort(() => Math.random() - 0.5).slice(0, 7);
+    pool.forEach(([x, z], i) => {
+      const kind = MINOR_KINDS[Math.floor(Math.random() * MINOR_KINDS.length)];
+      this.addSpot(`minor-${i}`, x, z, kind.label, vary(kind.give), kind.prop(), Math.random() * 6);
+      this.spots[this.spots.length - 1].minor = true;
+    });
+    // and one rare drop in the deep woods
+    const [rx, rz] = DEEP_DROPS[Math.floor(Math.random() * DEEP_DROPS.length)];
+    this.addSpot("rare", rx, rz, "Open the Meridian crate", { med: 2, batteries: 2, fuel: 2, shards: 14 }, rareCrate(), Math.random() * 6, 2.2);
+    const rare = this.spots[this.spots.length - 1];
+    rare.minor = true;
+    // what you dropped when you went down is still where you left it
+    if (this.dropped && this.lastFall) {
+      const [fx, fz] = this.lastFall;
+      this.addSpot("mine", fx, fz, "Pick up your pack", this.dropped, myPack(), Math.random() * 6, 2.0);
+      this.spots[this.spots.length - 1].minor = true;
+    }
+  }
+  private lastFall: [number, number] | null = null;
+
   // -------------------------------------------------------------- scavenging
+  /** Searching takes a moment, and you're crouched in the open while you do. */
+  private searching: { s: Spot; t: number; hp: number } | null = null;
+  private search(s: Spot) {
+    if (this.searching) return;
+    this.searching = { s, t: searchTime(), hp: player.hp };
+    player.frozen = true;
+    sfx.rummage();
+  }
+
   private take(s: Spot) {
+    // what doesn't fit stays where it was
+    const left: Give = {};
+    let full = "";
+    for (const [k, n] of Object.entries(s.give) as [keyof Give, number][]) {
+      if (k === "med" || k === "shards") continue;
+      const room = carryCap() - supplies[k as Res];
+      if (n > room) {
+        left[k] = n - Math.max(0, room);
+        s.give[k] = Math.max(0, room);
+        full = NAMES[k][1].toLowerCase();
+      }
+    }
+    if (full) {
+      for (const k of Object.keys(s.give) as (keyof Give)[]) if (!s.give[k]) delete s.give[k];
+      if (!Object.keys(s.give).length) {
+        s.give = left;
+        toast(`You can't carry any more ${full}.`, 2200);
+        return;
+      }
+    }
     s.taken = true;
+    if (s.id === "mine") {
+      this.dropped = null;
+      if (!this.said.has("mine")) {
+        this.said.add("mine");
+        voice.interrupt();
+        void say(S.PACK_FOUND);
+      }
+    }
+    if (s.id === "rare" && !save.flags.rareSeen) {
+      save.flags.rareSeen = true;
+      void say(S.RARE_FOUND);
+    }
     if (s.prop) s.prop.visible = false;
     sfx.rummage();
     const parts: string[] = [];
@@ -242,7 +464,13 @@ class Survival {
     }
     window.setTimeout(() => sfx.pickup(), 160);
     this.found++;
-    toast(parts.join(" · ") + (hints.length ? ` — ${hints.join(" ")}` : ""), hints.length ? 4200 : 2200);
+    toast(parts.join(" · ") + (hints.length ? ` — ${hints.join(" ")}` : "") + (full ? ` · no room for more ${full}` : ""), hints.length ? 4200 : 2200);
+    if (full) {
+      // the rest is still there
+      s.taken = false;
+      s.give = left;
+      if (s.prop) s.prop.visible = true;
+    }
     this.renderInv(true);
   }
 
@@ -253,7 +481,7 @@ class Survival {
     for (const s of this.spots) {
       if (s.taken) continue;
       const at = new THREE.Vector3(s.x, 0, s.z);
-      list.push({ pos: () => at, r: s.r, label: s.label, when: () => !s.taken, run: () => this.take(s) });
+      list.push({ pos: () => at, r: s.r, label: () => (this.searching?.s === s ? "Searching…" : s.label), when: () => !s.taken, run: () => this.search(s) });
     }
     const fireStory = this.fireStory(stage);
     const cf = world.campfire;
@@ -298,7 +526,7 @@ class Survival {
       this.fireOutSaid = false;
       if (this.phase !== "off") this.objective();
     } else {
-      cf.hp = Math.min(cf.maxHp, cf.hp + cf.maxHp * 0.35);
+      cf.hp = Math.min(cf.maxHp, cf.hp + cf.maxHp * (up("keeper") ? 0.45 : 0.35));
       sfx.crackle(0.5);
       window.setTimeout(() => sfx.crackle(0.35), 120);
     }
@@ -462,7 +690,7 @@ class Survival {
       this.lightningT = 6;
       this.ensureRain();
       voice.interrupt();
-      void say(S.STORM_START).then(() => {
+      void say(this.stormLine()).then(() => {
         window.setTimeout(() => {
           if (this.phase === "storm" && !voice.busy) void say(S.STORM_LOST);
         }, 2500);
@@ -525,6 +753,99 @@ class Survival {
 
   private threatNear(r: number) {
     return enemies.list.some((e) => e.alive && e.kind !== "thing" && Math.hypot(e.pos.x - player.pos.x, e.pos.z - player.pos.z) < r);
+  }
+
+  // -------------------------------------------------------------- dying, and the night again
+  /** You went down. What you carried is temporary: half of it stays where you
+   *  fell (with some of your shards), the rest is gone. Knowledge isn't. */
+  onPlayerDeath() {
+    const drop: Give = {};
+    for (const k of Object.keys(supplies) as Res[]) {
+      const half = Math.ceil(supplies[k] / 2);
+      if (half > 0) drop[k] = half;
+      supplies[k] = 0;
+    }
+    const sh = Math.min(15, Math.floor(save.bank * 0.25));
+    if (sh > 0) {
+      drop.shards = sh;
+      save.bank -= sh;
+    }
+    const far = Math.hypot(player.pos.x - CAMP.x, player.pos.z - CAMP.z) > 6;
+    for (const sp of this.spots.filter((q) => q.id === "mine")) if (sp.prop) world.scene.remove(sp.prop);
+    this.spots = this.spots.filter((q) => q.id !== "mine");
+    if (Object.keys(drop).length && far) {
+      this.dropped = drop;
+      this.lastFall = [player.pos.x, player.pos.z];
+      this.addSpot("mine", player.pos.x, player.pos.z, "Pick up your pack", drop, myPack(), Math.random() * 6, 2.0);
+      this.spots[this.spots.length - 1].minor = true;
+    } else this.dropped = null;
+    this.deepHunters.clear();
+    this.renderInv(true);
+  }
+
+  /** The night begins again (you died in it). The world is a little different. */
+  loopNight() {
+    const run = Number(save.flags.run ?? 0) + 1;
+    save.flags.run = String(run);
+    this.phase = "early";
+    this.phaseT = 0;
+    this.chatterT = 45;
+    this.soundT = 14;
+    this.glimpses = 0;
+    this.glimpseOn = false;
+    this.prowler = null;
+    this.leaving.clear();
+    this.storm = { spawned: 0, killed: 0, waveT: 0 };
+    this.fireOutSaid = this.fireWarned = false;
+    for (const k of ["far", "fire", "found", "prowler"]) this.said.delete(k);
+    radio.charge = 1;
+    radio.warned = false;
+    const cf = world.campfire;
+    cf.lit = true; // already burning when you wake. You didn't light it.
+    cf.hp = cf.maxHp;
+    world.setMood("night");
+    world.snapMood();
+    enemies.maxAttackers = 1;
+    enemies.aggression = 1;
+    enemies.retreat = false;
+    this.roll();
+    this.objective();
+    this.renderInv(true);
+    this.onLoop(run);
+  }
+
+  /** How many times the night has begun again (persistent). */
+  get run() {
+    return Number(save.flags.run ?? 0);
+  }
+
+  private deepUpdate(dt: number, stage: string) {
+    const d = Math.hypot(player.pos.x - DEEP.x, player.pos.z - DEEP.z);
+    const inDeep = d < DEEP.r;
+    world.fogExtra += ((inDeep ? 1.4 : 0) - world.fogExtra) * Math.min(1, dt * 0.6);
+    if (inDeep && !this.deepIn && !save.flags.deepWarned && !voice.busy) {
+      save.flags.deepWarned = true;
+      void say(S.DEEP_WARN);
+    }
+    this.deepIn = inDeep;
+    const quiet = ["intro", "wake", "first", "ambush", "ending", "choir", "finale", "done"].includes(stage);
+    for (const e of this.deepHunters) if (!e.alive) this.deepHunters.delete(e);
+    if (inDeep && !quiet && !cine.active) {
+      this.deepT -= dt;
+      if (this.deepT <= 0 && this.deepHunters.size < 2) {
+        this.deepT = this.phase === "deep" || this.phase === "storm" ? 14 : 24;
+        const e = this.spawnStalker(18, 24);
+        if (e) {
+          e.bold = 1.4;
+          this.deepHunters.add(e);
+        }
+      }
+    } else if (d > DEEP.r + 14 && this.deepHunters.size) {
+      // they don't follow you out of their woods
+      for (const e of this.deepHunters) this.leaving.add(e);
+      this.deepHunters.clear();
+    }
+    if (!inDeep) this.deepT = Math.min(this.deepT, 4);
   }
 
   onEnemyDeath(e: Enemy) {
@@ -592,13 +913,33 @@ class Survival {
     }
 
     this.renderInv();
+    if (this.searching) {
+      const sr = this.searching;
+      sr.t -= dt;
+      if (player.hp < sr.hp - 0.5 || state.dead) {
+        // hit while you were rummaging: you let go of it
+        this.searching = null;
+        player.frozen = false;
+      } else if (sr.t <= 0) {
+        this.searching = null;
+        player.frozen = false;
+        if (!sr.s.taken) this.take(sr.s);
+      }
+    }
+    if (state.exited) this.deepUpdate(dt, stage);
     if (this.phase === "off" || cine.active) return;
     this.phaseT += dt;
+
+    // not enough out here: somebody else's lantern on the path (the trading post)
+    if (this.phase === "early" && !this.needSaid && this.phaseT > 40 && !voice.busy && !save.flags.tradeRevealed) {
+      this.needSaid = true;
+      void say(S.SUPPLY_NEED).then(() => this.onNeedSupplies());
+    }
 
     // the fire burns down: slowly, then faster in the wind and rain
     const burn = { off: 0, early: 0.36, deep: 0.42, storm: 0.62, dawn: 0.15, home: 0 }[this.phase];
     if (cf.lit) {
-      cf.hp = Math.max(0, cf.hp - burn * dt);
+      cf.hp = Math.max(0, cf.hp - burn * (up("keeper") ? 0.85 : 1) * dt);
       if (cf.hp / cf.maxHp < 0.25 && !this.fireWarned && !voice.busy) {
         this.fireWarned = true;
         void say(S.FIRE_LOW);
@@ -681,6 +1022,7 @@ class Survival {
         // one of them comes to look; it circles, and maybe it tries you
         this.said.add("prowler");
         this.prowler = this.spawnStalker(24, 30);
+        if (this.prowler) this.onProwler(this.prowler);
       }
       if (this.phaseT > 120) this.to("storm");
     } else if (this.phase === "storm") {

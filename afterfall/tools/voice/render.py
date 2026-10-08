@@ -87,6 +87,8 @@ def cast(l, alt="a"):
         return [(ECHO_VOICES[n % len(ECHO_VOICES)], 0.95, 1)], "tape"
     if i == "INES":
         return [("bf_emma", 1.02, 1)], "dry"
+    if i == "TRADER":
+        return [("bf_lily", 0.9, 1)], "teo"
     if i == "TEO":
         return [("bm_fable", 0.88, 1)], "teo"
     raise ValueError(i)

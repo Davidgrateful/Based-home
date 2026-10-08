@@ -17,7 +17,7 @@
 
 import { collectShard, persist, player, sfx, toast } from "./ctx";
 import { save } from "./save";
-import { supplies, survival } from "./survival";
+import { carryCap, supplies, survival } from "./survival";
 
 // ------------------------------------------------------------------ prices
 /** Shards per item. Not balanced yet: tune here. */
@@ -25,19 +25,38 @@ export const PRICES = {
   medkit: 10,
   food: 5,
   water: 4,
-  fuel: 6,
+  fuel: 9,
+  kindling: 4,
   battery: 4,
   scrap: 3,
+  hone: 22,
+  // rare (the Watch's surplus): expensive, and worth it on a bad night
+  surgery: 18,
+  drum: 20,
+  cells: 10,
 };
-/** How many the table holds (restocked at dawn). */
+/** How many each station holds (restocked at dawn). */
 export const STOCK = {
   medkit: 2,
   food: 3,
   water: 3,
-  fuel: 3,
+  fuel: 2,
+  kindling: 4,
   battery: 2,
   scrap: 3,
+  hone: 1,
+  surgery: 1,
+  drum: 1,
+  cells: 1,
 };
+
+/** Where you can trade, and what's there. Prices at a station are the base
+ *  price times its markup (the Watch is a long way to carry things). */
+export const STATIONS = {
+  post: { name: "The trading post", items: ["medkit", "fuel", "kindling", "food", "water", "battery", "scrap", "hone"], markup: 1 },
+  watch: { name: "Meridian surplus", items: ["surgery", "drum", "cells", "medkit", "scrap"], markup: 1.25 },
+} as const;
+export type StationId = keyof typeof STATIONS;
 
 // ------------------------------------------------------------------ catalog
 /** What kind of thing it is: supplies now; the rest are room to grow. */
@@ -68,7 +87,11 @@ const supply = (id: keyof typeof PRICES, name: string, desc: string, res: "food"
   grant: () => {
     supplies[res]++;
   },
+  available: () => room(res, 1),
 });
+/** Room in the pack for n more? */
+const room = (res: "food" | "water" | "fuel" | "scrap" | "batteries", n: number) =>
+  supplies[res] + n <= carryCap() ? { ok: true } : { ok: false, reason: `You can't carry that much ${res === "batteries" ? "battery" : res}.` };
 
 export const CATALOG: Item[] = [
   {
@@ -82,20 +105,82 @@ export const CATALOG: Item[] = [
       player.medkits++;
     },
   },
-  supply("fuel", "Fuel", "A can's worth. Keeps the fire going a while longer.", "fuel"),
+  {
+    id: "fuel",
+    name: "Fuel can",
+    desc: "Two loads for the fire. Heavy, and worth it.",
+    category: "supply",
+    price: () => PRICES.fuel,
+    owned: () => supplies.fuel,
+    grant: () => {
+      supplies.fuel += 2;
+    },
+    available: () => room("fuel", 2),
+  },
+  supply("kindling", "Kindling", "Dry sticks and bark. One load for the fire.", "fuel"),
   supply("food", "Food", "Tins. Eat by the fire to recover.", "food"),
   supply("water", "Water", "A sealed bottle. Drink by the fire.", "water"),
   supply("battery", "Battery", "Keeps your radio talking.", "batteries"),
   supply("scrap", "Scrap", "Wire, tins, a hinge. Three rigs an alarm line.", "scrap"),
+  {
+    id: "hone",
+    name: "Whetstone and tape",
+    desc: "Put an edge back on the axe, rewrap the grip. It bites a little deeper.",
+    category: "tool",
+    price: () => PRICES.hone,
+    owned: () => (save.flags.axeHoned ? 1 : 0),
+    grant: () => {
+      save.flags.axeHoned = true;
+      player.dmgMul *= 1.12;
+    },
+    available: () => (save.flags.axeHoned ? { ok: false, reason: "Your axe is already honed." } : { ok: true }),
+  },
+  {
+    id: "surgery",
+    name: "Field surgery kit",
+    desc: "Two medkits' worth, sealed. Meridian issue.",
+    category: "supply",
+    price: () => PRICES.surgery,
+    owned: () => player.medkits,
+    grant: () => {
+      player.medkits += 2;
+    },
+  },
+  {
+    id: "drum",
+    name: "Sealed fuel drum",
+    desc: "Four loads for the fire. A whole bad night's worth.",
+    category: "supply",
+    price: () => PRICES.drum,
+    owned: () => supplies.fuel,
+    grant: () => {
+      supplies.fuel += 4;
+    },
+    available: () => room("fuel", 4),
+  },
+  {
+    id: "cells",
+    name: "Radio cells",
+    desc: "Three batteries, still in the wrapper.",
+    category: "supply",
+    price: () => PRICES.cells,
+    owned: () => supplies.batteries,
+    grant: () => {
+      supplies.batteries += 3;
+    },
+    available: () => room("batteries", 3),
+  },
 ];
 
 const stock = new Map<string, number>();
-/** Fill the table again (a new story, and every dawn). */
+/** Fill the stations again (a new story, and every dawn). */
 export function restock() {
-  for (const it of CATALOG) stock.set(it.id, STOCK[it.id as keyof typeof STOCK] ?? Infinity);
+  for (const st of Object.keys(STATIONS) as StationId[]) for (const id of STATIONS[st].items) stock.set(`${st}:${id}`, STOCK[id as keyof typeof STOCK] ?? 1);
 }
 restock();
-export const inStock = (id: string) => stock.get(id) ?? 0;
+export const inStock = (id: string, station: StationId = "post") => stock.get(`${station}:${id}`) ?? 0;
+/** What an item costs at a station. */
+export const priceAt = (item: Item, station: StationId) => Math.round(item.price() * STATIONS[station].markup);
 
 // ------------------------------------------------------------------ earning
 /** Shards for things you do, each with the reason they're there. */
@@ -194,17 +279,17 @@ export interface Quote {
 }
 
 /** CHECK: can this be bought, now, this way? (no side effects) */
-export function quote(id: string, method: Payment["id"] = "shards"): Quote | null {
+export function quote(id: string, method: Payment["id"] = "shards", station: StationId = "post"): Quote | null {
   const item = CATALOG.find((i) => i.id === id);
-  if (!item) return null;
+  if (!item || !(STATIONS[station].items as readonly string[]).includes(id)) return null;
   const pay = PAYMENTS[method];
-  const price = item.price();
+  const price = priceAt(item, station);
   const st = pay.status();
   const av = item.available?.() ?? { ok: true };
   const bal = pay.balance();
   let reason: string | undefined;
   if (!st.ok) reason = st.reason;
-  else if (inStock(id) <= 0) reason = "None left.";
+  else if (inStock(id, station) <= 0) reason = "None left.";
   else if (!av.ok) reason = av.reason;
   else if (bal !== null && bal < price) reason = `You need ${price - bal} more.`;
   return { item, price, pay, ok: !reason, reason };
@@ -214,14 +299,14 @@ export function quote(id: string, method: Payment["id"] = "shards"): Quote | nul
 export const receipts: { id: string; price: number; method: string; ref?: string; at: number }[] = [];
 
 /** CHARGE + GRANT: the confirmed purchase. The UI asks for confirmation first. */
-export async function purchase(id: string, method: Payment["id"] = "shards"): Promise<Receipt> {
-  const q = quote(id, method);
+export async function purchase(id: string, method: Payment["id"] = "shards", station: StationId = "post"): Promise<Receipt> {
+  const q = quote(id, method, station);
   if (!q) return { ok: false, reason: "Unknown item." };
   if (!q.ok) return { ok: false, reason: q.reason };
   const r = await q.pay.charge(q.price, q.item);
   if (!r.ok) return r;
   q.item.grant();
-  stock.set(id, inStock(id) - 1);
+  stock.set(`${station}:${id}`, inStock(id, station) - 1);
   receipts.push({ id, price: q.price, method, ref: r.ref, at: Date.now() });
   save.flags.bought = String(Number(save.flags.bought ?? 0) + 1);
   persist();

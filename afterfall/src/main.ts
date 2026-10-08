@@ -47,12 +47,14 @@ import { PlaneSet } from "./cinesets";
 import { supplies, survival } from "./survival";
 import { CATALOG, earn, PRICES, purchase, quote } from "./economy";
 import { tradingPost } from "./trade";
+import { countKill } from "./progress";
 
 // ------------------------------------------------------------------ hooks
 voice.onLine = (id, radio) => {
   if (radio) sfx.beep();
   castLine(id);
   farlands.onLine(id);
+  tradingPost.onLine(id);
 };
 player.onSwing = () => sfx.swing();
 player.onDash = () => sfx.dash();
@@ -95,6 +97,7 @@ enemies.onDeath = (e) => {
   sfx.kill();
   fx.sparks(e.pos.clone().add(new THREE.Vector3(0, 1, 0)), 20, 6);
   survival.onEnemyDeath(e);
+  if (state.mode === "story" && e.kind !== "thing") countKill();
   // the Hollow carry shards: some of them drop where they fall
   if (state.mode === "story" && e.kind !== "thing" && e.kind !== "warden" && Math.random() < 0.5) world.addShard(e.pos.x, e.pos.z, true);
   storyOnDeath(e);

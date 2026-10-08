@@ -1,9 +1,9 @@
 // Echoes: ghostly recordings of subjects who fell before you.
 
-import { $, card, persist, say, sfx, voice, world } from "./ctx";
+import { $, persist, say, sfx, voice, wait, world } from "./ctx";
 import { buildHumanoid } from "./models";
 import { save } from "./save";
-import { ECHO_FIRST_FIND, ECHOES } from "./script";
+import { ECHO_FIRST_FIND, ECHO_FRAGMENTS, ECHOES } from "./script";
 import type { Ghost } from "./world";
 
 export function spawnEcho(id: number, x: number, z: number) {
@@ -20,6 +20,8 @@ export function unfoundEchoes() {
   return ECHOES.map((e) => e.id).filter((id) => !save.echoes.includes(id) && (id !== 11 || save.echoes.length >= 11));
 }
 
+/** An Echo: the picture slips, one sentence surfaces, a voice, then nothing.
+ *  Not a cutscene. You keep walking. */
 export async function listenEcho(g: Ghost) {
   world.removeGhost(g);
   sfx.ghost();
@@ -30,9 +32,17 @@ export async function listenEcho(g: Ghost) {
     persist();
   }
   const echo = ECHOES[g.echoId];
-  card("ECHO RECOVERED", `PATIENT ${echo.patient}`, `${echoProgress()} echoes found`, 2600);
   $("echo-count").textContent = echoProgress();
+  document.body.classList.remove("echoing");
+  void document.body.offsetWidth;
+  document.body.classList.add("echoing");
+  window.setTimeout(() => document.body.classList.remove("echoing"), 1700);
+  const frag = $("fragment");
+  frag.innerHTML = `${ECHO_FRAGMENTS[g.echoId] ?? ""}<small>Patient ${echo.patient} · ${echoProgress()}</small>`;
+  frag.classList.add("show");
+  window.setTimeout(() => frag.classList.remove("show"), 4200);
   voice.interrupt();
+  await wait(1400);
   if (first) await say(ECHO_FIRST_FIND);
   await say(echo.lines);
 }

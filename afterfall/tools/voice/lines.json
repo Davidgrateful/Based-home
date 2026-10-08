@@ -1236,6 +1236,42 @@
   "from": "DEEP_NIGHT"
  },
  {
+  "key": "RHEA|1|You're in the dark part of the woods. Your signal's going.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "You're in the dark part of the woods. Your signal's going.",
+  "say": "You're in the dark part of the woods. Your signal's going.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DEEP_WARN"
+ },
+ {
+  "key": "YOU|0|There's something out here worth finding.",
+  "id": "YOU",
+  "radio": false,
+  "text": "There's something out here worth finding.",
+  "say": "There's something out here worth finding.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DEEP_WARN"
+ },
+ {
+  "key": "RHEA|1|There's always something out there. Be quick.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "There's always something out there. Be quick.",
+  "say": "There's always something out there. Be quick.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "DEEP_WARN"
+ },
+ {
   "key": "ECHO|0|Patient seven. Day one. They said it was a clinical trial. They said I'd be home by spring.",
   "id": "ECHO",
   "radio": false,
@@ -2304,6 +2340,30 @@
   "from": "LOOP_WAKE"
  },
  {
+  "key": "YOU|0|Somebody's cut a mark into this tree.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Somebody's cut a mark into this tree.",
+  "say": "Somebody's cut a mark into this tree.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "MARKED_TREE"
+ },
+ {
+  "key": "YOU|0|It's fresh.",
+  "id": "YOU",
+  "radio": false,
+  "text": "It's fresh.",
+  "say": "It's fresh.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "MARKED_TREE"
+ },
+ {
   "key": "YOU|0|Wristbands on the stones by the fire. Mine. More of them every time.",
   "id": "YOU",
   "radio": false,
@@ -2700,6 +2760,30 @@
   "from": "NIGHT1_START"
  },
  {
+  "key": "YOU|0|You always say that.",
+  "id": "YOU",
+  "radio": false,
+  "text": "You always say that.",
+  "say": "You always say that.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "NIGHT_AGAIN"
+ },
+ {
+  "key": "RHEA|1|Do I?",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Do I?",
+  "say": "Do I?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "NIGHT_AGAIN"
+ },
+ {
   "key": "RHEA|1|{name}, the rift went wild when the Warden fell. It's spitting Hollow out of the sky, and I can't reach you before dark.",
   "id": "RHEA",
   "radio": true,
@@ -2890,6 +2974,66 @@
   "rate": null,
   "pack": "night",
   "from": "NIGHT_OPENERS"
+ },
+ {
+  "key": "YOU|0|Their fire's lit.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Their fire's lit.",
+  "say": "Their fire's lit.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "OLD_FIRE"
+ },
+ {
+  "key": "RHEA|1|Is that another survivor?",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Is that another survivor?",
+  "say": "Is that another survivor?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "OLD_FIRE"
+ },
+ {
+  "key": "YOU|0|There's nobody here.",
+  "id": "YOU",
+  "radio": false,
+  "text": "There's nobody here.",
+  "say": "There's nobody here.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "OLD_FIRE"
+ },
+ {
+  "key": "YOU|0|That's my pack.",
+  "id": "YOU",
+  "radio": false,
+  "text": "That's my pack.",
+  "say": "That's my pack.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "PACK_FOUND"
+ },
+ {
+  "key": "YOU|0|I don't remember putting it down.",
+  "id": "YOU",
+  "radio": false,
+  "text": "I don't remember putting it down.",
+  "say": "I don't remember putting it down.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "PACK_FOUND"
  },
  {
   "key": "RHEA|1|It worked, the signal jumped! And there's something riding underneath it. Voices.",
@@ -3214,6 +3358,18 @@
   "rate": null,
   "pack": "intro",
   "from": "RADIO_FOUND"
+ },
+ {
+  "key": "YOU|0|A Meridian crate. Somebody dropped this out here on purpose.",
+  "id": "YOU",
+  "radio": false,
+  "text": "A Meridian crate. Somebody dropped this out here on purpose.",
+  "say": "A Meridian crate. Somebody dropped this out here on purpose.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "RARE_FOUND"
  },
  {
   "key": "YOU|0|Rhea. There's a record for me.",
@@ -3684,6 +3840,90 @@
   "from": "STORM_START"
  },
  {
+  "key": "RHEA|1|The storm's coming in again. It only ever starts when you wake up.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "The storm's coming in again. It only ever starts when you wake up.",
+  "say": "The storm's coming in again. It only ever starts when you wake up.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "STORM_WAKE"
+ },
+ {
+  "key": "YOU|0|When I wake up?",
+  "id": "YOU",
+  "radio": false,
+  "text": "When I wake up?",
+  "say": "When I wake up?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "STORM_WAKE"
+ },
+ {
+  "key": "RHEA|1|That isn't what I meant.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "That isn't what I meant.",
+  "say": "That isn't what I meant.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "STORM_WAKE"
+ },
+ {
+  "key": "YOU|0|I need more than what's lying around. Fuel. Medicine.",
+  "id": "YOU",
+  "radio": false,
+  "text": "I need more than what's lying around. Fuel. Medicine.",
+  "say": "I need more than what's lying around. Fuel. Medicine.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "SUPPLY_NEED"
+ },
+ {
+  "key": "RHEA|1|There's a light on the path toward the old camp. A lantern. It isn't mine.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "There's a light on the path toward the old camp. A lantern. It isn't mine.",
+  "say": "There's a light on the path toward the old camp. A lantern. It isn't mine.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "SUPPLY_NEED"
+ },
+ {
+  "key": "YOU|0|Somebody else is out here?",
+  "id": "YOU",
+  "radio": false,
+  "text": "Somebody else is out here?",
+  "say": "Somebody else is out here?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "SUPPLY_NEED"
+ },
+ {
+  "key": "YOU|0|Meridian surplus. Somebody's chalked prices on the lids.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Meridian surplus. Somebody's chalked prices on the lids.",
+  "say": "Meridian surplus. Somebody's chalked prices on the lids.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "SURPLUS_FIRST"
+ },
+ {
   "key": "YOU|0|Fire axe. Okay. Okay, I can do fire axe.",
   "id": "YOU",
   "radio": false,
@@ -3756,11 +3996,59 @@
   "from": "THING_FIRST"
  },
  {
-  "key": "YOU|0|Somebody's set up a table out here. Medkits. Fuel. Prices, in shards.",
+  "key": "TRADER|0|Watch my hands. I'll only do it once.",
+  "id": "TRADER",
+  "radio": false,
+  "text": "Watch my hands. I'll only do it once.",
+  "say": "Watch my hands. I'll only do it once.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADER_TEACH"
+ },
+ {
+  "key": "TRADER|0|Fair.",
+  "id": "TRADER",
+  "radio": false,
+  "text": "Fair.",
+  "say": "Fair.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADER_THANKS"
+ },
+ {
+  "key": "TRADER|0|That'll keep you a while.",
+  "id": "TRADER",
+  "radio": false,
+  "text": "That'll keep you a while.",
+  "say": "That'll keep you a while.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADER_THANKS"
+ },
+ {
+  "key": "TRADER|0|Spend it before it spends you.",
+  "id": "TRADER",
+  "radio": false,
+  "text": "Spend it before it spends you.",
+  "say": "Spend it before it spends you.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADER_THANKS"
+ },
+ {
+  "key": "YOU|0|There's someone at that table.",
   "id": "YOU",
   "radio": false,
-  "text": "Somebody's set up a table out here. Medkits. Fuel. Prices, in shards.",
-  "say": "Somebody's set up a table out here. Medkits. Fuel. Prices, in shards.",
+  "text": "There's someone at that table.",
+  "say": "There's someone at that table.",
   "name": "",
   "pitch": null,
   "rate": null,
@@ -3768,11 +4056,11 @@
   "from": "TRADE_FIRST"
  },
  {
-  "key": "RHEA|1|People out there trade in those?",
-  "id": "RHEA",
-  "radio": true,
-  "text": "People out there trade in those?",
-  "say": "People out there trade in those?",
+  "key": "TRADER|0|Sit if you want. Pay for what you touch.",
+  "id": "TRADER",
+  "radio": false,
+  "text": "Sit if you want. Pay for what you touch.",
+  "say": "Sit if you want. Pay for what you touch.",
   "name": "",
   "pitch": null,
   "rate": null,
@@ -3780,11 +4068,11 @@
   "from": "TRADE_FIRST"
  },
  {
-  "key": "YOU|0|There's a tin for the money. And a note. Take what you need. Leave what it's worth.",
+  "key": "YOU|0|Pay with what?",
   "id": "YOU",
   "radio": false,
-  "text": "There's a tin for the money. And a note. Take what you need. Leave what it's worth.",
-  "say": "There's a tin for the money. And a note. Take what you need. Leave what it's worth.",
+  "text": "Pay with what?",
+  "say": "Pay with what?",
   "name": "",
   "pitch": null,
   "rate": null,
@@ -3792,11 +4080,47 @@
   "from": "TRADE_FIRST"
  },
  {
-  "key": "RHEA|1|Then leave what it's worth.",
+  "key": "TRADER|0|Shards. Same as everyone.",
+  "id": "TRADER",
+  "radio": false,
+  "text": "Shards. Same as everyone.",
+  "say": "Shards. Same as everyone.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADE_FIRST"
+ },
+ {
+  "key": "RHEA|1|Who's that with you?",
   "id": "RHEA",
   "radio": true,
-  "text": "Then leave what it's worth.",
-  "say": "Then leave what it's worth.",
+  "text": "Who's that with you?",
+  "say": "Who's that with you?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADE_FIRST"
+ },
+ {
+  "key": "YOU|0|Somebody selling medkits.",
+  "id": "YOU",
+  "radio": false,
+  "text": "Somebody selling medkits.",
+  "say": "Somebody selling medkits.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "TRADE_FIRST"
+ },
+ {
+  "key": "RHEA|1|Then buy one.",
+  "id": "RHEA",
+  "radio": true,
+  "text": "Then buy one.",
+  "say": "Then buy one.",
   "name": "",
   "pitch": null,
   "rate": null,
@@ -4042,6 +4366,30 @@
   "rate": null,
   "pack": "story",
   "from": "WARDEN_SUMMON"
+ },
+ {
+  "key": "HOLLOW|0|And one.",
+  "id": "HOLLOW",
+  "radio": false,
+  "text": "And one.",
+  "say": "And one.",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "WATCHER"
+ },
+ {
+  "key": "YOU|0|Who's there?",
+  "id": "YOU",
+  "radio": false,
+  "text": "Who's there?",
+  "say": "Who's there?",
+  "name": "",
+  "pitch": null,
+  "rate": null,
+  "pack": "intro",
+  "from": "WHO_THERE"
  },
  {
   "key": "YOU|0|Wristbands. Hundreds of them, nailed up in rows.",

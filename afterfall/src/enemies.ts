@@ -103,6 +103,8 @@ export class Enemy {
   murmurT = 2 + Math.random() * 4;
   /** how quickly this one works itself up (the first Hollow is bolder) */
   bold = 1;
+  /** how far off it likes to keep (0: the usual few metres) */
+  keepOff = 0;
 
   constructor(kind: EnemyKind, at: THREE.Vector3, o: SpawnOpts) {
     this.kind = kind;
@@ -711,7 +713,7 @@ export class EnemyManager {
 
     // circle: the edge of the light if you're in it, else a few metres off you
     const c = playerInLight && fear ? fear.pos : player.pos;
-    const ringR = playerInLight && fear ? fear.r + 1.5 : 6.5 + (e.id % 3);
+    const ringR = Math.max(e.keepOff, playerInLight && fear ? fear.r + 1.5 : 6.5 + (e.id % 3));
     const dc = Math.hypot(e.pos.x - c.x, e.pos.z - c.z);
     const radial = dc - ringR;
     const out = Math.atan2(e.pos.x - c.x, e.pos.z - c.z);
