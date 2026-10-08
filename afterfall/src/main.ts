@@ -406,6 +406,7 @@ function updateMarker() {
     x *= s;
     y *= s;
   }
+  y = Math.max(y, -0.62); // pinned to the edge, never over the vitals at the bottom
   hud.marker.style.left = `${((x + 1) / 2) * innerWidth}px`;
   hud.marker.style.top = `${((1 - y) / 2) * innerHeight}px`;
   hud.markerDist.textContent = `${Math.round(Math.hypot(t.x - player.pos.x, t.z - player.pos.z))} m`;
