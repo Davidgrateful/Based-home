@@ -31,6 +31,8 @@ interface Piece {
   id: CampId;
   /** prompt verb when you can build it */
   verb: string;
+  /** what it becomes (shown with what it still needs) */
+  name: string;
   /** what it is, when you can't yet */
   noun: string;
   /** offset from the fire (x: west, z: north) and facing */
@@ -47,10 +49,11 @@ const PAST_FIRST = ["ch2", "pylons", "boss", "ending", "changed", "settlement", 
 const evidenceCount = () => Object.keys(save.flags).filter((k) => k.startsWith("ev:")).length;
 
 const PIECES: Piece[] = [
-  { id: "pit", verb: "Build up the fire pit", noun: "A heap of flat stones", at: [0.3, -2.1, 0.4], cost: { scrap: 2 }, gate: () => null },
-  { id: "storage", verb: "Make a store", noun: "Two broken pallets", at: [-3.7, 3.3, -0.6], cost: { scrap: 3, shards: 6 }, gate: () => null },
+  { id: "pit", name: "Fire pit", verb: "Build up the fire pit", noun: "A heap of flat stones", at: [-0.9, -2.9, 0.4], cost: { scrap: 2 }, gate: () => null },
+  { id: "storage", name: "Store", verb: "Make a store", noun: "Two broken pallets", at: [-3.7, 3.3, -0.6], cost: { scrap: 3, shards: 6 }, gate: () => null },
   {
     id: "shelter",
+    name: "Shelter",
     verb: "Put up a shelter",
     noun: "A rolled tarp and poles",
     at: [3.7, 3.1, 0.55],
@@ -59,6 +62,7 @@ const PIECES: Piece[] = [
   },
   {
     id: "medic",
+    name: "Medical station",
     verb: "Set up a medical station",
     noun: "A dented Meridian case",
     at: [3.9, -1.5, 1.2],
@@ -67,6 +71,7 @@ const PIECES: Piece[] = [
   },
   {
     id: "radio",
+    name: "Radio",
     verb: "Rebuild the radio",
     noun: "An empty crate",
     at: [-4.1, -0.3, -1.3],
@@ -75,6 +80,7 @@ const PIECES: Piece[] = [
   },
   {
     id: "table",
+    name: "Map table",
     verb: "Make a map table",
     noun: "A door off the wreck",
     at: [0.6, 4.6, 0.1],
@@ -241,7 +247,7 @@ function make(id: CampId): THREE.Group {
       g.add(tri);
       // split wood stacked where the stone heap was
       const wood = new THREE.Group();
-      wood.position.set(0.3, 0, -2.1);
+      wood.position.set(-0.9, 0, -2.9);
       wood.rotation.y = 0.4;
       g.add(wood);
       for (let i = 0; i < 7; i++) wood.add(mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.7, 6), i % 2 ? WOOD : DARK, (i % 4) * 0.15 - 0.22, 0.07 + Math.floor(i / 4) * 0.13, 0, 0, 0, Math.PI / 2));
@@ -361,6 +367,28 @@ function make(id: CampId): THREE.Group {
   return g;
 }
 
+/** Lived in: what piles up around a fire you keep coming back to (not built: it accrues). */
+function livedIn(level: 1 | 2) {
+  const g = new THREE.Group();
+  if (level === 1) {
+    // split wood, stacked against a stump; a bottle by the log; a tin cup
+    for (let i = 0; i < 9; i++) g.add(mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.6, 6), i % 3 ? WOOD : DARK, 2.0 + (i % 3) * 0.13, 0.07 + Math.floor(i / 3) * 0.12, 2.9, 0, 0.1, Math.PI / 2));
+    g.add(mesh(new THREE.CylinderGeometry(0.22, 0.25, 0.4, 9), DARK, 2.0, 0.2, 3.35));
+    g.add(mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 8), mat(0x6e8796, 0.25, 0, { transparent: true, opacity: 0.85 }), -2.1, 0.11, 1.9));
+    g.add(mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.08, 10), METAL, -1.8, 0.04, 1.95));
+  } else {
+    // a line between two stakes, a shirt and socks drying on it; empty tins in a pile
+    for (const x of [-3.0, -0.6]) g.add(mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.5, 5), DARK, x, 0.75, -3.9));
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3.0, 1.42, -3.9), new THREE.Vector3(-1.8, 1.3, -3.9), new THREE.Vector3(-0.6, 1.42, -3.9)]), new THREE.LineBasicMaterial({ color: 0x8a8270 })));
+    const shirt = sheet(0.5, 0.55, 0.03, mat(0x3a4a5a, 1, 0, { side: THREE.DoubleSide }));
+    shirt.position.set(-2.1, 1.05, -3.9);
+    g.add(shirt);
+    for (const x of [-1.35, -1.15]) g.add(mesh(new THREE.PlaneGeometry(0.1, 0.28), CLOTH, x, 1.16, -3.9));
+    for (let i = 0; i < 5; i++) g.add(mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1, 10), mat(0x8a8470, 0.5, 0.6), 3.0 + Math.sin(i * 2.4) * 0.2, 0.05, -3.2 + Math.cos(i * 1.7) * 0.2, i === 2 ? Math.PI / 2 : 0, 0, 0));
+  }
+  return g;
+}
+
 const COLL: Record<CampId, number> = { pit: 0.45, storage: 0.9, shelter: 0, medic: 0.45, radio: 0.4, table: 0.6 };
 
 interface Slot {
@@ -381,6 +409,7 @@ class Camp {
   private medCd = 0;
   private radioCd = 0;
   private stage = "";
+  private lived: THREE.Group[] = [];
 
   build() {
     try {
@@ -400,6 +429,14 @@ class Camp {
       this.slots.push(s);
       if (built(p.id)) this.finish(s, true);
       // the medical case only turns up once there's a reason to open it
+    }
+    for (const lv of [1, 2] as const) {
+      const g = livedIn(lv);
+      g.position.set(CAMP.x, CAMP.y, CAMP.z);
+      g.visible = false;
+      g.traverse((m) => ((m as THREE.Mesh).isMesh && ((m.castShadow = !LOW), (m.receiveShadow = true))));
+      world.scene.add(g);
+      this.lived.push(g);
     }
     this.shadows();
   }
@@ -488,16 +525,18 @@ class Camp {
   interacts(stage: string): Interact[] {
     this.stage = stage;
     const list: Interact[] = [];
+    // the fire's story comes first: nothing to build until the first night
+    const early = ["intro", "wake", "outside", "signs", "fire", "records", "first"].includes(stage);
     for (const s of this.slots) {
-      if (s.done) continue;
+      if (s.done || early) continue;
       if (s.p.id === "medic" && evidenceCount() < 1) continue; // not lying there yet
       list.push({
         pos: () => s.pos,
-        r: 1.9,
+        r: 1.5,
         label: () => {
           if (s.p.gate(stage)) return `${s.p.noun}`;
           const miss = this.short(s.p.cost);
-          return miss ? `${s.p.noun} <span class="dim">needs ${this.costText(s.p.cost)}</span>` : `${s.p.verb} <span class="dim">${this.costText(s.p.cost)}</span>`;
+          return miss ? `${s.p.name} <span class="dim">needs ${this.costText(s.p.cost)}</span>` : `${s.p.verb} <span class="dim">${this.costText(s.p.cost)}</span>`;
         },
         when: () => !player.frozen,
         run: () => void this.raise(s),
@@ -599,6 +638,9 @@ class Camp {
   private evSeen = -1;
 
   update(dt: number) {
+    // a night survived, then a chapter gone by: it looks more and more like somebody lives here
+    this.lived[0].visible = !!save.flags["rw:firstNight"] || PAST_FIRST.includes(this.stage);
+    this.lived[1].visible = PAST_FIRST.includes(this.stage) && this.stage !== "ch2";
     const ev = evidenceCount();
     if (ev !== this.evSeen) {
       this.evSeen = ev;

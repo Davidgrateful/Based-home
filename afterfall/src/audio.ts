@@ -113,6 +113,17 @@ export class Sfx {
   dash() { this.noise(0.25, 900, 0.5, 0.4, "highpass"); }
   heal() { this.tone(440, 0.4, 0.2, "sine", 880); }
   beep() { this.tone(1000, 0.08, 0.15, "square"); }
+  /** One footfall: dirt and needles outdoors, a hollow knock on the ambulance floor. */
+  footstep(speed: number, metal = false) {
+    const g = Math.min(1, 0.55 + speed * 0.07);
+    if (metal) {
+      this.tone(95 + Math.random() * 20, 0.07, 0.07 * g, "triangle", 60);
+      this.noise(0.05, 1400, 1.2, 0.03 * g, "bandpass");
+      return;
+    }
+    this.noise(0.09 + Math.random() * 0.03, 320 + Math.random() * 160, 0.8, 0.09 * g, "lowpass");
+    this.noise(0.05, 2200 + Math.random() * 1200, 1.5, 0.025 * g, "bandpass", 0.015); // needles, grit
+  }
   /** A carrier on the radio: two short pips, then nothing (Chapter II's signal). */
   signal(gain = 0.1, pitch = 1) {
     this.tone(1480 * pitch, 0.06, gain, "sine");

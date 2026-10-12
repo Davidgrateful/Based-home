@@ -53,7 +53,12 @@ function printTex() {
   c.width = 64;
   c.height = 128;
   const g = c.getContext("2d")!;
-  g.fillStyle = "rgba(20,16,12,0.78)";
+  // the soil pushed up round the edge catches what light there is
+  g.fillStyle = "rgba(150,132,108,0.28)";
+  g.beginPath();
+  g.ellipse(31, 72, 22, 52, 0.04, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = "rgba(14,11,8,0.9)";
   // a bare foot, a little too long: heel, sole, five toes pressed deep
   g.beginPath();
   g.ellipse(32, 98, 13, 20, 0, 0, Math.PI * 2);
@@ -93,7 +98,7 @@ function buildPrints() {
   // then away, toward the Blackwood
   for (let i = 0; i < TRAIL.length - 1; i++) step(TRAIL[i][0], TRAIL[i][1], TRAIL[i + 1][0], TRAIL[i + 1][1], ph);
   const m = new THREE.InstancedMesh(
-    new THREE.PlaneGeometry(0.16, 0.34),
+    new THREE.PlaneGeometry(0.2, 0.4),
     new THREE.MeshStandardMaterial({ map: printTex(), transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 }),
     spots.length,
   );
@@ -365,6 +370,7 @@ class ChapterTwo {
     this.herd = [];
     this.follower = null;
     this.herdT = -1;
+    if (this.phase === "lost" || this.phase === "echo" || this.phase === "camera") return; // a scene already running finishes itself
     this.to(seen("echo") ? (seen("lost") ? "signal" : "return") : "tracks");
     if (this.phase === "tracks") this.recognized = deaths >= 1;
   }
@@ -546,20 +552,21 @@ class ChapterTwo {
     cine.shot(key(eye, look), key(eye.clone().addScaledVector(side, -1.2), look), 30);
     await wait(1200);
     await cine.say(S.CH2_ECHO);
-    // it gets up, looks your way, and walks off into the trees
-    h.root.scale.set(1, 1, 1);
-    const away = new THREE.Vector3(ECHO2.x - 9, 0, ECHO2.z + 7);
-    h.root.rotation.y = Math.atan2(player.pos.x - seat.x, player.pos.z - seat.z);
-    await wait(1400);
-    h.root.rotation.y = Math.atan2(away.x - seat.x, away.z - seat.z);
+    // it straightens, turns its head your way, and comes apart where it sits
+    h.root.scale.set(1, 0.86, 1);
+    const turn0 = h.root.rotation.y;
+    const turn1 = Math.atan2(player.pos.x - seat.x, player.pos.z - seat.z);
     let k = 0;
     cine.onTick = (dt) => {
-      k = Math.min(1, k + dt / 4);
-      h.root.position.lerpVectors(seat, away, k);
-      h.root.position.y = heightAt(h.root.position.x, h.root.position.z);
-      gm.opacity = 0.42 * (1 - k) * (0.85 + Math.random() * 0.15);
+      k = Math.min(1, k + dt / 3.4);
+      h.root.rotation.y = turn0 + (turn1 - turn0) * Math.min(1, k * 2.5);
+      const out = Math.max(0, (k - 0.45) / 0.55);
+      // flickers, then less of it each time it comes back
+      gm.opacity = Math.random() < out * 0.6 ? 0 : 0.42 * (1 - out) * (0.85 + Math.random() * 0.15);
+      h.root.position.x = seat.x + (Math.random() < out * 0.2 ? (Math.random() - 0.5) * 0.3 : 0);
     };
-    await wait(4000);
+    sfx.ghost();
+    await wait(3400);
     cine.onTick = undefined;
     world.scene.remove(h.root);
     world.scene.remove(ghostFire.group);

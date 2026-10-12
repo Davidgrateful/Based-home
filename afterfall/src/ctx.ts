@@ -49,6 +49,7 @@ export const input = new Input(canvas);
 input.touch = TOUCH;
 export const player = new Player(scene);
 player.cameraBlockers = world.cameraBlockers;
+player.camAvoid = (p) => p.x > AMBULANCE.minX - 0.2 && p.x < AMBULANCE.maxX + 0.2 && p.z > AMBULANCE.minZ - 0.2 && p.z < AMBULANCE.maxZ + 0.35 && p.y < 3.1;
 export const enemies = new EnemyManager(scene, world.colliders);
 export const voice = new Voice();
 export const sfx = new Sfx();
@@ -251,7 +252,13 @@ export function runInteractions(list: Interact[]) {
   if (near) {
     const label = typeof near.label === "function" ? near.label() : near.label;
     hud.prompt.innerHTML = `<kbd>E</kbd> ${label}`;
-    if (input.tap("KeyE")) near.run();
+    if (input.tap("KeyE")) {
+      near.run();
+      // a beat of acknowledgement: the prompt dips
+      hud.prompt.classList.remove("did");
+      void hud.prompt.offsetWidth;
+      hud.prompt.classList.add("did");
+    }
   }
 }
 

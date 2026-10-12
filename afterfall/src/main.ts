@@ -52,6 +52,7 @@ import { tradingPost } from "./trade";
 import { countKill } from "./progress";
 
 // ------------------------------------------------------------------ hooks
+player.onStep = (speed) => sfx.footstep(speed, !state.exited && state.mode === "story");
 voice.onLine = (id, radio) => {
   if (radio) sfx.beep();
   castLine(id);
@@ -85,7 +86,10 @@ enemies.onHit = (e, _dmg, heavy) => {
   const at = e.pos.clone().add(new THREE.Vector3(0, 1.4 * e.scale, 0));
   fx.sparks(at, heavy ? 18 : 9, heavy ? 7 : 5);
   sfx.hit(heavy);
-  if (!state.remoteSwing) state.hitStop = heavy ? 0.08 : 0.045;
+  if (!state.remoteSwing) {
+    state.hitStop = heavy ? 0.08 : 0.045;
+    player.shake = Math.max(player.shake, heavy ? 0.16 : 0.07); // the axe lands: you feel it
+  }
 };
 enemies.onSlam = (e) => {
   sfx.slam();

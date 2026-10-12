@@ -320,6 +320,7 @@ async function goOutside() {
 
 async function beaconFound() {
   story.stage = "signs";
+  world.beaconSpent = true; // it said what it had to say
   signStep = -1; // nothing triggers until the recording is done
   checkpoint = BEACON.clone().add(new THREE.Vector3(3, 0, -4));
   setObjective("I · THE FALL", "Listen.");
@@ -1172,6 +1173,7 @@ export function storySkip(to: Stage) {
   story.stage = to;
   // past the registry you know what you are
   if (!["intro", "wake", "outside", "signs", "fire", "records"].includes(to)) setDesignation(2, true);
+  world.beaconSpent = !["intro", "wake", "outside"].includes(to);
   if (to === "outside") player.pos.set(0, 0, 6);
   if (["signs", "fire"].includes(to)) world.setCampfire(false);
   if (to === "signs") {
@@ -1240,7 +1242,11 @@ export function resumeStory(ch: Stage) {
   markRegion("fallsite");
   storySkip(ch);
   world.setCampfire(true);
-  if (ch === "pylons") player.pos.set(4, 0, 6);
+  if (ch === "pylons") {
+    // back at the fire, facing north toward the towers
+    player.pos.set(CAMP.x + 0.5, 0, CAMP.z + 3.2);
+    player.yaw = 0;
+  }
 }
 
 export const CHAPTER_NAMES: Record<string, string> = {

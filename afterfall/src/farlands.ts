@@ -198,9 +198,25 @@ export class Farlands {
     const lampList: THREE.Sprite[] = [];
     for (const dz of [-2.2, 2.2]) {
       const lamp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xffb060, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending }));
-      lamp.position.copy(at(S.x + 17.5, S.z + dz, 2.6));
-      lamp.scale.setScalar(1.2);
+      lamp.position.copy(at(S.x + 17.5, S.z + dz, 2.25));
+      lamp.scale.setScalar(0.6); // a halo round a real lantern, not a light hanging in the air
+      lamp.material.opacity = 0.5;
       scene.add(lamp);
+      // the lantern itself, hung from a post with a crossbar
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 2.8, 6), std(0x3a2f26, { roughness: 1 }));
+      post.position.copy(at(S.x + 17.9, S.z + dz, 1.4));
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.05), std(0x3a2f26, { roughness: 1 }));
+      arm.position.copy(at(S.x + 17.7, S.z + dz, 2.7));
+      const body = new THREE.Group();
+      body.add(new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.04, 10), std(0x2a2522, { roughness: 0.6, metalness: 0.6 })));
+      const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.17, 10), std(0x2a1f10, { roughness: 0.3, emissive: 0xffb860, emissiveIntensity: 1.6 }));
+      glass.position.y = 0.1;
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.07, 10), std(0x2a2522, { roughness: 0.6, metalness: 0.6 }));
+      cap.position.y = 0.22;
+      body.add(glass, cap);
+      body.position.copy(at(S.x + 17.5, S.z + dz, 2.15));
+      lamp.userData.glass = glass.material; // dark until somebody lives here
+      scene.add(post, arm, body);
       lampList.push(lamp);
     }
 
@@ -427,7 +443,10 @@ export class Farlands {
     this.live = on;
     for (const n of this.npcs) n.h.root.visible = on;
     this.settleFire.lit = on;
-    for (const l of this.lamps) l.visible = on;
+    for (const l of this.lamps) {
+      l.visible = on;
+      (l.userData.glass as THREE.MeshStandardMaterial).emissiveIntensity = on ? 1.6 : 0;
+    }
     this.barricade.visible = !on;
     const cols = this.world.colliders;
     for (const c of this.gateCollider) {

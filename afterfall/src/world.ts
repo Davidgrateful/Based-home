@@ -313,6 +313,8 @@ export class World {
   roofLights: THREE.MeshStandardMaterial[] = [];
   fires: { light: THREE.PointLight; fire: Fire; base: number }[] = [];
   beaconLight: THREE.PointLight;
+  /** played: the black box's light has gone out */
+  beaconSpent = false;
   beaconMat: THREE.MeshStandardMaterial;
   rift: THREE.Mesh;
   riftMat: THREE.ShaderMaterial;
@@ -2458,8 +2460,8 @@ export class World {
 
     // ambulance
     this.doorsOpen += (this.doorsTarget - this.doorsOpen) * Math.min(1, dt * 3);
-    this.doorL.rotation.y = -this.doorsOpen * 1.9;
-    this.doorR.rotation.y = this.doorsOpen * 1.9;
+    this.doorL.rotation.y = -this.doorsOpen * 4.62; // 270°: folded flat against the sides, like real ambulance doors
+    this.doorR.rotation.y = this.doorsOpen * 4.62;
     const flick = Math.sin(t * 23) * Math.sin(t * 7.3) > 0.2 ? 0.25 : 1;
     this.interiorLight.intensity = 3.2 * flick;
     this.roofLights[0].emissiveIntensity = Math.sin(t * 8) > 0 ? 3 : 0.1;
@@ -2471,8 +2473,9 @@ export class World {
     this.stationLamp.intensity = this.stationDark ? 0 : 6 + Math.max(0, Math.sin(t * 2.4)) * 18;
     this.stationFlicker.emissiveIntensity = Math.random() < 0.08 ? 0.1 : Math.sin(t * 31) > -0.6 ? 1.6 : 0.3;
     this.lookoutWin.emissiveIntensity = this.stationFlicker.emissiveIntensity * 0.35;
-    this.beaconMat.emissiveIntensity = Math.sin(t * 5) > 0 ? 3 : 0.2;
-    this.beaconLight.intensity = Math.sin(t * 5) > 0 ? 5 : 0.3;
+    const blink = !this.beaconSpent && Math.sin(t * 5) > 0;
+    this.beaconMat.emissiveIntensity = blink ? 3 : this.beaconSpent ? 0.05 : 0.2;
+    this.beaconLight.intensity = blink ? 5 : this.beaconSpent ? 0 : 0.3;
 
     if (this.shards.some((s) => s.dynamic && s.taken)) {
       for (const s of this.shards) if (s.dynamic && s.taken) this.scene.remove(s.mesh);

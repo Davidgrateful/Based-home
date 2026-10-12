@@ -107,23 +107,116 @@ export function buildDiscoveries() {
   // 4. A burned truck, the doors chained from outside.
   {
     const g = new THREE.Group();
-    const black = mat(0x1c1a18, 1, 0.3);
-    const rust = mat(0x4a2c1c, 0.95, 0.4);
-    const cab = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.5, 1.7), black);
-    cab.position.set(1.6, 1.05, 0);
-    const box = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.9, 2.0), rust);
-    box.position.set(-1.2, 1.25, 0);
-    g.add(cab, box);
-    for (const [x, z] of [[1.9, 0.9], [1.9, -0.9], [-2.2, 1.0], [-2.2, -1.0]] as const) {
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.06, 6, 12), black);
-      rim.position.set(x, 0.32, z);
-      g.add(rim);
+    const soot = mat(0x161412, 1, 0.25);
+    const steel = mat(0x2a2624, 0.8, 0.5);
+    const scorch = (() => {
+      // the box's sides: paint burned back to primer and rust, soot climbing from below
+      const c = document.createElement("canvas");
+      c.width = 256;
+      c.height = 128;
+      const q = c.getContext("2d")!;
+      q.fillStyle = "#6a3a24";
+      q.fillRect(0, 0, 256, 128);
+      for (let i = 0; i < 260; i++) {
+        q.fillStyle = `rgba(${30 + Math.random() * 60},${18 + Math.random() * 30},${10 + Math.random() * 20},${0.25 + Math.random() * 0.4})`;
+        q.fillRect(Math.random() * 256, Math.random() * 128, 2 + Math.random() * 18, 1 + Math.random() * 6);
+      }
+      const gr = q.createLinearGradient(0, 128, 0, 0);
+      gr.addColorStop(0, "rgba(10,8,7,0.95)");
+      gr.addColorStop(0.55, "rgba(10,8,7,0.55)");
+      gr.addColorStop(1, "rgba(10,8,7,0.1)");
+      q.fillStyle = gr;
+      q.fillRect(0, 0, 256, 128);
+      q.strokeStyle = "rgba(0,0,0,0.35)";
+      for (let x = 8; x < 256; x += 12) {
+        q.beginPath();
+        q.moveTo(x, 0);
+        q.lineTo(x, 128);
+        q.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return mat(0xffffff, 0.95, 0.35, { map: t });
+    })();
+    // chassis rails, sagging at the front where the tyres burned away
+    for (const z of [-0.55, 0.55]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.18, 0.12), steel);
+      rail.position.set(-0.1, 0.5, z);
+      g.add(rail);
     }
-    const chain = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 5, 10), mat(0x6a6a66, 0.5, 0.8));
-    chain.position.set(-3.02, 1.2, 0);
-    chain.rotation.y = Math.PI / 2;
-    g.add(chain);
-    place(g, 44, 46, 2.3, -0.15).rotation.z = 0.05;
+    // the cab, in profile: bumper, bonnet, windscreen, roof, back wall
+    const prof = new THREE.Shape();
+    prof.moveTo(0, 0);
+    prof.lineTo(1.75, 0);
+    prof.lineTo(1.8, 0.75);
+    prof.lineTo(1.25, 0.95);
+    prof.lineTo(0.95, 1.65);
+    prof.lineTo(0.05, 1.7);
+    prof.lineTo(0, 0);
+    const cabGeo = new THREE.ExtrudeGeometry(prof, { depth: 1.9, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2 });
+    cabGeo.translate(0, 0, -0.95);
+    const cab = new THREE.Mesh(cabGeo, soot);
+    cab.position.set(1.15, 0.55, 0);
+    g.add(cab);
+    // empty window frames, blackened inside
+    const hole = mat(0x050505, 1);
+    const ws = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 1.6), hole);
+    ws.position.set(1.15 + 1.11, 0.55 + 1.31, 0);
+    ws.rotation.set(0, Math.PI / 2, -0.4);
+    g.add(ws);
+    for (const sd of [-1, 1]) {
+      const side = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.55), hole);
+      side.position.set(1.15 + 0.52, 0.55 + 1.3, sd * 1.0);
+      side.rotation.y = sd > 0 ? 0 : Math.PI;
+      g.add(side);
+    }
+    // the box: ribbed sides, a roof that's started to buckle
+    const box = new THREE.Mesh(new THREE.BoxGeometry(3.9, 2.0, 2.1), [scorch, scorch, soot, soot, scorch, scorch]);
+    box.position.set(-1.0, 1.65, 0);
+    g.add(box);
+    const roof = new THREE.Mesh(new THREE.PlaneGeometry(3.9, 2.1, 6, 3), soot);
+    const rp = roof.geometry.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < rp.count; i++) rp.setZ(i, -Math.max(0, 1 - Math.abs(rp.getX(i) + 0.4) / 1.4) * 0.22);
+    roof.geometry.computeVertexNormals();
+    roof.rotation.x = -Math.PI / 2;
+    roof.position.set(-1.0, 2.66, 0);
+    g.add(roof);
+    // rear doors, a chain through the handles, padlocked
+    for (const sd of [-1, 1]) {
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.85, 1.0), soot);
+      door.position.set(-2.97, 1.65, sd * 0.52);
+      g.add(door);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.7, 6), steel);
+      bar.position.set(-3.0, 1.62, sd * 0.12);
+      g.add(bar);
+    }
+    const chainMat = mat(0x8a8a84, 0.45, 0.85);
+    for (let i = 0; i < 7; i++) {
+      const link = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.011, 5, 10), chainMat);
+      link.position.set(-3.03, 1.35 + Math.sin(i * 0.9) * 0.03, -0.18 + i * 0.06);
+      link.rotation.set(i % 2 ? Math.PI / 2 : 0, Math.PI / 2, 0);
+      g.add(link);
+    }
+    const lock = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.08, 0.06), mat(0x6a5a3a, 0.4, 0.8));
+    lock.position.set(-3.05, 1.24, 0.24);
+    g.add(lock);
+    // bare rims, the rubber long gone
+    for (const [x, z] of [[2.2, 1.0], [2.2, -1.0], [-1.9, 1.0], [-1.9, -1.0], [-2.6, 1.0], [-2.6, -1.0]] as const) {
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.22, 14, 1, true), mat(0x3a3430, 0.7, 0.6, { side: THREE.DoubleSide }));
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(x, x > 0 ? 0.3 : 0.38, z);
+      g.add(rim);
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.24, 8), steel);
+      hub.rotation.x = Math.PI / 2;
+      hub.position.copy(rim.position);
+      g.add(hub);
+    }
+    // a mirror on the ground, glass gone
+    const mirror = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.05), soot);
+    mirror.position.set(2.6, 0.05, 1.7);
+    mirror.rotation.set(Math.PI / 2, 0, 0.6);
+    g.add(mirror);
+    place(g, 44, 46, 2.3, -0.12).rotation.z = 0.06; // nose down
     world.colliders.push({ x: 44, z: 46, r: 2.6 });
   }
   // 5. Shoes, side by side, laces tied together.
@@ -178,22 +271,50 @@ export function buildDiscoveries() {
   {
     const g = new THREE.Group();
     const wood = mat(0x4a3d32, 1);
+    const dry = mat(0x5a4c3c, 1);
+    // two forked uprights, a ridge pole, branches leaned along one side
     for (const s of [-1, 1]) {
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.2, 6), wood);
-      pole.position.set(s * 1.1, 0.9, 0);
-      pole.rotation.x = 0.5;
-      g.add(pole);
+      const up = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 1.5, 6), wood);
+      up.position.set(s * 1.15, 0.72, 0.55);
+      up.rotation.z = s * 0.05;
+      g.add(up);
+      const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 5), wood);
+      fork.position.set(s * 1.15 + s * 0.06, 1.5, 0.55);
+      fork.rotation.z = s * -0.5;
+      g.add(fork);
     }
-    const roof = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.0), mat(0x3a3a2e, 1, 0, { side: THREE.DoubleSide }));
-    roof.rotation.x = -1.05;
-    roof.position.set(0, 0.95, -0.35);
-    g.add(roof);
-    const used = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.03, 1.8), mat(0x4a4436, 1));
-    used.position.set(-0.5, 0.02, 0.1);
+    const ridge = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 2.6, 6), wood);
+    ridge.rotation.z = Math.PI / 2;
+    ridge.position.set(0, 1.45, 0.55);
+    g.add(ridge);
+    for (let i = 0; i < 13; i++) {
+      const x = -1.15 + i * 0.19 + (Math.sin(i * 7.1) * 0.04);
+      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.032, 2.0 + (i % 3) * 0.12, 5), i % 3 ? wood : dry);
+      br.position.set(x, 0.78, -0.25);
+      br.rotation.set(-0.86 + Math.sin(i * 3.3) * 0.05, 0, Math.sin(i * 2.1) * 0.06);
+      g.add(br);
+    }
+    // a scrap of tarp on top, weighted with a stone
+    const tarp = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.1, 3, 3), mat(0x3a3a2e, 1, 0, { side: THREE.DoubleSide }));
+    tarp.rotation.set(-0.72, 0, 0.05);
+    tarp.position.set(0.35, 0.95, -0.2);
+    g.add(tarp);
+    const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1, 0), mat(0x5a5754, 1, 0, { flatShading: true }));
+    stone.position.set(0.5, 1.3, 0.12);
+    g.add(stone);
+    // two beds of bracken: one flattened, a blanket thrown back; one never lain on
+    const used = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, 1.8), mat(0x4a4436, 1));
+    used.position.set(-0.45, 0.02, -0.05);
     used.rotation.y = 0.05;
-    const unused = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 1.8), mat(0x5a5a48, 1));
-    unused.position.set(0.5, 0.04, 0.1);
-    g.add(used, unused);
+    const blanket = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.9, 3, 3), mat(0x5a3a2e, 1, 0, { side: THREE.DoubleSide }));
+    const bp = blanket.geometry.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < bp.count; i++) bp.setZ(i, Math.abs(Math.sin(bp.getX(i) * 6 + bp.getY(i) * 4)) * 0.06);
+    blanket.geometry.computeVertexNormals();
+    blanket.rotation.x = -Math.PI / 2;
+    blanket.position.set(-0.42, 0.06, 0.35);
+    const unused = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 1.8), mat(0x5a5a48, 1));
+    unused.position.set(0.45, 0.06, -0.05);
+    g.add(used, blanket, unused);
     place(g, -44, -12, 0.3);
   }
   // 9. Restraint straps, cut through, by a tree south of the ambulance.

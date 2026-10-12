@@ -84,6 +84,8 @@ export class Player {
   stamina = 100;
   /** how deep it runs (Last breath raises it) */
   maxStamina = 100;
+  /** a foot comes down (main.ts plays it) */
+  onStep?: (speed: number) => void;
   medkits = 2;
   invuln = 0;
   hurtFlash = 0;
@@ -118,6 +120,8 @@ export class Player {
   onSwingHit?: (facing: number, dmg: number, heavy: boolean) => number;
   onHurt?: () => void;
   cameraBlockers: THREE.Object3D[] = [];
+  /** places the camera mustn't be (inside the ambulance from outside) */
+  camAvoid?: (p: THREE.Vector3) => boolean;
   swingYaw = 0;
   /** Returns the yaw toward a nearby enemy, or null. Used on touch screens. */
   aimAssist?: (from: THREE.Vector3) => number | null;
@@ -298,7 +302,10 @@ export class Player {
     m.root.position.copy(this.pos);
     m.root.rotation.y = this.facing;
     const stride = moving ? speed : 0;
+    const before = Math.floor(this.walk / Math.PI);
     this.walk += dt * stride * 1.6;
+    // a footfall every half cycle, on the ground and actually going somewhere
+    if (Math.floor(this.walk / Math.PI) !== before && !this.airborne && !this.frozen && stride > 0.5) this.onStep?.(stride);
     const sw = Math.sin(this.walk) * Math.min(1, stride / 4) * 0.8;
     if (m instanceof Person) {
       // real clips: a looping base from the ground speed, one-shots on top
@@ -356,7 +363,11 @@ export class Player {
       const hit = this.ray.intersectObjects(this.cameraBlockers, true)[0];
       if (hit) dist *= Math.max(0.1, (hit.distance - 0.3) / len);
     }
-    const camPos = head.clone().addScaledVector(dir, -dist).addScaledVector(right, side * (dist / Math.max(0.01, this.camDist)));
+    const at = (d: number) => head.clone().addScaledVector(dir, -d).addScaledVector(right, side * (d / Math.max(0.01, this.camDist)));
+    let camPos = at(dist);
+    // never end up inside something you're standing outside of (the open
+    // ambulance: the ray goes straight through the doorway)
+    if (this.camAvoid && !this.camAvoid(head)) for (let k = 0; k < 10 && this.camAvoid(camPos); k++) camPos = at((dist *= 0.8));
     camPos.y = Math.max(camPos.y, bounds.groundAt(camPos.x, camPos.z) + 0.4);
     camera.position.copy(camPos);
     if (this.shake > 0) {

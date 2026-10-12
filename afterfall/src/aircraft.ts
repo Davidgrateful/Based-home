@@ -7,6 +7,7 @@
 // Axes: nose toward +z, up +y, the left (port) wing toward +x.
 
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 export const FUSE = {
   /** fuselage radius and the stations of nose tip and tail tip (m) */
@@ -690,6 +691,39 @@ export function wreckPieces() {
     gr.add(new THREE.Mesh(geo, dirty));
     // the inside: bare, dark, insulation and frames
     gr.add(new THREE.Mesh(geo, inside));
+    // what you see through a torn end: the frames, the floor, rows of seats
+    // (merged: two draw calls however long the piece)
+    const frames: THREE.BufferGeometry[] = [];
+    const seats: THREE.BufferGeometry[] = [];
+    const a0 = Math.min(z0, z1) + 0.25;
+    const a1 = Math.max(z0, z1) - 0.25;
+    for (let z = a0; z <= a1; z += 0.55) {
+      const s = section(z);
+      if (s.r < 0.6) continue;
+      const rib = new THREE.TorusGeometry(s.r * 0.96, 0.035, 4, 22);
+      rib.translate(0, s.y, z);
+      frames.push(rib);
+    }
+    {
+      const mid = section((a0 + a1) / 2);
+      const floor = new THREE.BoxGeometry(mid.r * 1.6, 0.05, a1 - a0);
+      floor.translate(0, mid.y - mid.r * 0.42, (a0 + a1) / 2);
+      frames.push(floor);
+      for (let z = a0 + 0.3; z <= a1 - 0.3; z += 0.82) {
+        const s = section(z);
+        if (s.r < 0.9) continue;
+        for (const x of [-0.62, -0.18, 0.18, 0.62].map((k) => k * s.r)) {
+          const seat = new THREE.BoxGeometry(0.4 * s.r, 0.36, 0.42);
+          seat.translate(x, s.y - s.r * 0.42 + 0.22, z);
+          const back = new THREE.BoxGeometry(0.4 * s.r, 0.5, 0.08);
+          back.rotateX(-0.15);
+          back.translate(x, s.y - s.r * 0.42 + 0.6, z - 0.2);
+          seats.push(seat, back);
+        }
+      }
+    }
+    if (frames.length) gr.add(new THREE.Mesh(mergeGeometries(frames.map((g) => g.toNonIndexed())), new THREE.MeshStandardMaterial({ color: 0x3a3632, roughness: 0.8, metalness: 0.3 })));
+    if (seats.length) gr.add(new THREE.Mesh(mergeGeometries(seats.map((g) => g.toNonIndexed())), new THREE.MeshStandardMaterial({ color: 0x2b3240, roughness: 1 })));
     // soot around the torn ends
     for (const z of [z0, z1]) {
       if (z <= FUSE.tail + 0.1 || z >= FUSE.nose - 0.1) continue;
