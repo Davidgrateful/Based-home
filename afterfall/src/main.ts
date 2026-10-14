@@ -594,6 +594,8 @@ tick();
   economy: { CATALOG, PRICES, quote, purchase, earn },
   tradingPost,
   camp: base,
+  sfx,
+  fx,
   ch2: chapterTwo,
   storyState: story,
 };
