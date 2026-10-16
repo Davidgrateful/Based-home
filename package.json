@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "tsx lib/db/migrate && next build",
+    "build": "node scripts/build-afterfall.mjs && tsx lib/db/migrate && next build",
+    "build:afterfall": "node scripts/build-afterfall.mjs",
     "start": "next start",
     "lint": "ultracite check",
     "format": "ultracite fix",
