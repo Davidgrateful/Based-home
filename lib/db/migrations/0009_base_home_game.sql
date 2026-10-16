@@ -229,25 +229,25 @@ CREATE TABLE IF NOT EXISTS "Trophy" (
 );
 
 -- Seed the 20 districts
-INSERT INTO "District" ("name", "slug", "lore", "resourceType", "gridX", "gridY", "color", "warState") VALUES
-  ('Neon Quarter',    'neon-quarter',    'The neon-lit heart of the grid. Entertainment, vice, and power converge here.',           'entertainment', 0, 0, '#ff44cc', 'peace'),
-  ('Vault District',  'vault-district',  'Fortress of wealth. The most defended district in the city.',                             'gold',          1, 0, '#ffcc00', 'peace'),
-  ('Zero District',   'zero-district',   'Birth of the grid. Ancient servers and forgotten protocols lurk beneath.',                'relics',        2, 0, '#4488ff', 'peace'),
-  ('Ghost Alley',     'ghost-alley',     'Where the disappeared go. Black markets and off-grid operatives thrive here.',            'intel',         3, 0, '#888888', 'peace'),
-  ('The Spire',       'the-spire',       'Towering headquarters of megacorps. Corporate warfare is fought in boardrooms.',          'influence',     4, 0, '#cc44ff', 'peace'),
-  ('Iron Works',      'iron-works',      'Industrial heart of the city. Forges, fabricators, and hard labor.',                     'materials',     0, 1, '#ff8844', 'peace'),
-  ('The Colosseum',   'the-colosseum',   'Sanctioned arena combat. Blood sports and glory draws the bold.',                        'glory',         1, 1, '#ff3344', 'peace'),
-  ('Circuit Bay',     'circuit-bay',     'Docklands of the digital sea. Smugglers and engineers share the waterfront.',            'components',    2, 1, '#44ccff', 'peace'),
-  ('The Gardens',     'the-gardens',     'Rare green space. Food production and alchemical ingredients grown here.',                'food',          3, 1, '#44ff88', 'peace'),
-  ('Data Spraw',      'data-spraw',      'Endless low-cost housing. Where most operatives start their grid life.',                 'data',          4, 1, '#6688ff', 'peace'),
-  ('Rust Corridor',   'rust-corridor',   'Abandoned industrial zone. Salvagers and raiders use it as a staging ground.',           'salvage',       0, 2, '#cc8844', 'peace'),
-  ('Nexus Gate',      'nexus-gate',      'Transit hub. Every route passes through Nexus. Control it, control movement.',           'transit',       1, 2, '#44ffcc', 'peace'),
-  ('The Undermarket', 'undermarket',     'Underground bazaar. Anything can be bought or sold, no questions asked.',                 'contraband',    2, 2, '#ff6644', 'peace'),
-  ('Helix Labs',      'helix-labs',      'Biotech research district. Experimental enhancements and volatile substances.',          'biotech',       3, 2, '#ccff44', 'peace'),
-  ('Crypt Row',       'crypt-row',       'Where the server dead rest. Ancient encrypted vaults line every wall.',                  'encrypted_data',4, 2, '#8844ff', 'peace'),
-  ('Nova Flats',      'nova-flats',      'Mid-tier residential. Stable, boring, and increasingly contested.',                     'housing',       0, 3, '#ff44ff', 'peace'),
-  ('The Exchange',    'the-exchange',    'Financial district. Commodity trading, currency exchange, and market manipulation.',      'currency',      1, 3, '#ffee44', 'peace'),
-  ('Slag Heap',       'slag-heap',       'Wasteland outskirts. Toxic but rich in rare earth materials.',                          'rare_materials',2, 3, '#884422', 'peace'),
-  ('Signal Tower',    'signal-tower',    'Communications nexus. Whoever holds it can broadcast to the whole grid.',               'broadcast',     3, 3, '#4488ff', 'peace'),
-  ('The Sanctuary',   'the-sanctuary',   'Neutral ground. Raids forbidden. A place for diplomacy and deals.',                     'neutral',       4, 3, '#ffffff', 'peace')
+INSERT INTO "District" ("name", "slug", "lore", "resourceType", "gridX", "gridY", "warState") VALUES
+  ('Neon Quarter',    'neon-quarter',    'The neon-lit heart of the grid. Entertainment, vice, and power converge here.',           'entertainment', 0, 0, 'peace'),
+  ('Vault District',  'vault-district',  'Fortress of wealth. The most defended district in the city.',                             'gold',          1, 0, 'peace'),
+  ('Zero District',   'zero-district',   'Birth of the grid. Ancient servers and forgotten protocols lurk beneath.',                'relics',        2, 0, 'peace'),
+  ('Ghost Alley',     'ghost-alley',     'Where the disappeared go. Black markets and off-grid operatives thrive here.',            'intel',         3, 0, 'peace'),
+  ('The Spire',       'the-spire',       'Towering headquarters of megacorps. Corporate warfare is fought in boardrooms.',          'influence',     4, 0, 'peace'),
+  ('Iron Works',      'iron-works',      'Industrial heart of the city. Forges, fabricators, and hard labor.',                     'materials',     0, 1, 'peace'),
+  ('The Colosseum',   'the-colosseum',   'Sanctioned arena combat. Blood sports and glory draws the bold.',                        'glory',         1, 1, 'peace'),
+  ('Circuit Bay',     'circuit-bay',     'Docklands of the digital sea. Smugglers and engineers share the waterfront.',            'components',    2, 1, 'peace'),
+  ('The Gardens',     'the-gardens',     'Rare green space. Food production and alchemical ingredients grown here.',                'food',          3, 1, 'peace'),
+  ('Data Spraw',      'data-spraw',      'Endless low-cost housing. Where most operatives start their grid life.',                 'data',          4, 1, 'peace'),
+  ('Rust Corridor',   'rust-corridor',   'Abandoned industrial zone. Salvagers and raiders use it as a staging ground.',           'salvage',       0, 2, 'peace'),
+  ('Nexus Gate',      'nexus-gate',      'Transit hub. Every route passes through Nexus. Control it, control movement.',           'transit',       1, 2, 'peace'),
+  ('The Undermarket', 'undermarket',     'Underground bazaar. Anything can be bought or sold, no questions asked.',                 'contraband',    2, 2, 'peace'),
+  ('Helix Labs',      'helix-labs',      'Biotech research district. Experimental enhancements and volatile substances.',          'biotech',       3, 2, 'peace'),
+  ('Crypt Row',       'crypt-row',       'Where the server dead rest. Ancient encrypted vaults line every wall.',                  'encrypted_data',4, 2, 'peace'),
+  ('Nova Flats',      'nova-flats',      'Mid-tier residential. Stable, boring, and increasingly contested.',                     'housing',       0, 3, 'peace'),
+  ('The Exchange',    'the-exchange',    'Financial district. Commodity trading, currency exchange, and market manipulation.',      'currency',      1, 3, 'peace'),
+  ('Slag Heap',       'slag-heap',       'Wasteland outskirts. Toxic but rich in rare earth materials.',                          'rare_materials',2, 3, 'peace'),
+  ('Signal Tower',    'signal-tower',    'Communications nexus. Whoever holds it can broadcast to the whole grid.',               'broadcast',     3, 3, 'peace'),
+  ('The Sanctuary',   'the-sanctuary',   'Neutral ground. Raids forbidden. A place for diplomacy and deals.',                     'neutral',       4, 3, 'peace')
 ON CONFLICT (slug) DO NOTHING;
