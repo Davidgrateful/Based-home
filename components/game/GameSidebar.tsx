@@ -41,6 +41,11 @@ export function GameSidebar({ userId, userName }: Props) {
             {item.label}
           </Link>
         ))}
+        {/* Static Vite build, not a Next route: a plain link loads it fully. */}
+        <a href="/afterfall/index.html" className="nav-item">
+          <span style={{ fontSize: '1rem', width: 20, textAlign: 'center' }}>🔥</span>
+          AFTERFALL
+        </a>
       </div>
 
       {/* Season badge */}
