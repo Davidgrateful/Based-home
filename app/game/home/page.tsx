@@ -46,7 +46,7 @@ export default function HomePage() {
     });
   }, []);
 
-  const handleSave = async (layout: RoomCell[], cost: number) => {
+  const handleSave = async (layout: RoomCell[][], cost: number) => {
     const res = await fetch('/api/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

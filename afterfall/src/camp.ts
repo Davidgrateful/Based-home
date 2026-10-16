@@ -49,7 +49,7 @@ const PAST_FIRST = ["ch2", "pylons", "boss", "ending", "changed", "settlement", 
 const evidenceCount = () => Object.keys(save.flags).filter((k) => k.startsWith("ev:")).length;
 
 const PIECES: Piece[] = [
-  { id: "pit", name: "Fire pit", verb: "Build up the fire pit", noun: "A heap of flat stones", at: [-0.9, -2.9, 0.4], cost: { scrap: 2 }, gate: () => null },
+  { id: "pit", name: "Fire pit", verb: "Build up the fire pit", noun: "A heap of flat stones", at: [2.6, -3.4, 0.4], cost: { scrap: 2 }, gate: () => null },
   { id: "storage", name: "Store", verb: "Make a store", noun: "Two broken pallets", at: [-3.7, 3.3, -0.6], cost: { scrap: 3, shards: 6 }, gate: () => null },
   {
     id: "shelter",
@@ -247,7 +247,7 @@ function make(id: CampId): THREE.Group {
       g.add(tri);
       // split wood stacked where the stone heap was
       const wood = new THREE.Group();
-      wood.position.set(-0.9, 0, -2.9);
+      wood.position.set(2.6, 0, -3.4);
       wood.rotation.y = 0.4;
       g.add(wood);
       for (let i = 0; i < 7; i++) wood.add(mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.7, 6), i % 2 ? WOOD : DARK, (i % 4) * 0.15 - 0.22, 0.07 + Math.floor(i / 4) * 0.13, 0, 0, 0, Math.PI / 2));

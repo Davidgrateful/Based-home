@@ -20,7 +20,8 @@
       "!ai-sdk",
       "!components/ui",
       "!lib/utils.ts",
-      "!hooks/use-mobile.ts"
+      "!hooks/use-mobile.ts",
+      "!afterfall"
     ]
   },
   "linter": {
