@@ -99,13 +99,9 @@ export function simulateRaid(
     ];
 
     let moved = false;
-    for (const dir of directions.sort(() => {
-      // Sort toward target if exists
-      if (!target) return Math.random() - 0.5;
-      const a = Math.abs((cx + dir.dx) - target.x) + Math.abs((cy + dir.dy) - target.y);
-      const b = Math.abs(cx - target.x) + Math.abs(cy - target.y);
-      return a - b;
-    })) {
+    // try the steps that bring us closest to the target first (no target: any order)
+    const toTarget = (d: { dx: number; dy: number }) => (target ? Math.abs(cx + d.dx - target.x) + Math.abs(cy + d.dy - target.y) : 0);
+    for (const dir of directions.sort((d1, d2) => (target ? toTarget(d1) - toTarget(d2) : Math.random() - 0.5))) {
       const nx = cx + dir.dx, ny = cy + dir.dy;
       if (nx < 0 || ny < 0 || ny >= GRID_SIZE || nx >= (layout[ny]?.length ?? 0)) continue;
       const cell = layout[ny]?.[nx];

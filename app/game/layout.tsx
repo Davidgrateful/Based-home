@@ -1,8 +1,19 @@
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { auth } from '@/app/(auth)/auth';
 import { GameSidebar } from '@/components/game/GameSidebar';
 
-export default async function GameLayout({ children }: { children: React.ReactNode }) {
+// The session is request data: with cacheComponents on it has to be read
+// inside a Suspense boundary (same pattern as the chat layout).
+export default function GameLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg-void)' }} />}>
+      <GameShell>{children}</GameShell>
+    </Suspense>
+  );
+}
+
+async function GameShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
